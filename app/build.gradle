@@ -1,0 +1,38 @@
+plugins {
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '8.1.1' // For packaging dependencies
+}
+
+repositories {
+    mavenCentral()
+    maven { url 'https://repo.papermc.io/repository/maven-public/' }
+    maven { url 'https://jitpack.io' } // Adiciona o repositório JitPack
+}
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.9.1'
+    testImplementation 'io.papermc.paper:paper-api:1.20-R0.1-SNAPSHOT'
+    compileOnly 'io.papermc.paper:paper-api:1.20-R0.1-SNAPSHOT'
+    implementation 'com.google.guava:guava:31.1-jre'
+    implementation 'mysql:mysql-connector-java:8.0.33'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+    options.compilerArgs << "-Xlint:deprecation"
+}
+
+tasks.named('shadowJar') {
+    archiveBaseName.set('SolanaDevMinecraftAstraL')
+    archiveVersion.set('1.33')
+}
+
+tasks.test {
+    enabled = false
+}

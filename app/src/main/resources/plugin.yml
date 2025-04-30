@@ -1,0 +1,46 @@
+name: SolanaDevMinecraftAstraL
+version: 1.0
+main: com.SolanaDevMinecraft.App
+api-version: 1.19
+author: Amauri
+description: Plugin que permite ver token Solana Dev no Minecraft
+commands:
+  saldo:
+    description: Verifica o saldo bancário.
+    usage: /saldo
+  loan:
+    description: Solicita um empréstimo. pega emprestimo com 13 do L
+    usage: /loan <quantidade>
+  paydebt:
+    description: Paga parte ou toda a dívida.
+    usage: /paydebt <quantidade>
+  invest:
+    description: Realiza um investimento.
+    usage: /invest <quantidade>
+  solbalance:
+    description: Verifica o saldo da carteira Solana.
+    usage: /solbalance
+  soltransfer:
+    description: Transfere SOL para outro jogador.
+    usage: /soltransfer <quantidade> <jogador_destino>
+  buycurrency:
+    description: Compra moedas do jogo usando Solana.
+    usage: /buycurrency <quantidade_SOL>
+  createwallet:
+    description: Cria uma carteira Solana para o jogador.
+    usage: /createwallet
+  buyapple:
+    description: Compra uma Maçã Encantada.
+    usage: /buyapple
+  buyemerald:
+    description: Compra uma Esmeralda.
+    usage: /buyemerald
+  buynetheritepickaxe:
+    description: Compra uma Picareta de Netherite Encantada.
+    usage: /buynetheritepickaxe
+  buydiamondarmor:
+    description: Compra uma Armadura Completa de Diamante Encantada.
+    usage: /buydiamondarmor
+  buynetheritearmor:
+    description: Compra uma Armadura Completa de Netherite Encantada.
+    usage: /buynetheritearmor
