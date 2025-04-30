@@ -111,3 +111,6 @@ Aqui está um fluxo básico em forma de diagrama para os comandos do seu plugin:
   - `/soltransfer`: Transfere SOL para outro jogador.
 
 Se precisar de mais detalhes ou ajustes, é só avisar! 😊
+
+este video em ingles me ajudou a criar e configurar uma dock para solana https://www.youtube.com/watch?v=L4ASwqLZVV0 
+um pai ensinando as finhas economia e banco digital Ti e tecnologias
