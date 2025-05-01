@@ -7,36 +7,105 @@ import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.logging.Logger;
+import java.net.HttpURLConnection;
+import java.net.URLEncoder;
+import java.net.URL;
+
+import org.bukkit.configuration.file.FileConfiguration;
+
+
 
 public class Solana {
 
     private final Connection connection;
+    private static final Logger LOGGER = Logger.getLogger(Solana.class.getName());
 
     public Solana(Connection connection) {
+        this.config = config;
         this.connection = connection;
     }
 
+
+    private FileConfiguration config;
+
+public Solana(FileConfiguration config, Connection connection) {
+    this.config = config;
+    this.connection = connection;
+}
+
     // 📌 Método para verificar saldo da carteira Solana
     public double getSolanaBalance(String walletAddress) throws Exception {
-        String command = "sudo docker run --rm -v /home/astral/astralcoin:/solana-token -v /home/astral/astralcoin/solana-data:/root/.config/solana heysolana solana balance " + walletAddress;
-        String output = executeCommand(command);
-        return Double.parseDouble(output.trim());
+    // Obtém o host do arquivo de configuração
+    String host = config.getString("docker.host");
+
+    // Constrói a URL para a requisição HTTP
+    String url = String.format("http://%s/consulta.php?comando=%s", host, walletAddress);
+
+    // Faz a requisição HTTP
+    String response = executeHttpGet(url);
+
+    // Processa a resposta JSON
+    if (response.contains("\"status\":\"success\"")) {
+        // Extrai o campo "output" do JSON e remove " SOL"
+        String output = response.split("\"output\":\"")[1].split("\"")[0].replace(" SOL", "").trim();
+        return Double.parseDouble(output); // Converte o saldo para um valor numérico
+    } else {
+        throw new Exception("Erro ao obter saldo: " + response);
     }
+}
 
-    // 📌 Método para transferir Solana para outro jogador
-    public String transferSolana(String sender, String recipientWallet, double amount) throws Exception {
-        String command = "sudo -u www-data docker run --rm -v /home/astral/astralcoin:/solana-token -v /home/astral/astralcoin/solana-data:/root/.config/solana heysolana solana transfer " +
-                recipientWallet + " " + amount + " --keypair /solana-token/wallets/" + sender + "_wallet.json --allow-unfunded-recipient";
-        String output = executeCommand(command);
+    // 📌 Método auxiliar para executar requisições HTTP GET
+private String executeHttpGet(String urlString) throws Exception {
+    URL url = new URL(urlString);
+    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+    connection.setRequestMethod("GET");
 
-        // 📌 Extraindo a assinatura da transação
-        String signature = extractSignature(output);
-        if (signature == null) {
-            throw new Exception("Falha na transferência. Assinatura não encontrada.");
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+        StringBuilder response = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            response.append(line);
+        }
+        return response.toString();
+    }
+}
+
+   public String transferSolana(String sender, String recipientWallet, double amount) throws Exception {
+    // URL da página PHP
+    String host = config.getString("docker.host");
+    String baseUrl = "http://" + host + "/transfer.php";
+
+    // Constrói os parâmetros para a requisição GET
+    String params = String.format("sender=%s&recipientWallet=%s&amount=%.2f",
+        URLEncoder.encode(sender, "UTF-8"),
+        URLEncoder.encode(recipientWallet, "UTF-8"),
+        amount
+    );
+
+    // Faz a requisição HTTP GET
+    HttpURLConnection connection = (HttpURLConnection) new URL(baseUrl + "?" + params).openConnection();
+    connection.setRequestMethod("GET");
+
+    // Lê a resposta
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+        StringBuilder response = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            response.append(line);
         }
 
-        return signature;
+        // Processa a resposta JSON
+        String jsonResponse = response.toString();
+        if (jsonResponse.contains("\"status\":\"success\"")) {
+            return jsonResponse.split("\"signature\":\"")[1].split("\"")[0];
+        } else {
+            throw new Exception("Erro ao transferir SOL: " + jsonResponse);
+        }
     }
+}
 
     // 📌 Método para registrar transações no banco de dados
     public void registerTransaction(String player, String transactionType, double amount, String currency, String signature) {
@@ -84,34 +153,104 @@ public class Solana {
 
     // 📌 Método para obter o endereço da carteira do banco de dados
     public String getWalletFromDatabase(String username) {
-        String walletAddress = null;
-        try {
-            PreparedStatement stmt = connection.prepareStatement("SELECT walletAddress FROM players WHERE username = ?");
-            stmt.setString(1, username);
-            ResultSet rs = stmt.executeQuery();
+    String walletAddress = null;
+    Connection manualConnection = null;
 
-            if (rs.next()) {
-                walletAddress = rs.getString("walletAddress");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+    try {
+        LOGGER.info("Conectando ao banco de dados para buscar a carteira do usuário: " + username);
+
+        // Obtém as configurações do banco de dados do config.yml
+        String url = config.getString("database.url");
+        String user = config.getString("database.user");
+        String password = config.getString("database.password");
+
+        // Loga as configurações para depuração (não logue a senha em produção)
+        LOGGER.info("URL do banco de dados: " + url);
+        LOGGER.info("Usuário do banco de dados: " + user);
+
+        // Estabelece a conexão com o banco de dados
+        manualConnection = DriverManager.getConnection(url, user, password);
+
+        // Consulta para buscar o endereço da carteira com base no nome do jogador
+        String query = "SELECT c.endereco FROM carteiras c " +
+                       "JOIN jogadores j ON c.jogador_id = j.id " +
+                       "WHERE j.nome = ?";
+        PreparedStatement stmt = manualConnection.prepareStatement(query);
+        stmt.setString(1, username);
+        LOGGER.info("Executando consulta SQL: " + query.replace("?", "'" + username + "'"));
+        ResultSet rs = stmt.executeQuery();
+
+        if (rs.next()) {
+            walletAddress = rs.getString("endereco");
+            LOGGER.info("Carteira encontrada para o usuário " + username + ": " + walletAddress);
+        } else {
+            LOGGER.warning("Nenhuma carteira encontrada para o usuário: " + username);
         }
-        return walletAddress;
+    } catch (Exception e) {
+        LOGGER.severe("Erro ao buscar carteira no banco de dados para o usuário " + username + ": " + e.getMessage());
+    } finally {
+        if (manualConnection != null) {
+            try {
+                manualConnection.close();
+            } catch (Exception e) {
+                LOGGER.severe("Erro ao fechar a conexão com o banco de dados: " + e.getMessage());
+            }
+        }
     }
+
+    return walletAddress;
+}
+
+    public void logWalletAddress(Player player) {
+    String username = player.getName();
+    String walletAddress = getWalletFromDatabase(username);
+
+    if (walletAddress != null) {
+        // Loga o endereço da carteira no console do servidor
+        System.out.println("Endereço da carteira para " + username + ": " + walletAddress);
+    } else {
+        System.out.println("Nenhuma carteira encontrada para o jogador: " + username);
+    }
+}
 
     // 📌 Método para o comando /solbalance
     public void handleSolBalance(Player player) {
-        String walletAddress = getWalletFromDatabase(player.getName());
-        if (walletAddress == null) {
-            player.sendMessage("Você ainda não possui uma carteira registrada.");
-            return;
-        }
-        try {
-            double balance = getSolanaBalance(walletAddress);
-            player.sendMessage("Seu saldo de SOL é: " + balance);
-        } catch (Exception e) {
-            player.sendMessage("Erro ao verificar saldo: " + e.getMessage());
-        }
+
+    if (player == null) {
+    LOGGER.severe("O objeto Player é nulo.");
+    return;
+    }
+
+    String playerName = player.getName();
+    if (playerName == null || playerName.isEmpty()) {
+        LOGGER.severe("O nome do jogador é nulo ou vazio.");
+        player.sendMessage("Erro: Não foi possível identificar o jogador.");
+        return;
+    }
+    // Loga o nome do jogador
+    player.sendMessage("Obtendo o saldo de SOL para o jogador: " + player.getName());
+
+    // Obtém o endereço da carteira do banco de dados
+    String walletAddress = getWalletFromDatabase(player.getName());
+    if (walletAddress == null) {
+        LOGGER.warning("Nenhuma carteira encontrada para o jogador: " + player.getName());
+        player.sendMessage("Você ainda não possui uma carteira registrada.");
+        return;
+    }
+
+    player.sendMessage("Carteira SOL: " + walletAddress);
+    LOGGER.info("Endereço da carteira encontrado: " + walletAddress);
+
+    try {
+        // Obtém o saldo da carteira
+        double balance = getSolanaBalance(walletAddress);
+        LOGGER.info("Saldo obtido para a carteira " + walletAddress + ": " + balance + " SOL");
+        player.sendMessage("Seu saldo de SOL é: " + balance);
+    } catch (Exception e) {
+        LOGGER.severe("Erro ao verificar saldo para a carteira " + walletAddress + ": " + e.getMessage());
+        player.sendMessage("Erro ao verificar saldo: " + e.getMessage());
+        e.printStackTrace();
+    }
     }
 
     // 📌 Método para o comando /soltransfer
@@ -189,14 +328,20 @@ public void buyGameCurrency(Player player, double solAmount) {
 // 📌 Método para criar uma carteira Solana para o jogador
 public void createWallet(Player player) {
     String playerName = player.getName();
-    String walletPath = "/solana-token/wallets/" + playerName + "_wallet.json";
 
     try {
-        // Comando para criar a carteira via Docker
-        String createCommand = "sudo -u www-data docker run --rm -v /home/astral/astralcoin/wallets:/solana-token/wallets " +
-                "-v /home/astral/astralcoin/solana-data:/root/.config/solana " +
-                "heysolana solana-keygen new --no-passphrase --outfile " + walletPath + " --force";
+        // Obtém os valores do arquivo de configuração
+        String basePath = config.getString("docker.base_path");
+        String solanaCommand = config.getString("docker.solana_command");
+        String walletPath = String.format("%s/wallets/%s_wallet.json", basePath, playerName);
 
+        // Constrói o comando dinamicamente
+        String createCommand = String.format(
+            "sudo docker run --rm -v %s:/solana-token/wallets -v %s/solana-data:/root/.config/solana %s solana-keygen new --no-passphrase --outfile %s --force",
+            basePath, basePath, solanaCommand, walletPath
+        );
+
+        // Executa o comando para criar a carteira
         String output = executeCommand(createCommand);
 
         // Captura o endereço público (pubkey)

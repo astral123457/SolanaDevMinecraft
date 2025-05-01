@@ -5,6 +5,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.configuration.file.FileConfiguration;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -20,9 +21,11 @@ public class App extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        // Salva o config.yml na pasta do plugin, caso ainda não exista
+    saveDefaultConfig();
     getLogger().info("Plugin habilitado!");
     connectToDatabase();
-    solana = new Solana(connection);
+    solana = new Solana(getConfig(), connection); // Inicializa a instância da classe Solana // Inicializa a instância da classe Solana
     store = new Store(connection); // Inicializa a instância da classe Store
 
     // Atualiza juros a cada 60 segundos
@@ -49,17 +52,19 @@ public class App extends JavaPlugin {
     }
 
     private void connectToDatabase() {
-        try {
-            connection = DriverManager.getConnection(
-                "jdbc:mysql://debian.tail561849.ts.net:3306/banco", // URL do banco
-                "root", // Usuário
-                "0073007" // Senha
-            );
-            getLogger().info("Conectado ao banco de dados!");
-        } catch (Exception e) {
-            getLogger().severe("Erro ao conectar ao banco de dados: " + e.getMessage());
-        }
+    try {
+        String url = getConfig().getString("database.url");
+        String user = getConfig().getString("database.user");
+        String password = getConfig().getString("database.password");
+
+        getLogger().info("Tentando conectar ao banco de dados com URL: " + url);
+        connection = DriverManager.getConnection(url, user, password);
+        getLogger().info("Conectado ao banco de dados!");
+    } catch (Exception e) {
+        getLogger().severe("Erro ao conectar ao banco de dados: " + e.getMessage());
+        e.printStackTrace();
     }
+}
 
     private void disconnectFromDatabase() {
         try {
@@ -82,7 +87,43 @@ public boolean onCommand(CommandSender sender, Command command, String label, St
             sender.sendMessage("Este comando só pode ser usado por jogadores.");
         }
         return true;
-    } else if (command.getName().equalsIgnoreCase("loan")) {
+    } else if (command.getName().equalsIgnoreCase("testdb")) {
+    if (sender instanceof Player) {
+        Player player = (Player) sender;
+
+        // Obtém as configurações do banco de dados
+        String url = getConfig().getString("database.url");
+        String user = getConfig().getString("database.user");
+        String password = getConfig().getString("database.password");
+
+        // Exibe as configurações para o jogador
+        player.sendMessage("Url: " + url);
+        player.sendMessage("User: " + user);
+        player.sendMessage("Password: " + password);
+
+        try {
+            // Testa a conexão com o banco de dados
+            if (connection == null || connection.isClosed()) {
+                player.sendMessage("Erro: Conexão com o banco de dados não foi estabelecida.");
+                return true;
+            }
+
+            PreparedStatement statement = connection.prepareStatement("SELECT 1");
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                player.sendMessage("Conexão com o banco de dados está funcionando!");
+            } else {
+                player.sendMessage("Erro ao testar a conexão com o banco de dados.");
+            }
+        } catch (Exception e) {
+            player.sendMessage("Erro ao acessar o banco de dados: " + e.getMessage());
+            getLogger().severe("Erro ao testar conexão com o banco de dados: " + e.getMessage());
+        }
+    } else {
+        sender.sendMessage("Este comando só pode ser usado por jogadores.");
+    }
+    return true;
+} else if (command.getName().equalsIgnoreCase("loan")) {
         if (sender instanceof Player) {
             Player player = (Player) sender;
             if (args.length == 1) {
@@ -196,7 +237,7 @@ public boolean onCommand(CommandSender sender, Command command, String label, St
         } else {
             sender.sendMessage("Este comando só pode ser usado por jogadores.");
         }
-        return true;
+        return true;   
     
     } else if (command.getName().equalsIgnoreCase("invest")) {
         if (sender instanceof Player) {

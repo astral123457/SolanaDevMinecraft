@@ -44,3 +44,9 @@ commands:
   buynetheritearmor:
     description: Compra uma Armadura Completa de Netherite Encantada.
     usage: /buynetheritearmor
+  checkwallet:
+    description: Verifica o endereço da carteira associado ao jogador.
+    usage: /checkwallet
+  testdb:
+    description: Testa a conexão com o banco de dados.
+    usage: /testdb
