@@ -114,3 +114,70 @@ Se precisar de mais detalhes ou ajustes, é só avisar! 😊
 
 este video em ingles me ajudou a criar e configurar uma dock para solana https://www.youtube.com/watch?v=L4ASwqLZVV0 
 um pai ensinando as finhas economia e banco digital Ti e tecnologias
+
+caso queira criar usuario astral e pasta astral e usuario www 
+1. Criar um Usuário no Linux
+Para criar o usuário que terá permissões específicas:
+sudo adduser www
+
+
+- O comando pedirá que você configure senha e outras informações básicas.
+- Certifique-se de que o usuário tenha acesso apenas às pastas e comandos necessários.
+
+
+2. Criar um Grupo e Adicionar o Usuário
+Crie um grupo chamado dockerusers (ou outro nome que preferir) e adicione o usuário www:
+sudo groupadd dockerusers
+sudo usermod -aG dockerusers www
+
+
+- Isso adicionará o usuário ao grupo e permitirá que ele execute comandos relacionados ao Docker (se configurado).
+
+
+3. Permitir Acesso ao Docker
+Garanta que o grupo dockerusers tenha permissão para usar o Docker sem precisar de sudo:
+sudo usermod -aG docker www
+
+
+Depois disso, reinicie para garantir que as permissões sejam aplicadas:
+newgrp docker
+
+
+
+4. Configurar as Pastas
+Garanta que as pastas necessárias para o comando Docker estejam acessíveis ao usuário www:
+sudo mkdir -p /home/astral/astralcoin /home/astral/astralcoin/solana-data
+sudo chown -R www:www /home/astral/astralcoin
+
+
+Isso configura permissões de leitura/escrita para o usuário www.
+
+5. Executar o Comando Docker
+Verifique se o Docker está instalado. Caso contrário, instale-o com:
+sudo apt update
+sudo apt install docker.io
+
+
+Depois, você pode executar o comando com o usuário www:
+sudo docker run --rm \
+  -v /home/astral/astralcoin:/solana-token \
+  -v /home/astral/astralcoin/solana-data:/root/.config/solana \
+  heysolana solana balance
+
+
+
+6. Configurar Permissões no Usuário www
+Se precisar que o usuário www tenha acesso a grupos adicionais, você pode editá-lo diretamente:
+sudo usermod -aG www-data www
+
+
+O grupo www-data é comumente usado em configurações web, mas verifique a necessidade antes de adicionar.
+
+7. Documentar e Simplificar
+Para o tutorial:
+- Descreva cada passo detalhadamente.
+- Inclua explicações sobre segurança (limitar permissões, evitar acessos desnecessários, etc.).
+- Caso o script exija ajustes adicionais, como variáveis de ambiente, explique como configurá-las.
+
+Com essas etapas, você terá um guia funcional para configurar o ambiente no Linux e executar o comando Docker no contexto do seu projeto. Precisa de ajuda para formatar isso em texto claro ou agregar mais detalhes? 🚀
+
