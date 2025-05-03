@@ -38,21 +38,16 @@ public Solana(FileConfiguration config, Connection connection) {
 
     // 📌 Método para verificar saldo da carteira Solana
     public double getSolanaBalance(String walletAddress) throws Exception {
-    // Obtém o host do arquivo de configuração
     String host = config.getString("docker.host");
     String comando = "solana balance " + walletAddress;
 
-    // Constrói a URL para a requisição HTTP
     String url = String.format("http://%s/consulta.php?comando=%s", host, URLEncoder.encode(comando, "UTF-8"));
 
-    // Faz a requisição HTTP
     String response = executeHttpGet(url);
 
-    // Processa a resposta JSON
     if (response.contains("\"status\":\"success\"")) {
-        // Extrai o campo "output" do JSON e remove " SOL"
         String output = response.split("\"output\":\"")[1].split("\"")[0].replace(" SOL", "").trim();
-        return Double.parseDouble(output); // Converte o saldo para um valor numérico
+        return Double.parseDouble(output);
     } else {
         throw new Exception("Erro ao obter saldo: " + response);
     }
@@ -75,42 +70,23 @@ private String executeHttpGet(String urlString) throws Exception {
 }
 
    public String transferSolana(String sender, String recipientWallet, double amount) throws Exception {
-    // Obtém o host do arquivo de configuração
     String host = config.getString("docker.host");
 
-    // Constrói o comando de transferência
-    String comando = String.format(
-        "sudo docker run --rm -v /home/astral/astralcoin:/solana-token -v /home/astral/astralcoin/solana-data:/root/.config/solana heysolana solana transfer %s %.2f --keypair /solana-token/wallets/%s_wallet.json --allow-unfunded-recipient",
+    String comando = String.format("solana transfer %s %.2f --keypair /solana-token/wallets/%s_wallet.json --allow-unfunded-recipient",
         recipientWallet,
         amount,
         sender
     );
 
-    // Constrói a URL para a requisição HTTP
     String url = String.format("http://%s/consulta.php?comando=%s", host, URLEncoder.encode(comando, "UTF-8"));
 
-    // Faz a requisição HTTP GET
-    HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
-    connection.setRequestMethod("GET");
+    String response = executeHttpGet(url);
 
-    // Lê a resposta
-    try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
-        StringBuilder response = new StringBuilder();
-        String line;
-        while ((line = reader.readLine()) != null) {
-            response.append(line);
-        }
-
-        // Processa a resposta JSON
-        String jsonResponse = response.toString();
-        if (jsonResponse.contains("\"status\":\"success\"")) {
-            // Extrai a assinatura da transação
-            return jsonResponse.split("\"output\":\"")[1].split("\"")[0].trim();
-        } else {
-            throw new Exception("Erro ao transferir SOL: " + jsonResponse);
-        }
-    } catch (Exception e) {
-        throw new Exception("Erro ao conectar à API de transferência: " + e.getMessage(), e);
+    if (response.contains("\"status\":\"success\"")) {
+        String output = response.split("\"output\":\"")[1].split("\"")[0].trim();
+        return output;
+    } else {
+        throw new Exception("Erro ao transferir SOL: " + response);
     }
 }
 
@@ -171,20 +147,14 @@ private String executeHttpGet(String urlString) throws Exception {
         String user = config.getString("database.user");
         String password = config.getString("database.password");
 
-        // Loga as configurações para depuração (não logue a senha em produção)
-        LOGGER.info("URL do banco de dados: " + url);
-        LOGGER.info("Usuário do banco de dados: " + user);
-
         // Estabelece a conexão com o banco de dados
         manualConnection = DriverManager.getConnection(url, user, password);
 
-        // Consulta para buscar o endereço da carteira com base no nome do jogador
-        String query = "SELECT c.endereco FROM carteiras c " +
-                       "JOIN jogadores j ON c.jogador_id = j.id " +
-                       "WHERE j.nome = ?";
+        // Consulta para buscar a carteira vinculada ao jogador
+        String query = "SELECT c.endereco FROM carteiras c JOIN jogadores j ON c.jogador_id = j.id WHERE LOWER(j.nome) = LOWER(?)";
         PreparedStatement stmt = manualConnection.prepareStatement(query);
-        stmt.setString(1, username);
-        LOGGER.info("Executando consulta SQL: " + query.replace("?", "'" + username + "'"));
+        stmt.setString(1, username.trim());
+
         ResultSet rs = stmt.executeQuery();
 
         if (rs.next()) {
@@ -194,14 +164,12 @@ private String executeHttpGet(String urlString) throws Exception {
             LOGGER.warning("Nenhuma carteira encontrada para o usuário: " + username);
         }
     } catch (Exception e) {
-        LOGGER.severe("Erro ao buscar carteira no banco de dados para o usuário " + username + ": " + e.getMessage());
+        LOGGER.severe("Erro ao buscar carteira no banco: " + e.getMessage());
     } finally {
-        if (manualConnection != null) {
-            try {
-                manualConnection.close();
-            } catch (Exception e) {
-                LOGGER.severe("Erro ao fechar a conexão com o banco de dados: " + e.getMessage());
-            }
+        try {
+            if (manualConnection != null) manualConnection.close();
+        } catch (Exception e) {
+            LOGGER.severe("Erro ao fechar conexão: " + e.getMessage());
         }
     }
 
@@ -278,57 +246,41 @@ private String executeHttpGet(String urlString) throws Exception {
 
     // 📌 Método para comprar moedas do jogo usando Solana com base em uma taxa fixa
 public void buyGameCurrency(Player player, double solAmount) {
-    // Define a taxa de conversão: 1 SOL = 1000 moedas
-    int conversionRate = 1000;
+    int conversionRate = 1000; // 1 SOL = 1000 moedas do jogo
     int gameCurrencyAmount = (int) (solAmount * conversionRate);
 
     String playerWallet = getWalletFromDatabase(player.getName());
     if (playerWallet == null) {
-        player.sendMessage("Você ainda não possui uma carteira registrada.");
+        player.sendMessage("❌ Você ainda não possui uma carteira registrada.");
         return;
     }
 
     try {
-        // Verifica o saldo de SOL do jogador
+        // 🔹 Verifica saldo da carteira do jogador antes da compra
         double solBalance = getSolanaBalance(playerWallet);
         if (solBalance < solAmount) {
-            player.sendMessage("Saldo insuficiente de SOL. Saldo atual: " + solBalance);
+            player.sendMessage("❌ Saldo insuficiente de SOL. Saldo atual: " + solBalance);
             return;
         }
 
-        // Obtém o host do arquivo de configuração
+        // 🔹 Executa transferência para a carteira da loja/banco
         String host = config.getString("docker.host");
-
-        // Constrói o comando de transferência
+        String bank = config.getString("docker.wallet_bank_store_admin");
         String comando = String.format(
-            "sudo docker run --rm -v /home/astral/astralcoin:/solana-token -v /home/astral/astralcoin/solana-data:/root/.config/solana heysolana solana transfer dadhcDXHiHDrWkT2Z4pSZyF6HWmHwQMG3HtGciwccVP %.2f --keypair /solana-token/wallets/%s_wallet.json --allow-unfunded-recipient",
+            "solana transfer %s %.2f --keypair /solana-token/wallets/%s_wallet.json --allow-unfunded-recipient",
+            bank,  // Agora usa a carteira configurável do banco/loja
             solAmount,
-            player.getName()
+            player.getName().replace(" ", "_").toLowerCase()
         );
 
-        // Constrói a URL para a requisição HTTP
         String url = String.format("http://%s/consulta.php?comando=%s", host, URLEncoder.encode(comando, "UTF-8"));
+        String response = executeHttpGet(url);
 
-        // Faz a requisição HTTP GET
-        HttpURLConnection httpConnection = (HttpURLConnection) new URL(url).openConnection();
-        httpConnection.setRequestMethod("GET");
+        // 🔹 Processa resposta da API
+        if (response.contains("\"status\":\"success\"")) {
+            String signature = response.split("\"output\":\"")[1].split("\"")[0].trim();
 
-        // Lê a resposta
-        StringBuilder response = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(httpConnection.getInputStream()))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                response.append(line);
-            }
-        }
-
-        // Processa a resposta JSON
-        String jsonResponse = response.toString();
-        if (jsonResponse.contains("\"status\":\"success\"")) {
-            // Extrai a assinatura da transação
-            String signature = jsonResponse.split("\"output\":\"")[1].split("\"")[0].trim();
-
-            // Atualiza o saldo do jogador no banco de dados
+            // 🔹 Atualiza saldo do jogador no banco de dados
             try (PreparedStatement updateStatement = this.connection.prepareStatement(
                 "UPDATE banco SET saldo = saldo + ? WHERE jogador = ?"
             )) {
@@ -337,19 +289,19 @@ public void buyGameCurrency(Player player, double solAmount) {
                 int rowsUpdated = updateStatement.executeUpdate();
 
                 if (rowsUpdated > 0) {
-                    // Registra a transação no livro caixa
+                    // 🔹 Registra a transação no livro caixa
                     registerTransaction(player.getName(), "compra", solAmount, "SOL", signature);
-                    player.sendMessage("Você comprou " + gameCurrencyAmount + " moedas por " + solAmount + " SOL!");
-                    player.sendMessage("Transação registrada com assinatura: " + signature);
+                    player.sendMessage("✅ Compra realizada com sucesso! Você recebeu " + gameCurrencyAmount + " moedas.");
+                    player.sendMessage("💸 Transação registrada com assinatura: " + signature);
                 } else {
-                    player.sendMessage("Erro ao atualizar seu saldo no banco.");
+                    player.sendMessage("⚠ Erro ao atualizar seu saldo no banco.");
                 }
             }
         } else {
-            throw new Exception("Erro ao transferir SOL: " + jsonResponse);
+            throw new Exception("❌ Erro ao transferir SOL: " + response);
         }
     } catch (Exception e) {
-        player.sendMessage("Erro ao processar a compra: " + e.getMessage());
+        player.sendMessage("⚠ Erro ao processar a compra: " + e.getMessage());
         e.printStackTrace();
     }
 }
@@ -357,40 +309,41 @@ public void buyGameCurrency(Player player, double solAmount) {
 
 // 📌 Método para criar uma carteira Solana para o jogador
 public void createWallet(Player player) {
-    String playerName = player.getName();
+    String playerName = player.getName().replace(" ", "_").toLowerCase();
+    String walletPath = String.format("/solana-token/wallets/%s_wallet.json", playerName);
 
     try {
-        // Obtém os valores do arquivo de configuração
-        String basePath = config.getString("docker.base_path");
-        String solanaCommand = config.getString("docker.solana_command");
-        String walletPath = String.format("%s/wallets/%s_wallet.json", basePath, playerName);
+        String host = config.getString("docker.host");
 
-        // Constrói o comando dinamicamente
-        String createCommand = String.format(
-            "sudo docker run --rm -v %s:/solana-token/wallets -v %s/solana-data:/root/.config/solana %s solana-keygen new --no-passphrase --outfile %s --force",
-            basePath, basePath, solanaCommand, walletPath
-        );
+        // Corrigindo a construção do comando
+        String comando = String.format("solana-keygen new --no-passphrase --outfile %s --force", walletPath);
 
-        // Executa o comando para criar a carteira
-        String output = executeCommand(createCommand);
+        // Constrói a URL corretamente
+        String url = String.format("http://%s/consulta.php?comando=%s", host, URLEncoder.encode(comando, "UTF-8"));
 
-        // Captura o endereço público (pubkey)
-        String walletAddress = extractWalletAddress(output);
-        if (walletAddress == null) {
-            player.sendMessage("Erro ao criar a carteira. Consulte um administrador.");
-            return;
+        // Faz a requisição HTTP
+        String response = executeHttpGet(url);
+
+        if (response.contains("\"status\":\"success\"")) {
+            String walletAddress = extractWalletAddress(response);
+            if (walletAddress == null) {
+                player.sendMessage("Erro ao criar a carteira. Consulte um administrador.");
+                return;
+            }
+
+            // Insere a carteira no banco
+            PreparedStatement statement = connection.prepareStatement(
+                "INSERT INTO carteiras (jogador_id, endereco) VALUES ((SELECT id FROM jogadores WHERE nome = ?), ?) ON DUPLICATE KEY UPDATE endereco = ?"
+            );
+            statement.setString(1, playerName);
+            statement.setString(2, walletAddress);
+            statement.setString(3, walletAddress);
+            statement.executeUpdate();
+
+            player.sendMessage("Carteira criada com sucesso! Endereço: " + walletAddress);
+        } else {
+            throw new Exception("Erro ao criar carteira: " + response);
         }
-
-        // Salva a carteira no banco de dados
-        PreparedStatement statement = connection.prepareStatement(
-            "INSERT INTO players (username, walletAddress) VALUES (?, ?) ON DUPLICATE KEY UPDATE walletAddress = ?"
-        );
-        statement.setString(1, playerName);
-        statement.setString(2, walletAddress);
-        statement.setString(3, walletAddress);
-        statement.executeUpdate();
-
-        player.sendMessage("Carteira criada com sucesso! Endereço: " + walletAddress);
     } catch (Exception e) {
         player.sendMessage("Erro ao criar a carteira: " + e.getMessage());
         e.printStackTrace();

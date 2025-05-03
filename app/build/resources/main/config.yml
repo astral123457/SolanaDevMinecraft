@@ -7,3 +7,4 @@ docker:
   host: debian.tail561849.ts.net
   base_path: /home/astral/astralcoin
   solana_command: heysolana
+  wallet_bank_store_admin: "7PJBFH7sRPDjmQk7n2qQzaFSn4oxsMv8BFS43vKKb3S"
