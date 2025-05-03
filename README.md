@@ -9,7 +9,7 @@ testes ssh
  
 curl -X GET "http://192.168.100.170/consulta.php?comando=solana%20balance%207PJBFH7sRPDjmQk7n2qQzaFSn4oxsMv8BFS43vKKb3S2"
 
-Tranferir de um jogador a outro
+Tranferir de um jogador a outro a carteira de quem vai receber e o nome do jogador que ja possue carteira com dinheiro!
 
 curl -X GET "http://192.168.100.170/consulta.php?comando=solana%20transfer%207PJBFH7sRPDjmQk7n2qQzaFSn4oxsMv8BFS43vKKb3S2%200.05%20--keypair%20/solana-token/wallets/BerserkerWolf_wallet.json%20--allow-unfunded-recipient"
 
