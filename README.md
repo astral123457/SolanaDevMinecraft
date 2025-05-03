@@ -11,6 +11,10 @@ curl -X GET "http://192.168.100.170/consulta.php?comando=solana%20transfer%207PJ
 
 ![image](https://github.com/user-attachments/assets/fd46a787-5de7-442d-80bd-166e90498ee0)
 
+Se quiser conferir se os fundos foram corretamente transferidos %20 = espaço para funcionar web!
+
+curl -X GET "http://192.168.100.170/consulta.php?comando=solana%20confirm%20-v%205pbKpF54ZhMfkxmfwxsjACM7VJLqLv4U1syPLrvoWaHQMY4ogfVdz7TKuUUNJFLuiJdRtFtACWvHceg3m12mR6vk"
+
 
 
 Aqui está um fluxo básico em forma de diagrama para os comandos do seu plugin:
