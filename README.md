@@ -1,6 +1,17 @@
 # SolanaDevMinecraft
 SolanaDevMinecraft
 
+Api consulta.php:
+testes ssh
+ 
+curl -X GET "http://192.168.100.170/consulta.php?comando=solana%20balance%207PJBFH7sRPDjmQk7n2qQzaFSn4oxsMv8BFS43vKKb3S2"
+
+
+curl -X GET "http://192.168.100.170/consulta.php?comando=solana%20transfer%207PJBFH7sRPDjmQk7n2qQzaFSn4oxsMv8BFS43vKKb3S2%200.05%20--keypair%20/solana-token/wallets/BerserkerWolf_wallet.json%20--allow-unfunded-recipient"
+
+![image](https://github.com/user-attachments/assets/fd46a787-5de7-442d-80bd-166e90498ee0)
+
+
 
 Aqui está um fluxo básico em forma de diagrama para os comandos do seu plugin:
 
