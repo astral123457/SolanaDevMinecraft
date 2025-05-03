@@ -15,6 +15,14 @@ Se quiser conferir se os fundos foram corretamente transferidos %20 = espaço pa
 
 curl -X GET "http://192.168.100.170/consulta.php?comando=solana%20confirm%20-v%205pbKpF54ZhMfkxmfwxsjACM7VJLqLv4U1syPLrvoWaHQMY4ogfVdz7TKuUUNJFLuiJdRtFtACWvHceg3m12mR6vk"
 
+
+Ou pode usar um explorador da Solana como:
+
+🔍 Solana Explorer https://explorer.solana.com/?cluster=devnet 
+
+https://explorer.solana.com/tx/5pbKpF54ZhMfkxmfwxsjACM7VJLqLv4U1syPLrvoWaHQMY4ogfVdz7TKuUUNJFLuiJdRtFtACWvHceg3m12mR6vk?cluster=devnet
+
+
 
 
 Aqui está um fluxo básico em forma de diagrama para os comandos do seu plugin:
