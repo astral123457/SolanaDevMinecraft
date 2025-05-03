@@ -22,7 +22,19 @@ Ou pode usar um explorador da Solana como:
 
 https://explorer.solana.com/tx/5pbKpF54ZhMfkxmfwxsjACM7VJLqLv4U1syPLrvoWaHQMY4ogfVdz7TKuUUNJFLuiJdRtFtACWvHceg3m12mR6vk?cluster=devnet
 
+criar carteira comando coloque seu nome no lugar TesteplayerName_wallet.json
 
+curl -X GET "http://192.168.100.170/consulta.php?comando=solana-keygen%20new%20--no-passphrase%20--outfile%20/solana-token/wallets/TesteplayerName_wallet.json%20--force"
+
+![image](https://github.com/user-attachments/assets/1cfc9993-b687-439e-9efc-d47596de4bcf)
+
+Agora você pode vincular essa carteira ao jogador no banco de dados. Execute no
+
+INSERT INTO carteiras (jogador_id, endereco, chave_privada, frase_secreta)
+VALUES ((SELECT id FROM jogadores WHERE nome = 'TesteplayerName'), 
+        'FGozVewNCFzWf494biSsaEfpxmVycvoc55kt4yy3r5VD',
+        '/solana-token/wallets/TesteplayerName_wallet.json',
+        'blur accident maple defense carry march awesome liberty parrot amused earth eternal');
 
 
 Aqui está um fluxo básico em forma de diagrama para os comandos do seu plugin:
