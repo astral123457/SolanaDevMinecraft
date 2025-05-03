@@ -1,0 +1,75 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f9f9f9;
+    margin: 0;
+    padding: 0;
+}
+
+
+
+h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+form {
+    margin: 20px 0;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+form select, form button {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+form button {
+    background-color: #0073e6;
+    color: white;
+    cursor: pointer;
+    border: none;
+}
+
+form button:hover {
+    background-color: #005bb5;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+table th, table td {
+    border: 1px solid #ccc;
+    padding: 10px;
+    text-align: left;
+}
+
+table th {
+    background-color: #0073e6;
+    color: white;
+    text-transform: uppercase;
+}
+
+table tr:nth-child(even) {
+    background-color: #f4f4f4;
+}
+
+table tr:hover {
+    background-color: #e0e0e0;
+}
+
+table td.chave_privada, table td.frase_secreta {
+    font-family: "Courier New", Courier, monospace;
+    color: #333;
+    word-wrap: break-word;
+}
+
+table td.saldo {
+    font-weight: bold;
+    color: #0073e6;
+}

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campo Oculto com Copiar</title>
+    <style>
+        .campo-oculto {
+            position: relative;
+            display: inline-block;
+        }
+
+        .conteudo {
+            visibility: hidden;
+            background-color: #f1f1f1;
+            padding: 10px;
+            position: absolute;
+            z-index: 1;
+            border: 1px solid #ddd;
+        }
+
+        .campo-oculto:hover .conteudo {
+            visibility: visible;
+        }
+    </style>
+</head>
+<body>
+    <div class="campo-oculto">
+        Passe o mouse aqui
+        <div class="conteudo" id="texto">
+            Conteúdo oculto: Copie-me!
+        </div>
+    </div>
+    <button onclick="copiarTexto()">Copiar</button>
+
+    <script>
+        function copiarTexto() {
+            const texto = document.getElementById('texto').textContent;
+            navigator.clipboard.writeText(texto).then(() => {
+                alert("Conteúdo copiado!");
+            }).catch(err => {
+                console.error("Erro ao copiar texto:", err);
+            });
+        }
+    </script>
+</body>
+</html>
