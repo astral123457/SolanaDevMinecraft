@@ -1,4 +1,4 @@
-# SolanaDevMinecraft
+# SolanaDevMinecraft 1.19.x a 1.20.x a 1.21.x Paper ou seja funciona tambem com modernos server fabric e mods
 SolanaDevMinecraft
 
 Api consulta.php:
