@@ -13,15 +13,35 @@ import java.util.logging.Logger;
 import java.net.HttpURLConnection;
 import java.net.URLEncoder;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 
 import org.bukkit.configuration.file.FileConfiguration;
+
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextColor;
+
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.io.IOException;
+
+import org.json.JSONObject;
+import org.json.JSONException;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
 
 
 
 public class Solana {
 
     private final Connection connection;
-    private static final Logger LOGGER = Logger.getLogger(Solana.class.getName());
+    //private static final Logger LOGGER = Logger.getLogger(Solana.class.getName());
+    //private static final Logger LOGGER = LoggerFactory.getLogger(Solana.class);
+    private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(Solana.class.getName());
+    
+    
 
     public Solana(Connection connection) {
         this.config = config;
@@ -72,15 +92,23 @@ private String executeHttpGet(String urlString) throws Exception {
    public String transferSolana(String sender, String recipientWallet, double amount) throws Exception {
     String host = config.getString("docker.host");
 
-    String comando = String.format("solana transfer %s %.2f --keypair /solana-token/wallets/%s_wallet.json --allow-unfunded-recipient",
+    if (Double.isNaN(amount) || Double.isInfinite(amount)) {
+        throw new IllegalArgumentException("Valor inválido para transferência: " + amount);
+    }
+
+    // Agora declaramos a variável `comando` fora do bloco if/else
+    String comando = String.format("solana transfer %s %s --keypair /solana-token/wallets/%s_wallet.json --allow-unfunded-recipient",
         recipientWallet,
-        amount,
+        String.valueOf(amount),  // Garante conversão correta para String
         sender
     );
 
     String url = String.format("http://%s/consulta.php?comando=%s", host, URLEncoder.encode(comando, "UTF-8"));
 
     String response = executeHttpGet(url);
+
+    // Adicionando log de depuração
+    LOGGER.info("[DEBUG SOLANA TRANSFER RESPONSE]: " + response);
 
     if (response.contains("\"status\":\"success\"")) {
         String output = response.split("\"output\":\"")[1].split("\"")[0].trim();
@@ -89,6 +117,7 @@ private String executeHttpGet(String urlString) throws Exception {
         throw new Exception("Erro ao transferir SOL: " + response);
     }
 }
+
 
     // 📌 Método para registrar transações no banco de dados
     public void registerTransaction(String player, String transactionType, double amount, String currency, String signature) {
@@ -125,9 +154,9 @@ private String executeHttpGet(String urlString) throws Exception {
 
     // 📌 Método auxiliar para extrair a assinatura da transação
     private String extractSignature(String output) {
-        String[] lines = output.split("\n");
+        String[] lines = output.split(" ");
         for (String line : lines) {
-            if (line.startsWith("Signature: ")) {
+            if (line.startsWith("Minecraft-Sigmaboy: ")) {
                 return line.substring(10).trim();
             }
         }
@@ -238,7 +267,15 @@ private String executeHttpGet(String urlString) throws Exception {
         try {
             String signature = transferSolana(player.getName(), recipientWallet, amount);
             registerTransaction(player.getName(), "transferência", amount, "SOL", signature);
-            player.sendMessage("Transferência de " + amount + " SOL para " + recipient + " concluída com sucesso! Assinatura: " + signature);
+            player.sendMessage(Component.text("Transferência de ")
+        .color(TextColor.color(0x00FF00)) // Verde
+        .append(Component.text(amount + " SOL ").color(TextColor.color(0xFFD700))) // Dourado
+        .append(Component.text("para ").color(TextColor.color(0x00FF00))) // Verde
+        .append(Component.text(recipient).color(TextColor.color(0x00FFFF))) // Azul Claro
+        .append(Component.text(" concluída com sucesso! Assinatura: ").color(TextColor.color(0x00FF00))) // Verde
+        .append(Component.text(signature).color(TextColor.color(0xFFFF00))) // Amarelo
+);
+
         } catch (Exception e) {
             player.sendMessage("Erro ao transferir SOL: " + e.getMessage());
         }
@@ -266,15 +303,25 @@ public void buyGameCurrency(Player player, double solAmount) {
         // 🔹 Executa transferência para a carteira da loja/banco
         String host = config.getString("docker.host");
         String bank = config.getString("docker.wallet_bank_store_admin");
-        String comando = String.format(
-            "solana transfer %s %.2f --keypair /solana-token/wallets/%s_wallet.json --allow-unfunded-recipient",
-            bank,  // Agora usa a carteira configurável do banco/loja
-            solAmount,
-            player.getName().replace(" ", "_").toLowerCase()
-        );
+
+
+        DecimalFormat df = new DecimalFormat("0.##"); // Remove zeros desnecessários
+        String formattedAmount = String.format("%.2f", solAmount).replace(",", ".");
+
+String comando = String.format(
+    "solana transfer %s %s --keypair /solana-token/wallets/%s_wallet.json --allow-unfunded-recipient",
+    bank,  
+    formattedAmount,  // Agora está como String e não será tratado como double
+    player.getName().replace(" ", "_").toLowerCase()
+);
+
 
         String url = String.format("http://%s/consulta.php?comando=%s", host, URLEncoder.encode(comando, "UTF-8"));
+
         String response = executeHttpGet(url);
+
+        // Adicionando log de depuração
+        LOGGER.info("[DEBUG SOLANA BUY RESPONSE]: " + response);
 
         // 🔹 Processa resposta da API
         if (response.contains("\"status\":\"success\"")) {
@@ -291,8 +338,18 @@ public void buyGameCurrency(Player player, double solAmount) {
                 if (rowsUpdated > 0) {
                     // 🔹 Registra a transação no livro caixa
                     registerTransaction(player.getName(), "compra", solAmount, "SOL", signature);
-                    player.sendMessage("✅ Compra realizada com sucesso! Você recebeu " + gameCurrencyAmount + " moedas.");
-                    player.sendMessage("💸 Transação registrada com assinatura: " + signature);
+                    
+
+player.sendMessage(Component.text("✅ Compra realizada com sucesso! ")
+    .color(TextColor.color(0x00FF00)) // Verde
+    .append(Component.text("Você recebeu " + gameCurrencyAmount + " moedas.")
+    .color(TextColor.color(0xFFD700))) // Dourado
+);
+
+player.sendMessage(Component.text("💸 Transação registrada com assinatura: ")
+    .color(TextColor.color(0x00FFFF)) // Azul Claro
+    .append(Component.text(signature).color(TextColor.color(0xFFFF00))) // Amarelo
+);
                 } else {
                     player.sendMessage("⚠ Erro ao atualizar seu saldo no banco.");
                 }
@@ -308,57 +365,101 @@ public void buyGameCurrency(Player player, double solAmount) {
 
 
 // 📌 Método para criar uma carteira Solana para o jogador
-public void createWallet(Player player) {
-    String playerName = player.getName().replace(" ", "_").toLowerCase();
-    String walletPath = String.format("/solana-token/wallets/%s_wallet.json", playerName);
+ public void createWallet(Player player) {
+        String playerName = player.getName().replace(" ", "_").toLowerCase();
+        String walletPath = String.format("/solana-token/wallets/%s_wallet.json", playerName);
 
-    try {
-        String host = config.getString("docker.host");
+        try {
+            String host = config.getString("docker.host");
 
-        // Corrigindo a construção do comando
-        String comando = String.format("solana-keygen new --no-passphrase --outfile %s --force", walletPath);
+            // Gera a carteira no servidor
+            String comando = String.format("solana-keygen new --no-passphrase --outfile %s --force", walletPath);
+            String url = String.format("http://%s/consulta.php?comando=%s", host, URLEncoder.encode(comando, "UTF-8"));
+            String response = executeHttpGet(url);
 
-        // Constrói a URL corretamente
-        String url = String.format("http://%s/consulta.php?comando=%s", host, URLEncoder.encode(comando, "UTF-8"));
+            if (!response.contains("\"status\":\"success\"")) {
+                throw new Exception("❌ Erro ao criar carteira: " + response);
+            }
 
-        // Faz a requisição HTTP
-        String response = executeHttpGet(url);
-
-        if (response.contains("\"status\":\"success\"")) {
+            // Extraindo os dados
             String walletAddress = extractWalletAddress(response);
-            if (walletAddress == null) {
-                player.sendMessage("Erro ao criar a carteira. Consulte um administrador.");
+            String secretPhrase = extractSecretPhrase(response);
+            String privateKey = extractPrivateKey(walletPath); // Lendo do arquivo JSON
+
+            if (walletAddress == null || privateKey == null || secretPhrase == null) {
+                player.sendMessage(Component.text("❌ Erro ao criar a carteira. Consulte um administrador.")
+                        .color(TextColor.color(0xFF0000)));
                 return;
             }
 
-            // Insere a carteira no banco
+            // Insere a carteira no banco de dados
             PreparedStatement statement = connection.prepareStatement(
-                "INSERT INTO carteiras (jogador_id, endereco) VALUES ((SELECT id FROM jogadores WHERE nome = ?), ?) ON DUPLICATE KEY UPDATE endereco = ?"
+                "INSERT INTO carteiras (jogador_id, endereco, chave_privada, frase_secreta) VALUES ((SELECT id FROM jogadores WHERE nome = ?), ?, ?, ?) ON DUPLICATE KEY UPDATE endereco = ?, chave_privada = ?, frase_secreta = ?"
             );
             statement.setString(1, playerName);
             statement.setString(2, walletAddress);
-            statement.setString(3, walletAddress);
+            statement.setString(3, privateKey);
+            statement.setString(4, secretPhrase);
+            statement.setString(5, walletAddress);
+            statement.setString(6, privateKey);
+            statement.setString(7, secretPhrase);
             statement.executeUpdate();
 
-            player.sendMessage("Carteira criada com sucesso! Endereço: " + walletAddress);
-        } else {
-            throw new Exception("Erro ao criar carteira: " + response);
+            player.sendMessage(Component.text("✅ Carteira criada com sucesso! Endereço: " + walletAddress)
+                    .color(TextColor.color(0x00FF00)));
+            player.sendMessage(Component.text("🛡️ Guarde sua frase secreta com segurança!")
+                    .color(TextColor.color(0xFFD700)));
+
+        } catch (Exception e) {
+            player.sendMessage(Component.text("⚠ Erro ao criar a carteira: " + e.getMessage())
+                    .color(TextColor.color(0xFF0000)));
+            e.printStackTrace();
         }
-    } catch (Exception e) {
-        player.sendMessage("Erro ao criar a carteira: " + e.getMessage());
-        e.printStackTrace();
     }
-}
+
 
 // 📌 Método auxiliar para extrair o endereço da carteira do comando de saída
-private String extractWalletAddress(String output) {
-    String[] lines = output.split("\n");
-    for (String line : lines) {
-        if (line.contains("pubkey:")) {
-            return line.split(": ")[1].trim();
+    private String extractWalletAddress(String output) {
+        for (String line : output.split("\n")) {
+            if (line.contains("pubkey:")) {
+                return line.split(": ")[1].trim();
+            }
+        }
+        return null;
+    }
+
+    // Extraindo frase secreta do retorno do comando
+    private String extractSecretPhrase(String output) {
+        StringBuilder seedPhrase = new StringBuilder();
+        boolean capturing = false;
+
+        for (String line : output.split("\n")) {
+            if (line.contains("Save this seed phrase")) {
+                capturing = true;
+                continue;
+            }
+            if (capturing && line.contains("===")) {
+                break;
+            }
+            if (capturing) {
+                seedPhrase.append(line.trim()).append(" ");
+            }
+        }
+        return seedPhrase.toString().trim();
+    }
+
+    // Lendo chave privada do arquivo JSON gerado pela Solana
+    private String extractPrivateKey(String walletPath) {
+        try {
+            String content = new String(Files.readAllBytes(Paths.get(walletPath)));
+            JSONObject json = new JSONObject(content);
+            return json.getString("private_key"); // Verifique o nome correto da chave no JSON
+        } catch (IOException e) {
+
+            e.printStackTrace();
+            return null;
         }
     }
-    return null;
-}
+
 
 }

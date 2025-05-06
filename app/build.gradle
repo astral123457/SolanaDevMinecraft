@@ -16,6 +16,8 @@ dependencies {
     implementation 'com.google.guava:guava:31.1-jre'
     //implementation 'org.mariadb.jdbc:mariadb-java-client:3.1.4' // Substitua pelo driver MariaDB
     implementation 'mysql:mysql-connector-java:8.0.33'
+    implementation 'org.json:json:20210307'
+
 }
 
 java {
