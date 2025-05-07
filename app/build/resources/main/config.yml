@@ -2,6 +2,7 @@ database:
   url: jdbc:mysql://debian.tail561849.ts.net:3306/banco
   user: root
   password: "0073007"
+  database_solana_minecraft: "banco"
 
 docker:
   host: debian.tail561849.ts.net
