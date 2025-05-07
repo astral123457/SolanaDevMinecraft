@@ -12,6 +12,10 @@ para configurar tudo antes recomendo ver este video em ingles me ajudou a criar 
 SolanaDevMinecraft
 ![image](https://github.com/user-attachments/assets/45c02d12-4759-42b3-b5a8-885796fdcbcc)
 
+
+![image](https://github.com/user-attachments/assets/3808718f-a04c-48f1-b4cf-7cde0e76b7f7)
+
+
 Api consulta.php:
 testes ssh
  
