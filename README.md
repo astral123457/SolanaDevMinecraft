@@ -137,42 +137,7 @@ Aqui está um fluxo básico em forma de diagrama para os comandos do seu plugin:
 
 ---
 
-# Agora, crie o banco chamado banco e sua tabela principal:
 
-
-USE banco;
-
-CREATE TABLE banco (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    jogador VARCHAR(50) UNIQUE,
-    saldo DECIMAL(10,2) DEFAULT 500,
-    divida DECIMAL(10,2) DEFAULT 0,
-    investimento DECIMAL(10,2) DEFAULT 0
-);
-
-CREATE TABLE jogadores (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    nome VARCHAR(50) UNIQUE NOT NULL
-);
-
-CREATE TABLE carteiras (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    jogador_id INT NOT NULL,
-    endereco VARCHAR(100) UNIQUE NOT NULL,
-    chave_privada TEXT NOT NULL,
-    frase_secreta TEXT NOT NULL,
-    FOREIGN KEY (jogador_id) REFERENCES jogadores(id) ON DELETE CASCADE
-);
-
-CREATE TABLE livro_caixa (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    jogador VARCHAR(255) NOT NULL,
-    tipo_transacao VARCHAR(255) NOT NULL, -- Ex: "compra", "transferencia"
-    valor FLOAT NOT NULL,
-    moeda VARCHAR(10) NOT NULL, -- Ex: "SOL", "moedas"
-    assinatura VARCHAR(255) NOT NULL, -- Signature gerada na transação
-    data_hora DATETIME DEFAULT CURRENT_TIMESTAMP
-);
 
 ### **Resumo**
 
