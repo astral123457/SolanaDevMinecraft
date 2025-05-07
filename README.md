@@ -3,9 +3,11 @@ para configurar tudo antes recomendo ver este video em ingles me ajudou a criar 
 
 # Dependencia mod do Fabric server
 
-Cardboard-1.21.4.jar 	
-fabric-api-0.119.21.21.4.jar 	
-iCommon-Fabric-bundle1.jar 
+          Cardboard-1.21.4.jar 	
+          
+          fabric-api-0.119.21.21.4.jar 	
+          
+          iCommon-Fabric-bundle1.jar 
 
 SolanaDevMinecraft
 ![image](https://github.com/user-attachments/assets/45c02d12-4759-42b3-b5a8-885796fdcbcc)
@@ -13,17 +15,17 @@ SolanaDevMinecraft
 Api consulta.php:
 testes ssh
  
-curl -X GET "http://192.168.100.170/consulta.php?comando=solana%20balance%207PJBFH7sRPDjmQk7n2qQzaFSn4oxsMv8BFS43vKKb3S2"
+                       curl -X GET "http://192.168.100.170/consulta.php?comando=solana%20balance%207PJBFH7sRPDjmQk7n2qQzaFSn4oxsMv8BFS43vKKb3S2"
 
 Tranferir de um jogador a outro a carteira de quem vai receber e o nome do jogador que ja possue carteira com dinheiro!
 
-curl -X GET "http://192.168.100.170/consulta.php?comando=solana%20transfer%207PJBFH7sRPDjmQk7n2qQzaFSn4oxsMv8BFS43vKKb3S2%200.05%20--keypair%20/solana-token/wallets/BerserkerWolf_wallet.json%20--allow-unfunded-recipient"
+                       curl -X GET "http://192.168.100.170/consulta.php?comando=solana%20transfer%207PJBFH7sRPDjmQk7n2qQzaFSn4oxsMv8BFS43vKKb3S2%200.05%20--keypair%20/solana-token/wallets/BerserkerWolf_wallet.json%20--allow-unfunded-recipient"
 
 ![image](https://github.com/user-attachments/assets/fd46a787-5de7-442d-80bd-166e90498ee0)
 
 Se quiser conferir se os fundos foram corretamente transferidos %20 = espaço para funcionar web!
 
-curl -X GET "http://192.168.100.170/consulta.php?comando=solana%20confirm%20-v%205pbKpF54ZhMfkxmfwxsjACM7VJLqLv4U1syPLrvoWaHQMY4ogfVdz7TKuUUNJFLuiJdRtFtACWvHceg3m12mR6vk"
+                        curl -X GET "http://192.168.100.170/consulta.php?comando=solana%20confirm%20-v%205pbKpF54ZhMfkxmfwxsjACM7VJLqLv4U1syPLrvoWaHQMY4ogfVdz7TKuUUNJFLuiJdRtFtACWvHceg3m12mR6vk"
 
 
 Ou pode usar um explorador da Solana como:
