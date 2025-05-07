@@ -9,6 +9,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.logging.Logger;
 import java.net.HttpURLConnection;
 import java.net.URLEncoder;
@@ -16,6 +17,9 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.logging.Logger;
+import org.json.JSONObject;
+
 
 import org.bukkit.configuration.file.FileConfiguration;
 
@@ -27,12 +31,30 @@ import net.kyori.adventure.text.event.ClickEvent;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.io.IOException;
+import java.util.Arrays;
+
 
 import org.json.JSONObject;
+import org.json.JSONArray;
 import org.json.JSONException;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import java.util.Base64;
+import java.util.regex.*;
 
+
+
+class WalletInfo {
+    String walletAddress;
+    String secretPhrase;
+    String privateKeyHex;
+
+    public WalletInfo(String walletAddress, String secretPhrase, String privateKeyHex) {
+        this.walletAddress = walletAddress;
+        this.secretPhrase = secretPhrase;
+        this.privateKeyHex = privateKeyHex;
+    }
+}
 
 
 
@@ -42,6 +64,7 @@ public class Solana {
     //private static final Logger LOGGER = Logger.getLogger(Solana.class.getName());
     //private static final Logger LOGGER = LoggerFactory.getLogger(Solana.class);
     private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(Solana.class.getName());
+
     
     
 
@@ -384,100 +407,182 @@ player.sendMessage(Component.text("💸 Transação registrada com assinatura: "
 
 // 📌 Método para criar uma carteira Solana para o jogador
  public void createWallet(Player player) {
-        String playerName = player.getName().replace(" ", "_").toLowerCase();
-        String walletPath = String.format("/solana-token/wallets/%s_wallet.json", playerName);
+    String playerName = player.getName().replace(" ", "_").toLowerCase();
+    String walletPath = String.format("wallets/%s_wallet.json", playerName);
+    PreparedStatement statement = null; // ✅ Declarado uma vez
 
-        try {
-            String host = config.getString("docker.host");
+    try {
+        String host = config.getString("docker.host");
 
-            // Gera a carteira no servidor
-            String comando = String.format("solana-keygen new --no-passphrase --outfile %s --force", walletPath);
-            String url = String.format("http://%s/consulta.php?comando=%s", host, URLEncoder.encode(comando, "UTF-8"));
-            String response = executeHttpGet(url);
+        // 🔹 Gera a carteira via API
+        String comandoGerar = String.format("solana-keygen new --no-passphrase --outfile %s --force", walletPath);
+        String urlGerar = String.format("http://%s/consulta.php?comando=%s", host, URLEncoder.encode(comandoGerar, "UTF-8"));
 
-            if (!response.contains("\"status\":\"success\"")) {
-                throw new Exception("❌ Erro ao criar carteira: " + response);
-            }
+        String responseGerar = executeHttpGet(urlGerar);
+        if (!responseGerar.contains("\"status\":\"success\"")) {
+            throw new Exception("❌ Erro ao criar carteira: " + responseGerar);
+        }
 
-            // Extraindo os dados
-            String walletAddress = extractWalletAddress(response);
-            String secretPhrase = extractSecretPhrase(response);
-            String privateKey = extractPrivateKey(walletPath); // Lendo do arquivo JSON
+        // 🔍 Extraindo informações da carteira
 
-            if (walletAddress == null || privateKey == null || secretPhrase == null) {
-                player.sendMessage(Component.text("❌ Erro ao criar a carteira. Consulte um administrador.")
-                        .color(TextColor.color(0xFF0000)));
-                return;
-            }
 
-            // Insere a carteira no banco de dados
-            PreparedStatement statement = connection.prepareStatement(
-                "INSERT INTO carteiras (jogador_id, endereco, chave_privada, frase_secreta) VALUES ((SELECT id FROM jogadores WHERE nome = ?), ?, ?, ?) ON DUPLICATE KEY UPDATE endereco = ?, chave_privada = ?, frase_secreta = ?"
+
+
+        String walletData = new String(responseGerar);
+
+        WalletInfo walletInfo = extractWalletInfo(walletData);
+
+        String walletAddress = walletInfo.walletAddress;
+        String secretPhrase = walletInfo.secretPhrase;
+
+
+        // 🔹 Lendo a chave privada da carteira gerada
+        String comandoLer = String.format("cat %s", walletPath);
+        String urlLer = String.format("http://%s/consulta.php?comando=%s", host, URLEncoder.encode(comandoLer, "UTF-8"));
+
+        String responseLer = executeHttpGet(urlLer);
+        if (!responseLer.contains("\"status\":\"success\"")) {
+            throw new Exception("❌ Erro ao ler carteira: " + responseLer);
+        }
+
+        String privateKeyHex = convertPrivateKeyToHex(responseLer);
+
+        //player.sendMessage(Component.text("? PrivateKeyHex 2: " + (privateKeyHex != null ? privateKeyHex : "NULO")));
+
+        // ✅ Depuração dos dados extraídos
+
+
+        // 🔹 Verifica se o jogador já está cadastrado
+        PreparedStatement checkPlayer = connection.prepareStatement("SELECT id FROM jogadores WHERE nome = ?");
+        checkPlayer.setString(1, playerName);
+        ResultSet rs = checkPlayer.executeQuery();
+        int jogadorId;
+
+        if (!rs.next()) {
+            // 🔹 Criando novo jogador
+            PreparedStatement createPlayer = connection.prepareStatement(
+                "INSERT INTO jogadores (nome) VALUES (?)", Statement.RETURN_GENERATED_KEYS
             );
-            statement.setString(1, playerName);
-            statement.setString(2, walletAddress);
-            statement.setString(3, privateKey);
-            statement.setString(4, secretPhrase);
-            statement.setString(5, walletAddress);
-            statement.setString(6, privateKey);
-            statement.setString(7, secretPhrase);
-            statement.executeUpdate();
+            createPlayer.setString(1, playerName);
+            createPlayer.executeUpdate();
 
-            player.sendMessage(Component.text("✅ Carteira criada com sucesso! Endereço: " + walletAddress)
-                    .color(TextColor.color(0x00FF00)));
-            player.sendMessage(Component.text("🛡️ Guarde sua frase secreta com segurança!")
-                    .color(TextColor.color(0xFFD700)));
+            ResultSet generatedKeys = createPlayer.getGeneratedKeys();
+            if (generatedKeys.next()) {
+                jogadorId = generatedKeys.getInt(1);
+            } else {
+                throw new Exception("❌ Erro ao registrar novo jogador!");
+            }
+        } else {
+            jogadorId = rs.getInt("id");
+        }
 
-        } catch (Exception e) {
-            player.sendMessage(Component.text("⚠ Erro ao criar a carteira: " + e.getMessage())
-                    .color(TextColor.color(0xFF0000)));
-            e.printStackTrace();
+        // 🔹 Salvando a carteira no banco
+        statement = connection.prepareStatement(
+            "INSERT INTO carteiras (jogador_id, endereco, chave_privada, frase_secreta) VALUES (?, ?, ?, ?) " +
+            "ON DUPLICATE KEY UPDATE endereco = ?, chave_privada = ?, frase_secreta = ?"
+        );
+        statement.setInt(1, jogadorId);
+        statement.setString(2, walletAddress);
+        statement.setString(3, privateKeyHex);
+        statement.setString(4, secretPhrase);
+        statement.setString(5, walletAddress);
+        statement.setString(6, privateKeyHex);
+        statement.setString(7, secretPhrase);
+        statement.executeUpdate();
+
+        // 🔹 Feedback ao jogador
+        player.sendMessage(Component.text("✅ Carteira criada com sucesso! Endereço: " + walletAddress)
+                .color(TextColor.color(0x00FF00)));
+        player.sendMessage(Component.text("🛡️ Guarde sua frase secreta com segurança!")
+                .color(TextColor.color(0xFFD700)));
+        player.sendMessage(Component.text("✅ SecretPhrase: " + (secretPhrase != null ? secretPhrase : "NULO")));
+
+    } catch (Exception e) {
+        player.sendMessage(Component.text("⚠ Erro ao criar a carteira: " + e.getMessage())
+                .color(TextColor.color(0xFF0000)));
+        e.printStackTrace();
+    } finally {
+        if (statement != null) {
+            try {
+                statement.close(); // ✅ Fecha corretamente
+            } catch (SQLException e) {
+                LOGGER.warning("❌ Erro ao fechar conexão: " + e.getMessage());
+            }
         }
     }
+}
 
 
 // 📌 Método auxiliar para extrair o endereço da carteira do comando de saída
-    private String extractWalletAddress(String output) {
-        for (String line : output.split("\n")) {
-            if (line.contains("pubkey:")) {
-                return line.split(": ")[1].trim();
-            }
+    private WalletInfo extractWalletInfo(String walletData) {
+    try {
+        // 🔍 Remove qualquer cabeçalho inicial da carteira
+        if (walletData.contains("pubkey: ")) {
+            walletData = walletData.substring(walletData.indexOf("pubkey: "));
         }
-        return null;
-    }
 
-    // Extraindo frase secreta do retorno do comando
-    private String extractSecretPhrase(String output) {
-        StringBuilder seedPhrase = new StringBuilder();
-        boolean capturing = false;
+        // 🔍 Regex para capturar `walletAddress`
+        Pattern patternAddress = Pattern.compile("pubkey: ([A-Za-z0-9]+)");
+        Matcher matcherAddress = patternAddress.matcher(walletData);
 
-        for (String line : output.split("\n")) {
-            if (line.contains("Save this seed phrase")) {
-                capturing = true;
-                continue;
-            }
-            if (capturing && line.contains("===")) {
-                break;
-            }
-            if (capturing) {
-                seedPhrase.append(line.trim()).append(" ");
-            }
-        }
-        return seedPhrase.toString().trim();
+        // 🔍 Regex atualizado para capturar a frase secreta corretamente
+        Pattern patternPhrase = Pattern.compile("Save this seed phrase to recover your new keypair:\\s*([^\n\r=]+)");
+        Matcher matcherPhrase = patternPhrase.matcher(walletData);
+
+        // 🎯 Extração correta dos valores
+        String walletAddress = matcherAddress.find() ? matcherAddress.group(1).trim() : null;
+        String secretPhrase = matcherPhrase.find() ? matcherPhrase.group(1).replaceAll("^[\\n\\r]+|[\\n\\r]+$", "").trim() : null;
+
+        // 🔹 Log para depuração
+        LOGGER.info("[DEBUG] Endereço da Carteira: " + walletAddress);
+        LOGGER.info("[DEBUG] Frase Secreta: " + secretPhrase);
+
+        return new WalletInfo(walletAddress, secretPhrase, null);
+    } catch (Exception e) {
+        e.printStackTrace();
     }
+    return null; // 🚨 Retorna `null` se não encontrar os valores corretamente
+}
+
+
 
     // Lendo chave privada do arquivo JSON gerado pela Solana
-    private String extractPrivateKey(String walletPath) {
+public static String convertPrivateKeyToHex(String jsonResponse) {
         try {
-            String content = new String(Files.readAllBytes(Paths.get(walletPath)));
-            JSONObject json = new JSONObject(content);
-            return json.getString("private_key"); // Verifique o nome correto da chave no JSON
-        } catch (IOException e) {
+            // 🔍 Aplica Regex para extrair apenas os números dentro de "output"
+            Pattern pattern = Pattern.compile("\"output\":\"\\[(.*?)\\]\"");
+            Matcher matcher = pattern.matcher(jsonResponse);
 
+            if (!matcher.find()) {
+                System.err.println("[ERRO] Campo 'output' não encontrado ou mal formatado!");
+                return null;
+            }
+
+            // 🔍 Captura os números extraídos da chave privada
+            String numbersOnly = matcher.group(1).trim();
+            System.out.println("[DEBUG] Números Extraídos: " + numbersOnly);
+
+            // 🔹 Divide os números separados por vírgula e converte para um array de bytes
+            String[] numberStrings = numbersOnly.split(",");
+            byte[] secretKeyArray = new byte[numberStrings.length];
+
+            for (int i = 0; i < numberStrings.length; i++) {
+                secretKeyArray[i] = (byte) Integer.parseInt(numberStrings[i].trim());
+            }
+
+            // 🔹 Converte os bytes para hexadecimal
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : secretKeyArray) {
+                hexString.append(String.format("%02x", b));
+            }
+
+            System.out.println("[DEBUG] Chave privada em HEX: " + hexString.toString());
+            return hexString.toString();
+
+        } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
     }
-
 
 }
