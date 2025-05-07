@@ -21,6 +21,8 @@ import org.bukkit.configuration.file.FileConfiguration;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
+import net.kyori.adventure.text.event.ClickEvent;
+
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -232,7 +234,10 @@ private String executeHttpGet(String urlString) throws Exception {
         return;
     }
     // Loga o nome do jogador
-    player.sendMessage("Obtendo o saldo de SOL para o jogador: " + player.getName());
+    player.sendMessage(Component.text("🔍 Obtendo o saldo de SOL para o jogador: ")
+    .color(TextColor.color(0x800080)) // Roxo
+    .append(Component.text(player.getName()).color(TextColor.color(0xFFD700))) // Amarelo para o nome
+);
 
     // Obtém o endereço da carteira do banco de dados
     String walletAddress = getWalletFromDatabase(player.getName());
@@ -242,14 +247,27 @@ private String executeHttpGet(String urlString) throws Exception {
         return;
     }
 
-    player.sendMessage("Carteira SOL: " + walletAddress);
+    player.sendMessage(
+    Component.text("💳 Carteira SOL: ")
+        .color(TextColor.color(0xFFD700)) // Dourado para destaque
+        .append(
+            Component.text(walletAddress)
+                .color(TextColor.color(0x00FFFF)) // Azul para o endereço da carteira
+                .clickEvent(ClickEvent.suggestCommand(walletAddress)) // Sugere o texto para copiar manualmente
+        )
+);
+
     LOGGER.info("Endereço da carteira encontrado: " + walletAddress);
 
     try {
         // Obtém o saldo da carteira
         double balance = getSolanaBalance(walletAddress);
         LOGGER.info("Saldo obtido para a carteira " + walletAddress + ": " + balance + " SOL");
-        player.sendMessage("Seu saldo de SOL é: " + balance);
+       player.sendMessage(
+    Component.text("💰 Seu saldo de SOL é: ")
+        .color(TextColor.color(0x800080))  // Roxo
+        .append(Component.text(balance + " SOL").color(TextColor.color(0xFFD700))) // Amarelo para o valor do saldo
+);
     } catch (Exception e) {
         LOGGER.severe("Erro ao verificar saldo para a carteira " + walletAddress + ": " + e.getMessage());
         player.sendMessage("Erro ao verificar saldo: " + e.getMessage());

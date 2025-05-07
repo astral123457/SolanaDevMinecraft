@@ -1,5 +1,4 @@
 package com.SolanaDevMinecraft;
-import com.SolanaDevMinecraft.PlayerJoinListener;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -15,18 +14,15 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.SQLException;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextColor;
+
+
 public class App extends JavaPlugin {
 
     private Connection connection;
     private Solana solana;
-    private Store store; // Adiciona a instância da classe Store\
-
-    private FileConfiguration config;
-
-    // Construtor que recebe a configuração
-    public App(FileConfiguration config) {
-        this.config = config;
-    }
+    private Store store; // Adiciona a instância da classe Store
 
 
     @Override
@@ -40,7 +36,6 @@ public class App extends JavaPlugin {
 
     // 🔹 Cria banco e tabelas automaticamente
     createDatabaseAndTables();
-    App appInstance = new App(getConfig());
 
     // Atualiza juros a cada 60 segundos
     new BukkitRunnable() {
@@ -70,20 +65,14 @@ public class App extends JavaPlugin {
         String url = getConfig().getString("database.url");
         String user = getConfig().getString("database.user");
         String password = getConfig().getString("database.password");
-        
 
         getLogger().info("Tentando conectar ao banco de dados com URL: " + url);
         connection = DriverManager.getConnection(url, user, password);
-        // Registra o Listener de eventos
-        getServer().getPluginManager().registerEvents(new PlayerJoinListener(connection), this);
         getLogger().info("Conectado ao banco de dados!");
     } catch (Exception e) {
         getLogger().severe("Erro ao conectar ao banco de dados: " + e.getMessage());
         e.printStackTrace();
     }
-
-    
-
 }
 
     private void disconnectFromDatabase() {
@@ -372,111 +361,85 @@ private void processInvestments() {
 }
 
     private void checkBalance(Player player) {
-        try {
-            PreparedStatement statement = connection.prepareStatement(
-                "SELECT saldo FROM banco WHERE jogador = ?"
-            );
-            statement.setString(1, player.getName());
-            ResultSet resultSet = statement.executeQuery();
-
-            if (resultSet.next()) {
-                double saldo = resultSet.getDouble("saldo");
-                player.sendMessage("Seu saldo bancário é: $" + saldo);
-            } else {
-                player.sendMessage("Você ainda não está registrado no banco.");
-            }
-        } catch (Exception e) {
-            player.sendMessage("Erro ao acessar o banco de dados.");
-            getLogger().severe("Erro ao consultar saldo: " + e.getMessage());
-        }
-    }
-
-    public void registerPlayer(Player player) {
-    String playerName = player.getName().replace(" ", "_").toLowerCase();
-
     try {
-        // 🔍 Verifica se o jogador já está cadastrado
+        // 🔍 Verifica se o jogador já tem saldo na tabela 'banco'
         PreparedStatement checkStatement = connection.prepareStatement(
-            "SELECT id FROM jogadores WHERE nome = ?"
+            "SELECT saldo FROM banco WHERE jogador = ?"
         );
-        checkStatement.setString(1, playerName);
+        checkStatement.setString(1, player.getName());
         ResultSet resultSet = checkStatement.executeQuery();
 
-        if (!resultSet.next()) { // Jogador não encontrado, precisa ser cadastrado
-
-            // 🔹 Cadastrar jogador na tabela `jogadores`
-            PreparedStatement insertPlayer = connection.prepareStatement(
-                "INSERT INTO jogadores (nome) VALUES (?)"
-            );
-            insertPlayer.setString(1, playerName);
-            insertPlayer.executeUpdate();
-
-            // 🔹 Adicionar saldo inicial de 500 na tabela `banco`
-            PreparedStatement insertBank = connection.prepareStatement(
+        if (resultSet.next()) {
+            // Se já estiver registrado, mostra o saldo com cor
+            double saldo = resultSet.getDouble("saldo");
+            player.sendMessage(Component.text("💰 Seu saldo bancário é: $" + saldo)
+                .color(TextColor.color(0xFFD700))); // Dourado para destacar o saldo
+        } else {
+            // 📌 Jogador não está registrado no banco, então adicionamos ele com saldo inicial de 500 moedas
+            PreparedStatement insertStatement = connection.prepareStatement(
                 "INSERT INTO banco (jogador, saldo) VALUES (?, 500)"
             );
-            insertBank.setString(1, playerName);
-            insertBank.executeUpdate();
+            insertStatement.setString(1, player.getName());
+            insertStatement.executeUpdate();
 
-            player.sendMessage("✅ Jogador cadastrado com sucesso! Saldo inicial: 500 moedas.");
-        } else {
-            player.sendMessage("⚠ Você já está cadastrado no banco!");
+            player.sendMessage(Component.text("✅ Você foi cadastrado no banco! Seu saldo inicial é de 500 moedas.")
+                .color(TextColor.color(0x00FF00))); // Verde para indicar sucesso
         }
 
     } catch (SQLException e) {
-        player.sendMessage("❌ Erro ao registrar jogador: " + e.getMessage());
-        e.printStackTrace();
+        player.sendMessage(Component.text("❌ Erro ao acessar o banco de dados.")
+            .color(TextColor.color(0xFF0000))); // Vermelho para indicar erro
+        getLogger().severe("Erro ao consultar saldo: " + e.getMessage());
     }
 }
+
     
     private void createDatabaseAndTables() {
-    try (Statement statement = connection.createStatement()) {
-        // 🔍 Criar o banco de dados dinamicamente com base no config.yml
-        
-        String bancodedados = getConfig().getString("database.database_solana_minecraft");
-        statement.execute("CREATE DATABASE IF NOT EXISTS " + bancodedados + ";");
-        statement.execute("USE " + bancodedados + ";"); // Define o banco como ativo
+        try (Statement statement = connection.createStatement()) {
+            // 🔍 Criar o banco se ele não existir
+            statement.execute("CREATE DATABASE IF NOT EXISTS banco;");
+            statement.execute("USE banco;");
 
-        // 🔹 Criar tabelas automaticamente se ainda não existirem
-        statement.execute("CREATE TABLE IF NOT EXISTS banco ("
-            + "id INT PRIMARY KEY AUTO_INCREMENT, "
-            + "jogador VARCHAR(50) UNIQUE, "
-            + "saldo DECIMAL(10,2) DEFAULT 500, "
-            + "divida DECIMAL(10,2) DEFAULT 0, "
-            + "investimento DECIMAL(10,2) DEFAULT 0"
-            + ");");
+            // 🔹 Criar tabelas automaticamente
+            statement.execute("CREATE TABLE IF NOT EXISTS banco ("
+                + "id INT PRIMARY KEY AUTO_INCREMENT, "
+                + "jogador VARCHAR(50) UNIQUE, "
+                + "saldo DECIMAL(10,2) DEFAULT 500, "
+                + "divida DECIMAL(10,2) DEFAULT 0, "
+                + "investimento DECIMAL(10,2) DEFAULT 0"
+                + ");");
 
-        statement.execute("CREATE TABLE IF NOT EXISTS jogadores ("
-            + "id INT AUTO_INCREMENT PRIMARY KEY, "
-            + "nome VARCHAR(50) UNIQUE NOT NULL"
-            + ");");
+            statement.execute("CREATE TABLE IF NOT EXISTS jogadores ("
+                + "id INT AUTO_INCREMENT PRIMARY KEY, "
+                + "nome VARCHAR(50) UNIQUE NOT NULL"
+                + ");");
 
-        statement.execute("CREATE TABLE IF NOT EXISTS carteiras ("
-            + "id INT AUTO_INCREMENT PRIMARY KEY, "
-            + "jogador_id INT NOT NULL, "
-            + "endereco VARCHAR(100) UNIQUE NOT NULL, "
-            + "chave_privada TEXT NOT NULL, "
-            + "frase_secreta TEXT NOT NULL, "
-            + "FOREIGN KEY (jogador_id) REFERENCES jogadores(id) ON DELETE CASCADE"
-            + ");");
+            statement.execute("CREATE TABLE IF NOT EXISTS carteiras ("
+                + "id INT AUTO_INCREMENT PRIMARY KEY, "
+                + "jogador_id INT NOT NULL, "
+                + "endereco VARCHAR(100) UNIQUE NOT NULL, "
+                + "chave_privada TEXT NOT NULL, "
+                + "frase_secreta TEXT NOT NULL, "
+                + "FOREIGN KEY (jogador_id) REFERENCES jogadores(id) ON DELETE CASCADE"
+                + ");");
 
-        statement.execute("CREATE TABLE IF NOT EXISTS livro_caixa ("
-            + "id INT AUTO_INCREMENT PRIMARY KEY, "
-            + "jogador VARCHAR(255) NOT NULL, "
-            + "tipo_transacao VARCHAR(255) NOT NULL, "
-            + "valor FLOAT NOT NULL, "
-            + "moeda VARCHAR(10) NOT NULL, "
-            + "assinatura VARCHAR(255) NOT NULL, "
-            + "data_hora DATETIME DEFAULT CURRENT_TIMESTAMP"
-            + ");");
+            statement.execute("CREATE TABLE IF NOT EXISTS livro_caixa ("
+                + "id INT AUTO_INCREMENT PRIMARY KEY, "
+                + "jogador VARCHAR(255) NOT NULL, "
+                + "tipo_transacao VARCHAR(255) NOT NULL, "
+                + "valor FLOAT NOT NULL, "
+                + "moeda VARCHAR(10) NOT NULL, "
+                + "assinatura VARCHAR(255) NOT NULL, "
+                + "data_hora DATETIME DEFAULT CURRENT_TIMESTAMP"
+                + ");");
 
-        getLogger().info("✅ Banco de dados '" + bancodedados + "' e tabelas criadas/verificadas!");
+            getLogger().info("✅ Banco de dados e tabelas criados/verificados!");
 
-    } catch (SQLException e) {
-        getLogger().severe("❌ Erro ao criar banco de dados/tabelas: " + e.getMessage());
-        e.printStackTrace();
+        } catch (SQLException e) {
+            getLogger().severe("Erro ao criar banco de dados/tabelas: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
-}
 
 
 
