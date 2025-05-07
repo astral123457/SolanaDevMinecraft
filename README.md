@@ -1,6 +1,11 @@
 # SolanaDevMinecraft 1.19.x a 1.20.x a 1.21.x Paper ou seja funciona tambem com modernos server fabric e mods
 para configurar tudo antes recomendo ver este video em ingles me ajudou a criar e configurar uma dock para solana https://www.youtube.com/watch?v=L4ASwqLZVV0
 
+# Dependencia mod do Fabric server
+
+Cardboard-1.21.4.jar 	
+fabric-api-0.119.21.21.4.jar 	
+iCommon-Fabric-bundle1.jar 
 
 SolanaDevMinecraft
 ![image](https://github.com/user-attachments/assets/45c02d12-4759-42b3-b5a8-885796fdcbcc)
