@@ -35,18 +35,3 @@ commands:
   buyemerald:
     description: Compra uma Esmeralda.
     usage: /buyemerald
-  buynetheritepickaxe:
-    description: Compra uma Picareta de Netherite Encantada.
-    usage: /buynetheritepickaxe
-  buydiamondarmor:
-    description: Compra uma Armadura Completa de Diamante Encantada.
-    usage: /buydiamondarmor
-  buynetheritearmor:
-    description: Compra uma Armadura Completa de Netherite Encantada.
-    usage: /buynetheritearmor
-  checkwallet:
-    description: Verifica o endereço da carteira associado ao jogador.
-    usage: /checkwallet
-  testdb:
-    description: Testa a conexão com o banco de dados.
-    usage: /testdb
