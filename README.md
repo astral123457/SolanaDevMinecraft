@@ -55,16 +55,8 @@ curl -X GET "http://192.168.100.170/consulta.php?apikey=b493d48364afe44d&comando
 
 ![image](https://github.com/user-attachments/assets/1cfc9993-b687-439e-9efc-d47596de4bcf)
 
-Agora você pode vincular essa carteira ao jogador no banco de dados. Execute no
 
-INSERT INTO carteiras (jogador_id, endereco, chave_privada, frase_secreta)
-VALUES ((SELECT id FROM jogadores WHERE nome = 'TesteplayerName'), 
-        'FGozVewNCFzWf494biSsaEfpxmVycvoc55kt4yy3r5VD',
-        '/solana-token/wallets/TesteplayerName_wallet.json',
-        'blur accident maple defense carry march awesome liberty parrot amused earth eternal');
-
-
-Aqui está um fluxo básico em forma de diagrama para os comandos do seu plugin:
+Here is a basic flow diagram for your plugin commands:
 
 ---
 
