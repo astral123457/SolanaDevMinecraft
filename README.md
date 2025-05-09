@@ -12,6 +12,17 @@ para configurar tudo antes recomendo ver este video em ingles me ajudou a criar 
 SolanaDevMinecraft
 ![image](https://github.com/user-attachments/assets/45c02d12-4759-42b3-b5a8-885796fdcbcc)
 
+Example URL:
+http://your_server/your_script.php?apikey=2f4164616e614e61&command=your_command_here
+
+Security Enhancements (Recommended):
+
+Real API Key: Instead of deriving from "banana", generate a long, random API key (e.g. 32 or 64 random hexadecimal characters) and store it directly in the script or in a configuration file.
+PHP
+
+// At the beginning of the script:
+// $correctApiKey = 'your_random_very_long_and_secure_key_here';
+
 
 ![image](https://github.com/user-attachments/assets/3808718f-a04c-48f1-b4cf-7cde0e76b7f7)
 
