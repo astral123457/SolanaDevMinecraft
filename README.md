@@ -13,7 +13,7 @@ SolanaDevMinecraft
 ![image](https://github.com/user-attachments/assets/45c02d12-4759-42b3-b5a8-885796fdcbcc)
 
 Example URL:
-http://your_server/your_script.php?apikey=2f4164616e614e61&command=your_command_here
+http://your_server/consulta.php?apikey=2f4164616e614e61&command=your_command_here
 
 Security Enhancements (Recommended):
 
