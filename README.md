@@ -1,5 +1,5 @@
 # SolanaDevMinecraft 1.19.x a 1.20.x a 1.21.x Paper ou seja funciona tambem com modernos server fabric e mods
-para configurar tudo antes recomendo ver este video em ingles me ajudou a criar e configurar uma dock para solana https://www.youtube.com/watch?v=L4ASwqLZVV0
+To configure everything first, I recommend watching this video in English, it helped me create and configure a dock for Solana https://www.youtube.com/watch?v=L4ASwqLZVV0
 
 # Dependencia mod do Fabric server
 
@@ -28,17 +28,17 @@ PHP
 
 
 Api consulta.php:
-testes ssh
+tests ssh
  
       curl -X GET "http://192.168.100.170/consulta.php?apikey=b493d48364afe44d&comando=solana%20balance%207PJBFH7sRPDjmQk7n2qQzaFSn4oxsMv8BFS43vKKb3S2"
 
-Tranferir de um jogador a outro a carteira de quem vai receber e o nome do jogador que ja possue carteira com dinheiro!
+Transfer from one player to another the wallet of the person who will receive it and the name of the player who already has a wallet with money!
 
       curl -X GET "http://192.168.100.170/consulta.php?comando=solana%20transfer%207PJBFH7sRPDjmQk7n2qQzaFSn4oxsMv8BFS43vKKb3S2%200.05%20--keypair%20/solana-token/wallets/BerserkerWolf_wallet.json%20--allow-unfunded-recipient"
 
 ![image](https://github.com/user-attachments/assets/fd46a787-5de7-442d-80bd-166e90498ee0)
 
-Se quiser conferir se os fundos foram corretamente transferidos %20 = espaço para funcionar web!
+If you want to check if the funds were correctly transferred %20 = space to run web!
 
       curl -X GET "http://192.168.100.170/consulta.php?apikey=b493d48364afe44d&comando=solana%20confirm%20-v%205pbKpF54ZhMfkxmfwxsjACM7VJLqLv4U1syPLrvoWaHQMY4ogfVdz7TKuUUNJFLuiJdRtFtACWvHceg3m12mR6vk"
 
@@ -49,7 +49,7 @@ Ou pode usar um explorador da Solana como:
 
 https://explorer.solana.com/tx/5pbKpF54ZhMfkxmfwxsjACM7VJLqLv4U1syPLrvoWaHQMY4ogfVdz7TKuUUNJFLuiJdRtFtACWvHceg3m12mR6vk?cluster=devnet
 
-criar carteira comando coloque seu nome no lugar TesteplayerName_wallet.json
+create wallet command put your name in place TesteplayerName_wallet.json
 
 curl -X GET "http://192.168.100.170/consulta.php?apikey=b493d48364afe44d&comando=solana-keygen%20new%20--no-passphrase%20--outfile%20/solana-token/wallets/TesteplayerName_wallet.json%20--force"
 
@@ -162,86 +162,77 @@ Aqui está um fluxo básico em forma de diagrama para os comandos do seu plugin:
 
 
 
-### **Resumo**
+### **Summary**
 
-- **Comandos de Saldo e Carteira**:
-  - `/saldo`: Consulta saldo no banco.
-  - `/createwallet`: Cria uma carteira Solana.
+- **Balance and Wallet Commands**:
+- `/saldo`: Check your bank balance.
+- `/createwallet`: Create a Solana wallet.
 
-- **Comandos de Compras**:
-  - `/buyapple`, `/buyemerald`, `/buynetheritepickaxe`, etc.: Compram itens específicos.
+- **Purchase Commands**:
+- `/buyapple`, `/buyemerald`, `/buynetheritepickaxe`, etc.: Purchase specific items.
 
-- **Comandos de Transferência**:
-  - `/soltransfer`: Transfere SOL para outro jogador.
+- **Transfer Commands**:
+- `/soltransfer`: Transfer SOL to another player.
 
-Se precisar de mais detalhes ou ajustes, é só avisar! 😊
+If you need more details or adjustments, just let me know! 😊
 
-este video em ingles me ajudou a criar e configurar uma dock para solana https://www.youtube.com/watch?v=L4ASwqLZVV0 
-um pai ensinando as finhas economia e banco digital Ti e tecnologias
+This video in English helped me create and configure a dock for Solana https://www.youtube.com/watch?v=L4ASwqLZVV0
 
-caso queira criar usuario astral e pasta astral e usuario www 
-1. Criar um Usuário no Linux
-Para criar o usuário que terá permissões específicas:
+A father teaching the little ones about economics and digital banking IT and technologies
+
+If you want to create an astral user and an astral folder and a www user
+
+1. Create a User in Linux
+To create the user that will have specific permissions:
 sudo adduser www
 
+- The command will ask you to set a password and other basic information.
 
-- O comando pedirá que você configure senha e outras informações básicas.
-- Certifique-se de que o usuário tenha acesso apenas às pastas e comandos necessários.
+- Make sure that the user only has access to the necessary folders and commands.
 
-
-2. Criar um Grupo e Adicionar o Usuário
-Crie um grupo chamado dockerusers (ou outro nome que preferir) e adicione o usuário www:
+2. Create a Group and Add the User
+Create a group called dockerusers (or whatever name you prefer) and add the user www:
 sudo groupadd dockerusers
 sudo usermod -aG dockerusers www
 
+- This will add the user to the group and allow them to run Docker-related commands (if configured).
 
-- Isso adicionará o usuário ao grupo e permitirá que ele execute comandos relacionados ao Docker (se configurado).
-
-
-3. Permitir Acesso ao Docker
-Garanta que o grupo dockerusers tenha permissão para usar o Docker sem precisar de sudo:
+3. Allow Access to Docker
+Ensure that the dockerusers group has permission to use Docker without needing sudo:
 sudo usermod -aG docker www
 
-
-Depois disso, reinicie para garantir que as permissões sejam aplicadas:
+After that, reboot to ensure that the permissions are applied:
 newgrp docker
 
-
-
-4. Configurar as Pastas
-Garanta que as pastas necessárias para o comando Docker estejam acessíveis ao usuário www:
+4. Configure Folders
+Ensure that the folders required for the Docker command are accessible to the www user:
 sudo mkdir -p /home/astral/astralcoin /home/astral/astralcoin/solana-data
 sudo chown -R www:www /home/astral/astralcoin
 
 
-Isso configura permissões de leitura/escrita para o usuário www.
+This sets read/write permissions for the www user.
 
-5. Executar o Comando Docker
-Verifique se o Docker está instalado. Caso contrário, instale-o com:
+5. Run the Docker Command
+Make sure that Docker is installed. Otherwise, install it with:
 sudo apt update
 sudo apt install docker.io
 
-
-Depois, você pode executar o comando com o usuário www:
+Then, you can run the command with the www user:
 sudo docker run --rm \
-  -v /home/astral/astralcoin:/solana-token \
-  -v /home/astral/astralcoin/solana-data:/root/.config/solana \
-  heysolana solana balance
+-v /home/astral/astralcoin:/solana-token \
+-v /home/astral/astralcoin/solana-data:/root/.config/solana \
+heysolana solana balance
 
-
-
-6. Configurar Permissões no Usuário www
-Se precisar que o usuário www tenha acesso a grupos adicionais, você pode editá-lo diretamente:
+6. Configure Permissions on the www User
+If you need the www user to have access to additional groups, you can edit it directly:
 sudo usermod -aG www-data www
 
+The www-data group is commonly used in web configurations, but check if it is necessary before adding it.
 
-O grupo www-data é comumente usado em configurações web, mas verifique a necessidade antes de adicionar.
+7. Document and Simplify
+For the tutorial:
+- Describe each step in detail.
+- Include explanations about security (limiting permissions, preventing unnecessary access, etc.).
+- If the script requires additional adjustments, such as environment variables, explain how to set them.
 
-7. Documentar e Simplificar
-Para o tutorial:
-- Descreva cada passo detalhadamente.
-- Inclua explicações sobre segurança (limitar permissões, evitar acessos desnecessários, etc.).
-- Caso o script exija ajustes adicionais, como variáveis de ambiente, explique como configurá-las.
-
-Com essas etapas, você terá um guia funcional para configurar o ambiente no Linux e executar o comando Docker no contexto do seu projeto. Precisa de ajuda para formatar isso em texto claro ou agregar mais detalhes? 🚀
-
+With these steps, you will have a working guide to setting up your Linux environment and running the Docker command in the context of your project. Need help formatting this in plain text or adding more details? 🚀
