@@ -14,44 +14,56 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.SQLException;
 
+import net.md_5.bungee.api.ChatColor;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
+import net.kyori.adventure.text.format.NamedTextColor;
+import java.util.List;
+import java.util.Locale;
+import org.bukkit.entity.Player;
+
+
+
 
 
 public class App extends JavaPlugin {
 
     private Connection connection;
     private Solana solana;
-    private Store store; // Adiciona a instância da classe Store
+    private Store store; // Instância da classe Store
+    private FileConfiguration config; // Armazena o config.yml
 
 
     @Override
     public void onEnable() {
         // Salva o config.yml na pasta do plugin, caso ainda não exista
-    saveDefaultConfig();
-    getLogger().info("Plugin habilitado!");
-    connectToDatabase();
-    solana = new Solana(getConfig(), connection); // Inicializa a instância da classe Solana // Inicializa a instância da classe Solana
-    store = new Store(connection); // Inicializa a instância da classe Store
+        saveDefaultConfig();
+        config = getConfig(); // Inicializa config.yml corretamente
+        getLogger().info("Plugin habilitado!");
+        
+        connectToDatabase();
+        
+        solana = new Solana(config, connection); // Passa config.yml e conexão para Solana
+        store = new Store(config, connection); // Passa config.yml e conexão para Store
 
-    // 🔹 Cria banco e tabelas automaticamente
-    createDatabaseAndTables();
+        // 🔹 Cria banco e tabelas automaticamente
+        createDatabaseAndTables();
 
-    // Atualiza juros a cada 60 segundos
-    new BukkitRunnable() {
-        @Override
-        public void run() {
-            updateDebts();
-        }
-    }.runTaskTimer(this, 0L, 1200L); // 1200 ticks = 60 segundos
+        // Atualiza juros a cada 60 segundos
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                updateDebts();
+            }
+        }.runTaskTimer(this, 0L, 1200L); // 1200 ticks = 60 segundos
 
-    // Retorno de investimentos a cada 5 minutos
-    new BukkitRunnable() {
-        @Override
-        public void run() {
-            processInvestments();
-        }
-    }.runTaskTimer(this, 0L, 6000L); // 6000 ticks = 5 minutos
+        // Retorno de investimentos a cada 5 minutos
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                processInvestments();
+            }
+        }.runTaskTimer(this, 0L, 6000L); // 6000 ticks = 5 minutos
     }
 
     @Override
@@ -61,19 +73,19 @@ public class App extends JavaPlugin {
     }
 
     private void connectToDatabase() {
-    try {
-        String url = getConfig().getString("database.url");
-        String user = getConfig().getString("database.user");
-        String password = getConfig().getString("database.password");
+        try {
+            String url = config.getString("database.url");
+            String user = config.getString("database.user");
+            String password = config.getString("database.password");
 
-        getLogger().info("Tentando conectar ao banco de dados com URL: " + url);
-        connection = DriverManager.getConnection(url, user, password);
-        getLogger().info("Conectado ao banco de dados!");
-    } catch (Exception e) {
-        getLogger().severe("Erro ao conectar ao banco de dados: " + e.getMessage());
-        e.printStackTrace();
+            getLogger().info("Tentando conectar ao banco de dados com URL: " + url);
+            connection = DriverManager.getConnection(url, user, password);
+            getLogger().info("Conectado ao banco de dados!");
+        } catch (Exception e) {
+            getLogger().severe("Erro ao conectar ao banco de dados: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
-}
 
     private void disconnectFromDatabase() {
         try {
@@ -86,11 +98,35 @@ public class App extends JavaPlugin {
         }
     }
 
-    @Override
+    @SuppressWarnings("deprecation")
+    public String getPlayerLanguage(Player player) {
+        String locale = player.getLocale(); // Obtém o idioma do jogador como String
+        List<String> supportedLanguages = config.getStringList("language.supported"); // Obtém a lista de idiomas do config.yml
+
+        // Se o idioma do jogador estiver na lista de suportados, usa ele. Caso contrário, usa o padrão do config.
+        return supportedLanguages.contains(locale) ? locale : config.getString("language.default", "pt-BR");
+    }
+
+
+
+@Override
 public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+
+    
     if (command.getName().equalsIgnoreCase("saldo")) {
         if (sender instanceof Player) {
             Player player = (Player) sender;
+            String lang = store.getPlayerLanguage(player); // Obtém o idioma do jogador
+            if (lang.equals("pt")) {
+                player.sendMessage(Component.text("⚡ Aguarde! ", NamedTextColor.GOLD) // Correção aqui
+                .append(Component.text("Pode levar 5 segundos...", NamedTextColor.GREEN))
+                .append(Component.text("\n🌐 Conectando ao banco Solana...", NamedTextColor.AQUA)));
+                } else {
+                    player.sendMessage(Component.text("⚡ Please wait! ", NamedTextColor.GOLD)
+                    .append(Component.text("This may take 5 seconds...", NamedTextColor.GREEN))
+                    .append(Component.text("\n🌐 Connecting to Solana bank...", NamedTextColor.AQUA))); // Certifique-se de que este está correto!
+                }
+
             checkBalance(player);
         } else {
             sender.sendMessage("Este comando só pode ser usado por jogadores.");
@@ -135,6 +171,16 @@ public boolean onCommand(CommandSender sender, Command command, String label, St
         Player player = (Player) sender;
         if (args.length == 1) {
             try {
+                String lang = store.getPlayerLanguage(player); // Obtém o idioma do jogador
+                if (lang.equals("pt")) {
+                    player.sendMessage(Component.text("⚡ Aguarde! ", NamedTextColor.GOLD) // Correção aqui
+                    .append(Component.text("Pode levar 5 segundos...", NamedTextColor.GREEN))
+                    .append(Component.text("\n🌐 Conectando ao banco Solana...", NamedTextColor.AQUA)));
+                    } else {
+                        player.sendMessage(Component.text("⚡ Please wait! ", NamedTextColor.GOLD)
+                        .append(Component.text("This may take 5 seconds...", NamedTextColor.GREEN))
+                        .append(Component.text("\n🌐 Connecting to Solana bank...", NamedTextColor.AQUA))); // Certifique-se de que este está correto!
+                    }
                 double solAmount = Double.parseDouble(args[0]);
                 solana.buyGameCurrency(player, solAmount);
             } catch (NumberFormatException e) {
@@ -143,14 +189,6 @@ public boolean onCommand(CommandSender sender, Command command, String label, St
         } else {
             player.sendMessage("Uso correto: /buycurrency <quantidade_SOL>");
         }
-    } else {
-        sender.sendMessage("Este comando só pode ser usado por jogadores.");
-    }
-    return true;
-    } else if (command.getName().equalsIgnoreCase("createwallet")) {
-    if (sender instanceof Player) {
-        Player player = (Player) sender;
-        solana.createWallet(player);
     } else {
         sender.sendMessage("Este comando só pode ser usado por jogadores.");
     }
@@ -173,6 +211,21 @@ public boolean onCommand(CommandSender sender, Command command, String label, St
             if (args.length == 2) {
                 String recipient = args[0];
                 try {
+                    String lang = store.getPlayerLanguage(player); // Obtém o idioma do jogador
+                    if (lang.equals("pt")) {
+                        player.sendMessage(Component.text("⚡ Aguarde! ", NamedTextColor.GOLD)
+                        .append(Component.text("Pode levar 5 segundos...", NamedTextColor.GREEN))
+                        .append(Component.text("\n🌐 Conectando ao banco Solana...", NamedTextColor.AQUA)));
+                        } else if (lang.equals("es")) {
+                            player.sendMessage(Component.text("⚡ ¡Espere! ", NamedTextColor.GOLD)
+                            .append(Component.text("Puede tardar 5 segundos...", NamedTextColor.GREEN))
+                            .append(Component.text("\n🌐 Conectando al banco Solana...", NamedTextColor.AQUA)));
+                            } else { // Inglês como padrão
+                            player.sendMessage(Component.text("⚡ Please wait! ", NamedTextColor.GOLD)
+                            .append(Component.text("This may take 5 seconds...", NamedTextColor.GREEN))
+                            .append(Component.text("\n🌐 Connecting to Solana bank...", NamedTextColor.AQUA)));
+                        }
+
                     double amount = Double.parseDouble(args[1]);
                     solana.handleSolTransfer(player, recipient, amount);
                 } catch (NumberFormatException e) {
@@ -194,6 +247,97 @@ public boolean onCommand(CommandSender sender, Command command, String label, St
         }
         return true;   
     
+    } else if (command.getName().equalsIgnoreCase("buySpinningWand")) {
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            store.buySpinningWand(player);
+        }
+        return true;
+    } else if (command.getName().equalsIgnoreCase("buyiron")) {
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            store.buyIronBlock(player);
+        }
+        return true;
+    }
+     else if (command.getName().equalsIgnoreCase("buyEmeraldBlock")) {
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            store.buyEmeraldBlock(player);
+        }
+        return true;
+    } else if (command.getName().equalsIgnoreCase("buygold")) {
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            store.buyGoldBlock(player);
+        }
+        return true;
+    } else if (command.getName().equalsIgnoreCase("buydiamond")) {
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            store.buyDiamondBlock(player);
+        }
+        return true;
+    } else if (command.getName().equalsIgnoreCase("buyLapis")) {
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            store.buyLapisBlock(player);
+        }
+        return true;
+    } else if (command.getName().equalsIgnoreCase("buyQuartz")) {
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            store.buyQuartzBlock(player);
+        }
+        return true;
+    } else if (command.getName().equalsIgnoreCase("buyClay")) {
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            store.buyClayBlock(player);
+        }
+        return true;
+    } else if (command.getName().equalsIgnoreCase("buyRedstone")) {
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            store.buyRedstoneBlock(player);
+        }
+        return true;
+    } else if (command.getName().equalsIgnoreCase("buySandBlock")) {
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            store.buySandBlock(player);
+        }
+        return true;
+    } else if (command.getName().equalsIgnoreCase("buyAllEnchantmentBooks")) {
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            store.buyAllEnchantmentBooks(player);
+        }
+        return true;
+    } else if (command.getName().equalsIgnoreCase("buyAllPotions")) {
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            store.buyAllEnchantmentBooks(player);
+        }
+        return true;
+    } else if (command.getName().equalsIgnoreCase("buyAllFood")) {
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            store.buyAllFood(player);
+        }
+        return true;
+    } else if (command.getName().equalsIgnoreCase("buySimpleBook")) {
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            store.buySimpleBook(player);
+        }
+        return true;
+    } else if (command.getName().equalsIgnoreCase("buynetherite")) {
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            store.buyNetheriteBlock(player);
+        }
+        return true;
     } else if (command.getName().equalsIgnoreCase("invest")) {
         if (sender instanceof Player) {
             Player player = (Player) sender;

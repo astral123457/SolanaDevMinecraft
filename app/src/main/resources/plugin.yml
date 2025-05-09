@@ -35,3 +35,52 @@ commands:
   buyemerald:
     description: Compra uma Esmeralda.
     usage: /buyemerald
+  buydiamond:
+    description: Compra um Diamante.
+    usage: /buydiamond
+  buygold:
+    description: Compra uma Barra de Ouro.
+    usage: /buygold
+  buyiron:
+    description: Compra uma Barra de Ferro.
+    usage: /buyiron
+  buynetherite:
+    description: Compra uma Barra de Netherite.
+    usage: /buynetherite
+  buySpinningWand:
+    description: Compra uma Varinha Giratória.
+    usage: /buySpinningWand
+  buyLapis:
+    description: Compra um Lápis Lazúli.
+    usage: /buyLapis
+  buyQuartz:
+    description: Compra um Quartzo.
+    usage: /buyQuartz
+  buyRedstone:
+    description: Compra uma Redstone.
+    usage: /buyRedstone
+  buyClay:
+    description: Compra um Bloco de Argila.
+    usage: /buyClay
+  buySandBlock:
+    description: Compra um Bloco de Areia.
+    usage: /buySandBlock
+  buyAllEnchantmentBooks:
+    description: Compra todos os Livros Encantados.
+    usage: /buyAllEnchantmentBooks
+  buyAllPotions:
+    description: Compra todas as Poções.
+    usage: /buyAllPotions
+  buyAllFood:
+    description: Compra toda a Comida.
+    usage: /buyAllFood
+  buySimpleBook:
+    description: Compra um Livro Simples.
+    usage: /buySimpleBook
+  buyEmeraldBlock:
+    description: Compra um Bloco de Esmeralda.
+    usage: /buyEmeraldBlock
+  
+  
+  
+  

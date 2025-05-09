@@ -26,6 +26,13 @@ import org.bukkit.configuration.file.FileConfiguration;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
+
+import net.md_5.bungee.api.ChatColor;
+
+
+import java.util.Locale;
+import org.bukkit.entity.Player;
 
 
 import java.nio.file.Files;
@@ -41,6 +48,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import java.util.Base64;
 import java.util.regex.*;
+import java.util.List;
 
 
 
@@ -61,32 +69,32 @@ class WalletInfo {
 public class Solana {
 
     private final Connection connection;
-    //private static final Logger LOGGER = Logger.getLogger(Solana.class.getName());
-    //private static final Logger LOGGER = LoggerFactory.getLogger(Solana.class);
+    private final FileConfiguration config;
+    
     private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(Solana.class.getName());
 
-    
-    
-
-    public Solana(Connection connection) {
-        this.config = config;
+    // 🔹 Construtor correto
+    public Solana(FileConfiguration config, Connection connection) {
+        this.config = config; // Inicializa corretamente
         this.connection = connection;
     }
 
+@SuppressWarnings("deprecation")
+public String getPlayerLanguage(Player player) {
+    String locale = player.getLocale(); // Obtém o idioma do jogador como String
+    List<String> supportedLanguages = config.getStringList("language.supported"); // Obtém a lista de idiomas do config.yml
 
-    private FileConfiguration config;
-
-public Solana(FileConfiguration config, Connection connection) {
-    this.config = config;
-    this.connection = connection;
+    // Se o idioma do jogador estiver na lista de suportados, usa ele. Caso contrário, usa o padrão do config.
+    return supportedLanguages.contains(locale) ? locale : config.getString("language.default", "pt-BR"); 
 }
 
     // 📌 Método para verificar saldo da carteira Solana
     public double getSolanaBalance(String walletAddress) throws Exception {
     String host = config.getString("docker.host");
+    String apiwebkey = config.getString("docker.api_web_key");
     String comando = "solana balance " + walletAddress;
 
-    String url = String.format("http://%s/consulta.php?comando=%s", host, URLEncoder.encode(comando, "UTF-8"));
+    String url = String.format("http://%s/consulta.php?apikey=%s&comando=%s", host, apiwebkey, URLEncoder.encode(comando, "UTF-8"));
 
     String response = executeHttpGet(url);
 
@@ -116,6 +124,7 @@ private String executeHttpGet(String urlString) throws Exception {
 
    public String transferSolana(String sender, String recipientWallet, double amount) throws Exception {
     String host = config.getString("docker.host");
+    String apiwebkey = config.getString("docker.api_web_key");
 
     if (Double.isNaN(amount) || Double.isInfinite(amount)) {
         throw new IllegalArgumentException("Valor inválido para transferência: " + amount);
@@ -128,7 +137,7 @@ private String executeHttpGet(String urlString) throws Exception {
         sender
     );
 
-    String url = String.format("http://%s/consulta.php?comando=%s", host, URLEncoder.encode(comando, "UTF-8"));
+    String url = String.format("http://%s/consulta.php?apikey=%s&comando=%s", host, apiwebkey, URLEncoder.encode(comando, "UTF-8"));
 
     String response = executeHttpGet(url);
 
@@ -266,7 +275,18 @@ private String executeHttpGet(String urlString) throws Exception {
     String walletAddress = getWalletFromDatabase(player.getName());
     if (walletAddress == null) {
         LOGGER.warning("Nenhuma carteira encontrada para o jogador: " + player.getName());
-        player.sendMessage("Você ainda não possui uma carteira registrada.");
+        String lang = getPlayerLanguage(player);
+
+        if (lang.equals("pt")) {
+            player.sendMessage(Component.text("💳 Você ainda não possui uma carteira registrada.")
+                .color(TextColor.color(0xFF0000))); // Vermelho
+        } else if (lang.equals("es")) {
+            player.sendMessage(Component.text("💳 Aún no tienes una billetera registrada.")
+                .color(TextColor.color(0xFF0000))); // Vermelho
+        } else {
+            player.sendMessage(Component.text("💳 You do not have a registered wallet yet.")
+                .color(TextColor.color(0xFF0000))); // Vermelho
+        }
         return;
     }
 
@@ -286,11 +306,23 @@ private String executeHttpGet(String urlString) throws Exception {
         // Obtém o saldo da carteira
         double balance = getSolanaBalance(walletAddress);
         LOGGER.info("Saldo obtido para a carteira " + walletAddress + ": " + balance + " SOL");
-       player.sendMessage(
-    Component.text("💰 Seu saldo de SOL é: ")
-        .color(TextColor.color(0x800080))  // Roxo
-        .append(Component.text(balance + " SOL").color(TextColor.color(0xFFD700))) // Amarelo para o valor do saldo
-);
+       
+
+String lang = getPlayerLanguage(player);
+
+        if (lang.equals("pt")) {
+            player.sendMessage(Component.text("💰 Seu saldo de SOL é: ")
+                .color(TextColor.color(0x800080))); // Roxo
+        } else if (lang.equals("es")) {
+            player.sendMessage(Component.text("💰 Tu saldo de SOL es: ")
+                .color(TextColor.color(0x800080))); // Roxo
+            } else {
+            player.sendMessage(Component.text("💰 Your SOL balance is: ")
+                .color(TextColor.color(0x800080))); // Roxo
+        } 
+        player.sendMessage(Component.text(" " + balance + " SOL")
+                .color(TextColor.color(0xFFD700)));
+
     } catch (Exception e) {
         LOGGER.severe("Erro ao verificar saldo para a carteira " + walletAddress + ": " + e.getMessage());
         player.sendMessage("Erro ao verificar saldo: " + e.getMessage());
@@ -308,14 +340,37 @@ private String executeHttpGet(String urlString) throws Exception {
         try {
             String signature = transferSolana(player.getName(), recipientWallet, amount);
             registerTransaction(player.getName(), "transferência", amount, "SOL", signature);
-            player.sendMessage(Component.text("Transferência de ")
+          
+
+String lang = getPlayerLanguage(player);
+
+        if (lang.equals("pt")) {
+    player.sendMessage(Component.text("💸 Transferência de ")
         .color(TextColor.color(0x00FF00)) // Verde
         .append(Component.text(amount + " SOL ").color(TextColor.color(0xFFD700))) // Dourado
         .append(Component.text("para ").color(TextColor.color(0x00FF00))) // Verde
         .append(Component.text(recipient).color(TextColor.color(0x00FFFF))) // Azul Claro
         .append(Component.text(" concluída com sucesso! Assinatura: ").color(TextColor.color(0x00FF00))) // Verde
-        .append(Component.text(signature).color(TextColor.color(0xFFFF00))) // Amarelo
-);
+        .append(Component.text(signature).color(TextColor.color(0xFFFF00)))); // Amarelo - Fechamento correto
+} else if (lang.equals("es")) {
+    player.sendMessage(Component.text("💸 Transferencia de ")
+        .color(TextColor.color(0x00FF00)) // Verde
+        .append(Component.text(amount + " SOL ").color(TextColor.color(0xFFD700))) // Dourado
+        .append(Component.text("a ").color(TextColor.color(0x00FF00))) // Verde
+        .append(Component.text(recipient).color(TextColor.color(0x00FFFF))) // Azul Claro
+        .append(Component.text(" completada con éxito! Firma: ").color(TextColor.color(0x00FF00))) // Verde
+        .append(Component.text(signature).color(TextColor.color(0xFFFF00)))); // Amarelo - Fechamento correto
+    }
+    else {
+    player.sendMessage(Component.text("💸 Transfer of ")
+        .color(TextColor.color(0x00FF00)) // Verde
+        .append(Component.text(amount + " SOL ").color(TextColor.color(0xFFD700))) // Dourado
+        .append(Component.text("to ").color(TextColor.color(0x00FF00))) // Verde
+        .append(Component.text(recipient).color(TextColor.color(0x00FFFF))) // Azul Claro
+        .append(Component.text(" completed successfully! Signature: ").color(TextColor.color(0x00FF00))) // Verde
+        .append(Component.text(signature).color(TextColor.color(0xFFFF00)))); // Amarelo - Fechamento correto
+}
+ 
 
         } catch (Exception e) {
             player.sendMessage("Erro ao transferir SOL: " + e.getMessage());
@@ -324,12 +379,28 @@ private String executeHttpGet(String urlString) throws Exception {
 
     // 📌 Método para comprar moedas do jogo usando Solana com base em uma taxa fixa
 public void buyGameCurrency(Player player, double solAmount) {
-    int conversionRate = 1000; // 1 SOL = 1000 moedas do jogo
+    int conversionRate = config.getInt("store.value_of-in-game_currency"); // Obtém corretamente o valor numérico // 1 SOL = 1000 moedas do jogo
+    //int conversionRate = 1000; // 1 SOL = 1000 moedas do jogo
     int gameCurrencyAmount = (int) (solAmount * conversionRate);
+    String lang = getPlayerLanguage(player);
 
     String playerWallet = getWalletFromDatabase(player.getName());
     if (playerWallet == null) {
-        player.sendMessage("❌ Você ainda não possui uma carteira registrada.");
+        
+        
+        if (lang.equals("pt")) {
+            player.sendMessage("❌ Você ainda não possui uma carteira registrada.");
+            player.sendMessage(Component.text("💳 Crie uma carteira usando /createwallet.")
+                .color(TextColor.color(0xFF0000))); // Vermelho
+        } else if (lang.equals("es")) {
+            player.sendMessage("❌ Aún no tienes una billetera registrada.");
+            player.sendMessage(Component.text("💳 Crea una billetera usando /createwallet.")
+                .color(TextColor.color(0xFF0000))); // Vermelho
+            } else {
+            player.sendMessage("❌ You do not yet have a registered wallet.");
+            player.sendMessage(Component.text("💳 Create a wallet using /createwallet.")
+                .color(TextColor.color(0xFF0000))); // Vermelho
+        }
         return;
     }
 
@@ -337,12 +408,20 @@ public void buyGameCurrency(Player player, double solAmount) {
         // 🔹 Verifica saldo da carteira do jogador antes da compra
         double solBalance = getSolanaBalance(playerWallet);
         if (solBalance < solAmount) {
-            player.sendMessage("❌ Saldo insuficiente de SOL. Saldo atual: " + solBalance);
+            if (lang.equals("pt")) {
+                player.sendMessage("💰 Saldo insuficiente de SOL. Saldo atual: " + solBalance);
+            } else if (lang.equals("es")) {
+                player.sendMessage("💰 Saldo insuficiente de SOL. Saldo actual: " + solBalance);
+                }
+            else {
+                player.sendMessage("💰 Insufficient SOL balance. Current balance: " + solBalance);
+            }
             return;
         }
 
         // 🔹 Executa transferência para a carteira da loja/banco
         String host = config.getString("docker.host");
+        String apiwebkey = config.getString("docker.api_web_key");
         String bank = config.getString("docker.wallet_bank_store_admin");
 
 
@@ -357,7 +436,7 @@ String comando = String.format(
 );
 
 
-        String url = String.format("http://%s/consulta.php?comando=%s", host, URLEncoder.encode(comando, "UTF-8"));
+        String url = String.format("http://%s/consulta.php?apikey=%s&comando=%s", host, apiwebkey, URLEncoder.encode(comando, "UTF-8"));
 
         String response = executeHttpGet(url);
 
@@ -379,18 +458,37 @@ String comando = String.format(
                 if (rowsUpdated > 0) {
                     // 🔹 Registra a transação no livro caixa
                     registerTransaction(player.getName(), "compra", solAmount, "SOL", signature);
-                    
+                    if (lang.equals("pt")) {
+                        player.sendMessage(Component.text("✅ Compra realizada com sucesso! ")
+                        .color(TextColor.color(0x00FF00)) // Verde
+                        .append(Component.text("Você recebeu " + gameCurrencyAmount + " moedas.")
+                        .color(TextColor.color(0xFFD700))));
+                        
+                        player.sendMessage(Component.text("💸 Transação registrada com assinatura: ")
+                        .color(TextColor.color(0x00FFFF)) // Azul Claro
+                        .append(Component.text(signature).color(TextColor.color(0xFFFF00))));
+                    } else if (lang.equals("es")) {
+                        player.sendMessage(Component.text("✅ Compra realizada con éxito! ")
+                        .color(TextColor.color(0x00FF00)) // Verde
+                        .append(Component.text("Recibiste " + gameCurrencyAmount + " monedas.")
+                        .color(TextColor.color(0xFFD700))));
 
-player.sendMessage(Component.text("✅ Compra realizada com sucesso! ")
-    .color(TextColor.color(0x00FF00)) // Verde
-    .append(Component.text("Você recebeu " + gameCurrencyAmount + " moedas.")
-    .color(TextColor.color(0xFFD700))) // Dourado
-);
+                        player.sendMessage(Component.text("💸 Transacción registrada con firma: ")
+                        .color(TextColor.color(0x00FFFF)) // Azul Claro
+                        .append(Component.text(signature).color(TextColor.color(0xFFFF00))));
 
-player.sendMessage(Component.text("💸 Transação registrada com assinatura: ")
-    .color(TextColor.color(0x00FFFF)) // Azul Claro
-    .append(Component.text(signature).color(TextColor.color(0xFFFF00))) // Amarelo
-);
+                        } else {
+                        player.sendMessage(Component.text("✅ Purchase completed successfully! ")
+                        .color(TextColor.color(0x00FF00))
+                        .append(Component.text("You received " + gameCurrencyAmount + " coins.")
+                        .color(TextColor.color(0xFFD700))));
+                        
+                        player.sendMessage(Component.text("💸 Transaction registered with signature: ")
+                        .color(TextColor.color(0x00FFFF))
+                        .append(Component.text(signature).color(TextColor.color(0xFFFF00))));
+                    }
+
+
                 } else {
                     player.sendMessage("⚠ Erro ao atualizar seu saldo no banco.");
                 }
@@ -410,13 +508,16 @@ player.sendMessage(Component.text("💸 Transação registrada com assinatura: "
     String playerName = player.getName().replace(" ", "_").toLowerCase();
     String walletPath = String.format("wallets/%s_wallet.json", playerName);
     PreparedStatement statement = null; // ✅ Declarado uma vez
+    String lang = getPlayerLanguage(player);
 
     try {
         String host = config.getString("docker.host");
+        String apiwebkey = config.getString("docker.api_web_key");
 
         // 🔹 Gera a carteira via API
         String comandoGerar = String.format("solana-keygen new --no-passphrase --outfile %s --force", walletPath);
-        String urlGerar = String.format("http://%s/consulta.php?comando=%s", host, URLEncoder.encode(comandoGerar, "UTF-8"));
+        String urlGerar = String.format("http://%s/consulta.php?apikey=%s&comando=%s", host, apiwebkey, URLEncoder.encode(comandoGerar, "UTF-8"));
+        
 
         String responseGerar = executeHttpGet(urlGerar);
         if (!responseGerar.contains("\"status\":\"success\"")) {
@@ -438,7 +539,7 @@ player.sendMessage(Component.text("💸 Transação registrada com assinatura: "
 
         // 🔹 Lendo a chave privada da carteira gerada
         String comandoLer = String.format("cat %s", walletPath);
-        String urlLer = String.format("http://%s/consulta.php?comando=%s", host, URLEncoder.encode(comandoLer, "UTF-8"));
+        String urlLer = String.format("http://%s/consulta.php?apikey=%s&comando=%s", host, apiwebkey, URLEncoder.encode(comandoLer, "UTF-8"));
 
         String responseLer = executeHttpGet(urlLer);
         if (!responseLer.contains("\"status\":\"success\"")) {
@@ -491,11 +592,21 @@ player.sendMessage(Component.text("💸 Transação registrada com assinatura: "
         statement.executeUpdate();
 
         // 🔹 Feedback ao jogador
-        player.sendMessage(Component.text("✅ Carteira criada com sucesso! Endereço: " + walletAddress)
-                .color(TextColor.color(0x00FF00)));
-        player.sendMessage(Component.text("🛡️ Guarde sua frase secreta com segurança!")
-                .color(TextColor.color(0xFFD700)));
-        player.sendMessage(Component.text("✅ SecretPhrase: " + (secretPhrase != null ? secretPhrase : "NULO")));
+        
+
+        if (lang.equals("pt")) {
+            player.sendMessage(Component.text("✅ Carteira criada com sucesso! Endereço: " + walletAddress).color(TextColor.color(0x00FF00)));
+            player.sendMessage(Component.text("🛡️ Guarde sua frase secreta com segurança!").color(TextColor.color(0xFFD700)));
+            player.sendMessage(Component.text("✅ SecretPhrase: " + (secretPhrase != null ? secretPhrase : "NULO")));
+            } else if (lang.equals("es")) {
+                player.sendMessage(Component.text("✅ Billetera creada con éxito! Dirección: " + walletAddress).color(TextColor.color(0x00FF00)));
+                player.sendMessage(Component.text("🛡️ ¡Guarda tu frase secreta a salvo!").color(TextColor.color(0xFFD700)));
+                player.sendMessage(Component.text("✅ Frase secreta: " + (secretPhrase != null ? secretPhrase : "NULO")));
+                }else { 
+                player.sendMessage(Component.text("✅ Wallet created successfully! Address: " + walletAddress).color(TextColor.color(0x00FF00)));
+                player.sendMessage(Component.text("🛡️ Keep your secret phrase safe!").color(TextColor.color(0xFFD700)));
+                player.sendMessage(Component.text("✅ SecretPhrase: " + (secretPhrase != null ? secretPhrase : "NULO")));
+            }
 
     } catch (Exception e) {
         player.sendMessage(Component.text("⚠ Erro ao criar a carteira: " + e.getMessage())
