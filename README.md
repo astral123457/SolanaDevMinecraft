@@ -13,6 +13,9 @@ SolanaDevMinecraft
 
 The Solana Dev token has no real value and is used only for fun and economic experimentation. It is not subject to regulations or financial laws, functioning solely as a fictional asset within a testing environment and playful interactions. Its purpose is to provide entertainment and learning about economic concepts without involving real financial transactions.
 
+this dev coin can be obtained every 8 hours, 2 drops of values from 1 to 5
+https://faucet.solana.com/
+
 
 ![image](https://github.com/user-attachments/assets/1a40a6c9-a8fa-44f8-bf96-59b5109b015e)
 
