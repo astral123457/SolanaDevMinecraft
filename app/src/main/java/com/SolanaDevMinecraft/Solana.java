@@ -122,43 +122,91 @@ private String executeHttpGet(String urlString) throws Exception {
     }
 }
 
-   public String transferSolana(String sender, String recipientWallet, double amount) throws Exception {
-    String host = config.getString("docker.host", "localhost"); // Define valor padrão se nulo
-    String apiwebkey = config.getString("docker.api_web_key", "defaultKey");
+   public void transferSolana(Player sender, String recipient, double amount) {
+    // Obtém as carteiras do remetente e do destinatário
+    String senderWallet = getWalletFromDatabase(sender.getName());
+    String recipientWallet = getWalletFromDatabase(recipient);
 
-    if (Double.isNaN(amount) || Double.isInfinite(amount)) {
-        throw new IllegalArgumentException("❌ Valor inválido para transferência: " + amount);
+    if (senderWallet == null) {
+        sender.sendMessage(Component.text("❌ Você não possui uma carteira registrada.")
+            .color(TextColor.color(0xFF0000))); // Vermelho
+        return;
     }
 
-    // Formatação correta do valor para evitar problemas com decimais
-    String formattedAmount = String.format(Locale.US, "%.8f", amount);
+    if (recipientWallet == null) {
+        sender.sendMessage(Component.text("❌ O jogador " + recipient + " não possui uma carteira registrada.")
+            .color(TextColor.color(0xFF0000))); // Vermelho
+        return;
+    }
 
-    // Construção do comando sem espaços incorretos
-    String comando = String.format("solana transfer %s %s --keypair /solana-token/wallets/%s_wallet.json --allow-unfunded-recipient",
-        recipientWallet, formattedAmount, sender);
-
-    // Garante que espaços são corretamente codificados na URL
-    String encodedCommand = URLEncoder.encode(comando, StandardCharsets.UTF_8);
-    String url = String.format("http://%s/consulta.php?apikey=%s&comando=%s", host, apiwebkey, encodedCommand);
-    
-
-    // Executa a requisição HTTP
-    String response = executeHttpGet(url);
-
-    // Adiciona log para depuração
-    LOGGER.info("[DEBUG SOLANA TRANSFER RESPONSE]: " + response);
-
-    // Validação da resposta para evitar erros de índice
+    // Verifica saldo antes da transferência
+    double senderBalance;
     try {
-        JSONObject jsonResponse = new JSONObject(response);
-        if (jsonResponse.optString("status").equals("success")) {
-            return jsonResponse.optString("output", "Sem assinatura.");
-        } else {
-            throw new Exception("❌ Erro ao transferir SOL: " + jsonResponse.optString("message", "Erro desconhecido."));
-        }
-    } catch (JSONException e) {
-        throw new Exception("❌ Erro ao processar resposta da API: " + e.getMessage());
+        senderBalance = getSolanaBalance(senderWallet);
+    } catch (Exception e) {
+        sender.sendMessage(Component.text("⚠ Erro ao obter saldo da carteira: " + e.getMessage())
+            .color(TextColor.color(0xFF0000))); // Vermelho
+        e.printStackTrace();
+        return;
     }
+
+    if (senderBalance < amount) {
+        sender.sendMessage(Component.text("❌ Saldo insuficiente para transferência. Saldo atual: " + senderBalance)
+            .color(TextColor.color(0xFF0000))); // Vermelho
+        return;
+    }
+
+    try {
+        // Executa a transferência via API
+        String host = config.getString("docker.host");
+        String apiwebkey = config.getString("docker.api_web_key");
+
+        DecimalFormat df = new DecimalFormat("0.##"); // Remove zeros desnecessários
+        String formattedAmount = String.format("%.2f", amount).replace(",", ".");
+
+        String comando = String.format("solana transfer %s %s --keypair /solana-token/wallets/%s_wallet.json --allow-unfunded-recipient",
+            recipientWallet, formattedAmount, sender.getName().replace(" ", "_").toLowerCase());// sempre corrigir %20 epaco e + coisa de url
+
+        String url = String.format("http://%s/consulta.php?apikey=%s&comando=%s", host, apiwebkey, URLEncoder.encode(comando, StandardCharsets.UTF_8));
+        String response = executeHttpGet(url);
+
+        if (response != null && response.contains("\"output\":\"")) {
+            String signature = response.split("\"output\":\"")[1].split("\"")[0].trim();
+            signature = response.replaceFirst("(?s).*Signature: ", "").replaceAll("\n", "").replaceAll("\"}", "").trim();
+
+            // Registra a transação no banco de dados
+           try (PreparedStatement stmt = this.connection.prepareStatement(
+                "INSERT INTO livro_caixa (jogador, tipo_transacao, valor, moeda, assinatura) VALUES (?, ?, ?, ?, ?)"
+            )) {    
+
+                stmt.setString(1, sender.getName());
+                stmt.setString(2, "transferência");
+                stmt.setDouble(3, amount);
+                stmt.setString(4, "SOL");
+                stmt.setString(5, signature);
+                stmt.executeUpdate();
+            }
+
+
+            sendTransactionMessage(sender, recipient, amount, signature);
+        } else {
+            throw new Exception("❌ Erro ao transferir SOL: " + response);
+        }
+    } catch (Exception e) {
+        sender.sendMessage(Component.text("⚠ Erro ao processar a transferência: " + e.getMessage())
+            .color(TextColor.color(0xFF0000))); // Vermelho
+        e.printStackTrace();
+    }
+}
+
+// Método auxiliar para mensagens personalizadas ao jogador
+private void sendTransactionMessage(Player sender, String recipient, double amount, String signature) {
+    sender.sendMessage(Component.text("💸 Transferência concluída! ")
+        .color(TextColor.color(0x00FF00)) // Verde
+        .append(Component.text(amount + " SOL para ").color(TextColor.color(0xFFD700))) // Dourado
+        .append(Component.text(recipient).color(TextColor.color(0x00FFFF))) // Azul Claro
+        .append(Component.text(". Assinatura: ").color(TextColor.color(0x00FF00))) // Verde
+        .append(Component.text(signature).color(TextColor.color(0xFFFF00)))); // Amarelo
 }
 
 
@@ -339,57 +387,6 @@ String lang = getPlayerLanguage(player);
     }
     }
 
-    // 📌 Método para transferir SOL entre carteiras
-public void handleSolTransfer(Player player, String recipient, double amount) {
-    String recipientWallet = getWalletFromDatabase(recipient);
-    if (recipientWallet == null) {
-        player.sendMessage(Component.text("❌ O jogador " + recipient + " não possui uma carteira registrada.")
-                .color(TextColor.color(0xFF0000))); // Vermelho
-        return;
-    }
-
-    try {
-        String signature = transferSolana(player.getName(), recipientWallet, amount);
-        registerTransaction(player.getName(), "transferência", amount, "SOL", signature);
-
-        String lang = getPlayerLanguage(player);
-
-        if (lang.equals("pt-BR")) {
-            player.sendMessage(Component.text("💸 Transferência de ")
-                .color(TextColor.color(0x00FF00)) // Verde
-                .append(Component.text(amount + " SOL ").color(TextColor.color(0xFFD700))) // Dourado
-                .append(Component.text("para ").color(TextColor.color(0x00FF00))) // Verde
-                .append(Component.text(recipient).color(TextColor.color(0x00FFFF))) // Azul Claro
-                .append(Component.text(" concluída com sucesso! Assinatura: ").color(TextColor.color(0x00FF00))) // Verde
-                .append(Component.text(signature).color(TextColor.color(0xFFFF00)))); // Amarelo
-
-        } else if (lang.equals("es-ES")) {
-            player.sendMessage(Component.text("💸 Transferencia de ")
-                .color(TextColor.color(0x00FF00)) // Verde
-                .append(Component.text(amount + " SOL ").color(TextColor.color(0xFFD700))) // Dourado
-                .append(Component.text("a ").color(TextColor.color(0x00FF00))) // Verde
-                .append(Component.text(recipient).color(TextColor.color(0x00FFFF))) // Azul Claro
-                .append(Component.text(" completada con éxito! Firma: ").color(TextColor.color(0x00FF00))) // Verde
-                .append(Component.text(signature).color(TextColor.color(0xFFFF00)))); // Amarelo
-
-        } else {
-            player.sendMessage(Component.text("💸 Transfer of ")
-                .color(TextColor.color(0x00FF00)) // Verde
-                .append(Component.text(amount + " SOL ").color(TextColor.color(0xFFD700))) // Dourado
-                .append(Component.text("to ").color(TextColor.color(0x00FF00))) // Verde
-                .append(Component.text(recipient).color(TextColor.color(0x00FFFF))) // Azul Claro
-                .append(Component.text(" completed successfully! Signature: ").color(TextColor.color(0x00FF00))) // Verde
-                .append(Component.text(signature).color(TextColor.color(0xFFFF00)))); // Amarelo
-        }
-
-    } catch (Exception e) {
-        player.sendMessage(Component.text("❌ Erro ao transferir SOL: ")
-                .color(TextColor.color(0xFF0000)) // Vermelho
-                .append(Component.text(e.getMessage()).color(TextColor.color(0xFFFF00)))); // Amarelo
-    }
-}
-   
-
     // 📌 Método para comprar moedas do jogo usando Solana com base em uma taxa fixa
 public void buyGameCurrency(Player player, double solAmount) {
     int conversionRate = config.getInt("store.value_of_in_game_currency", 1000); // Obtém corretamente o valor numérico // 1 SOL = 1000 moedas do jogo
@@ -459,6 +456,10 @@ String comando = String.format(
         // 🔹 Processa resposta da API
         if (response.contains("\"status\":\"success\"")) {
             String signature = response.split("\"output\":\"")[1].split("\"")[0].trim();
+            signature = response.replaceFirst("(?s).*Signature: ", "").trim();
+            signature = signature.replaceAll("\\n", ""); // Remove todas as quebras de linha
+            signature = signature.replaceAll("\"}", ""); // Remove o fechamento JSON
+            signature = signature.trim(); // Garante que espaços extras sejam removidos
 
             // 🔹 Atualiza saldo do jogador no banco de dados
             try (PreparedStatement updateStatement = this.connection.prepareStatement(

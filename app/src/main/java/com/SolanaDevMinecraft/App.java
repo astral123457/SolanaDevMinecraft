@@ -250,7 +250,7 @@ public boolean onCommand(CommandSender sender, Command command, String label, St
                         }
 
                     double amount = Double.parseDouble(args[1]);
-                    solana.handleSolTransfer(player, recipient, amount);
+                    solana.transferSolana(player, recipient, amount);
                 } catch (NumberFormatException e) {
                     player.sendMessage("Uso correto: /soltransfer <jogador> <quantidade_SOL>");
                 }
