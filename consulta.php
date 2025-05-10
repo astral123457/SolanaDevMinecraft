@@ -26,17 +26,16 @@ try {
             last_attempt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         );
     ");
-
 } catch (PDOException $e) {
-    die(json_encode(['status' => 'error', 'message' => 'Erro ao conectar ao banco de dados: ' . $e->getMessage()]));
+    error_log("Erro ao conectar ao banco de dados: " . $e->getMessage());
+    die(json_encode(['status' => 'error', 'message' => 'Erro ao conectar ao banco de dados.']));
 }
 
 // ---- Captura o IP do usuário ----
 $ipUsuario = $_SERVER['REMOTE_ADDR'];
-
 header('Content-Type: application/json');
 
-// ---- Verificação do IP banido ANTES da chave de API ----
+// ---- Verificação do IP banido ----
 $stmt = $pdo->prepare("SELECT * FROM ban_ip WHERE ip = :ip");
 $stmt->execute(['ip' => $ipUsuario]);
 if ($stmt->fetch()) {
@@ -51,13 +50,13 @@ $hashBinario64BitsEsperado = substr($hashBinarioCompletoEsperado, 0, 8);
 $chaveApiCorreta = bin2hex($hashBinario64BitsEsperado);
 
 if (!isset($_GET['apikey']) || !hash_equals($chaveApiCorreta, $_GET['apikey'])) {
-    // ---- Atualiza tentativas de acesso ----
+    // Atualiza tentativas de acesso
     $stmt = $pdo->prepare("INSERT INTO access_attempts (ip, attempts, last_attempt) 
                            VALUES (:ip, 1, NOW()) 
                            ON DUPLICATE KEY UPDATE attempts = attempts + 1, last_attempt = NOW()");
     $stmt->execute(['ip' => $ipUsuario]);
 
-    // ---- Verifica se deve banir o IP após 2 falhas ----
+    // Verifica se deve banir o IP após 2 falhas
     $stmt = $pdo->prepare("SELECT attempts FROM access_attempts WHERE ip = :ip");
     $stmt->execute(['ip' => $ipUsuario]);
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -82,6 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET' || !isset($_GET['comando'])) {
 
 $comandoRecebido = urldecode(trim($_GET['comando']));
 
+// Proteção contra caracteres perigosos no comando
 if (preg_match('/[;&|`]/', $comandoRecebido)) {
     echo json_encode(['status' => 'error', 'message' => 'Comando contém caracteres proibidos.']);
     exit;
@@ -89,7 +89,11 @@ if (preg_match('/[;&|`]/', $comandoRecebido)) {
 
 // ---- Registrar o comando no log ----
 $logFile = '/home/astral/logs/consulta_log.txt';
-@file_put_contents($logFile, date('Y-m-d H:i:s') . " - Comando recebido: " . $comandoRecebido . "\n", FILE_APPEND);
+$logEntry = date('Y-m-d H:i:s') . " - Comando recebido: " . $comandoRecebido . "\n";
+
+if (!file_put_contents($logFile, $logEntry, FILE_APPEND)) {
+    error_log("Falha ao escrever no log: $logFile");
+}
 
 // ---- Execução do comando via Docker ----
 $comandoSeguroParaExec = escapeshellcmd($comandoRecebido);
