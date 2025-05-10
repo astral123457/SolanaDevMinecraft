@@ -68,25 +68,25 @@ Here is a basic flow diagram for your plugin commands:
 
 ---
 
-### **Fluxo de Comandos**
+### **Command Flows**
 
 ```plaintext
-                          [Jogador Executa Comando]
+                          [Player Executes Command]
                                     |
                                     v
         +---------------------------+---------------------------+
         |                           |                           |
     /saldo                     /createwallet              /buycurrency
-    Verifica saldo no banco    Cria carteira Solana       Compra moedas do jogo
+   Check the balance     Create a Solana wallet          Buy game coins
         |                           |                           |
         v                           v                           v
-[Consulta saldo no banco]   [Cria carteira no Docker]   [Verifica saldo de SOL]
+[Check bank balance]    [Create wallet on Docker]      [Check SOL balance]
         |                           |                           |
         v                           v                           v
-[Retorna saldo ao jogador] [Salva carteira no banco]   [Deduz SOL e adiciona moedas]
+[balance to the player] [Saves wallet in the bank]    [Deducts SOL and adds coins]
                                     |                           |
                                     v                           v
-                          [Retorna endereço da carteira] [Confirma compra ao jogador]
+                          [Returns wallet address]    [Confirms purchase to the player]
 ```
 
 ---
