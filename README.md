@@ -100,19 +100,84 @@ Here is a basic flow diagram for your plugin commands:
         +---------------------------+---------------------------+
         |                           |                           |
   /buyapple                   /buyemerald              /buynetherite
-  buy apple Encantada       buy Emerald       9 Netherite + book Netherite upgrade
+  buy apple Enchanted       buy Emerald       9 Netherite + book Netherite upgrade
         |                           |                           |
         v                           v                           v
-[Verifica saldo no banco]   [Verifica saldo no banco]   [Verifica saldo no banco]
+[Check balance in the bank]   [Check balance in the bank]   [Check balance in the bank]
         |                           |                           |
         v                           v                           v
-[Deduz saldo do jogador]   [Deduz saldo do jogador]   [Deduz saldo do jogador]
+[Deduct player's balance]   [Deduct player's balancer]   [Deduct player's balance]
         |                           |                           |
         v                           v                           v
-[Adiciona item ao jogador] [Adiciona item ao jogador] [Adiciona item ao jogador]
+[Add item to player]         [Add item to player]        [Add item to player]
         |                           |                           |
         v                           v                           v
-[Confirma compra ao jogador] [Confirma compra ao jogador] [Confirma compra ao jogador]
+[Confirm purchase to the player] [Confirm purchase to the player] [Confirm purchase to the player]
+
+
+
+  buyapple:
+    description: Compra uma Maçã Encantada.
+    usage: /buyapple
+  buyemerald:
+    description: Compra uma Esmeralda.
+    usage: /buyemerald
+  buydiamond:
+    description: Compra um Diamante.
+    usage: /buydiamond
+  buygold:
+    description: Compra uma Barra de Ouro.
+    usage: /buygold
+  buyiron:
+    description: Compra uma Barra de Ferro.
+    usage: /buyiron
+  buynetherite:
+    description: Compra uma Barra de Netherite.
+    usage: /buynetherite
+  buySpinningWand:
+    description: Compra uma Varinha Giratória.
+    usage: /buySpinningWand
+  buyLapis:
+    description: Compra um Lápis Lazúli.
+    usage: /buyLapis
+  buyQuartz:
+    description: Compra um Quartzo.
+    usage: /buyQuartz
+  buyRedstone:
+    description: Compra uma Redstone.
+    usage: /buyRedstone
+  buyClay:
+    description: Compra um Bloco de Argila.
+    usage: /buyClay
+  buySandBlock:
+    description: Compra um Bloco de Areia.
+    usage: /buySandBlock
+  buyAllTools:
+    description: Compra todas as Ferramentas.
+    usage: /buyAllTools
+  buyAllFood:
+    description: Compra toda a Comida.
+    usage: /buyAllFood
+  buySimpleBook:
+    description: Compra um Livro Simples.
+    usage: /buySimpleBook
+  buyEmeraldBlock:
+    description: Compra um Bloco de Esmeralda.
+    usage: /buyEmeraldBlock
+  buySimpleMap:
+    description: Compra um Mapa Simples.
+    usage: /buySimpleMap
+  buySimpleCompass:
+    description: Compra uma Bússola Simples.
+    usage: /buySimpleCompass
+  buySimpleFishingRod:
+    description: Compra uma Vara de Pesca Simples.
+    usage: /buySimpleFishingRod
+  buyAxolotlBucket:
+    description: Balde com peixe Simples.
+    usage: /buyAxolotlBucket
+
+
 ```
 
 ---
