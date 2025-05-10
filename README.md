@@ -117,64 +117,64 @@ Here is a basic flow diagram for your plugin commands:
 
 
   buyapple:
-    description: Compra uma Maçã Encantada.
+    description: Buy a magic apple.
     usage: /buyapple
   buyemerald:
-    description: Compra uma Esmeralda.
+    description: Buy an Emerald.
     usage: /buyemerald
   buydiamond:
     description: Compra um Diamante.
     usage: /buydiamond
   buygold:
-    description: Compra uma Barra de Ouro.
+    description: Buy a gold bar.
     usage: /buygold
   buyiron:
-    description: Compra uma Barra de Ferro.
+    description: Buy an Iron Bar.
     usage: /buyiron
   buynetherite:
-    description: Compra uma Barra de Netherite.
+    description: Buy a block and a Netherite upgrade book.
     usage: /buynetherite
   buySpinningWand:
-    description: Compra uma Varinha Giratória.
+    description: Buy a Twirling Wand.
     usage: /buySpinningWand
   buyLapis:
-    description: Compra um Lápis Lazúli.
+    description: Buy a Lapis Lazuli.
     usage: /buyLapis
   buyQuartz:
-    description: Compra um Quartzo.
+    description: Buy a Quartz.
     usage: /buyQuartz
   buyRedstone:
-    description: Compra uma Redstone.
+    description: Buy a Redstone.
     usage: /buyRedstone
   buyClay:
-    description: Compra um Bloco de Argila.
+    description: Buy a block of clay.
     usage: /buyClay
   buySandBlock:
-    description: Compra um Bloco de Areia.
+    description: Buy a block of sand.
     usage: /buySandBlock
   buyAllTools:
-    description: Compra todas as Ferramentas.
+    description: Buy all the tools.
     usage: /buyAllTools
   buyAllFood:
-    description: Compra toda a Comida.
+    description: Buy all the food.
     usage: /buyAllFood
   buySimpleBook:
-    description: Compra um Livro Simples.
+    description: Buy a Simple Book.
     usage: /buySimpleBook
   buyEmeraldBlock:
-    description: Compra um Bloco de Esmeralda.
+    description: Buy an Emerald Block.
     usage: /buyEmeraldBlock
   buySimpleMap:
-    description: Compra um Mapa Simples.
+    description: Buy a Simple Map.
     usage: /buySimpleMap
   buySimpleCompass:
-    description: Compra uma Bússola Simples.
+    description: Buy a Simple Compass.
     usage: /buySimpleCompass
   buySimpleFishingRod:
-    description: Compra uma Vara de Pesca Simples.
+    description: Buy a simple fishing rod.
     usage: /buySimpleFishingRod
   buyAxolotlBucket:
-    description: Balde com peixe Simples.
+    description: Bucket with simple fish.
     usage: /buyAxolotlBucket
 
 
@@ -185,22 +185,22 @@ Here is a basic flow diagram for your plugin commands:
 ### **Solana Transfer Flow**
 
 ```plaintext
-                          [Jogador Executa /soltransfer]
+                          [Player Executes /soltransfer]
                                     |
                                     v
-                        [Verifica carteira do remetente]
+                          [Check sender's wallet]
                                     |
                                     v
-                        [Verifica saldo de SOL do remetente]
+                        [Check the sender's SOL balance]
                                     |
                                     v
-                        [Executa transferência via Docker]
+                        [Executes transfer via Docker]
                                     |
                                     v
-                        [Registra transação no banco]
+                        [Records transaction in the bank]
                                     |
                                     v
-                        [Confirma transferência ao jogador]
+                        [Confirm transfer to the player]
 ```
 
 ---
@@ -208,19 +208,19 @@ Here is a basic flow diagram for your plugin commands:
 ### **Wallet Creation Flow**
 
 ```plaintext
-                          [Jogador Executa /createwallet]
+                          [Player Executes /createwallet]
                                     |
                                     v
-                        [Verifica se já existe uma carteira]
+                        [Check if a wallet already exists]
                                     |
                                     v
-                        [Cria carteira via Docker]
+                        [Create a wallet via Docker]
                                     |
                                     v
-                        [Salva endereço da carteira no banco]
+                        [Save wallet address in the bank]
                                     |
                                     v
-                        [Retorna endereço ao jogador]
+                        [Returns the address to the player]
 ```
 
 ---
