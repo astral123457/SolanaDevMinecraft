@@ -242,65 +242,118 @@ Here is a basic flow diagram for your plugin commands:
 # config.yml
 
 database:
-  url: jdbc:mysql://debian.tail561849.ts.net:3306/banco
-  user: root
-  password: "0073007"
-  database_solana_minecraft: "banco"
+
+      url: jdbc:mysql://debian.tail561849.ts.net:3306/banco
+
+      user: root
+      
+      password: "0073007"
+      
+      database_solana_minecraft: "banco"
 
 docker:
-  host: debian.tail561849.ts.net
-  base_path: /home/astral/astralcoin
-  solana_command: heysolana
-  wallet_bank_store_admin: "dadhcDXHiHDrWkT2Z4pSZyF6HWmHwQMG3HtGciwccVP"
-  api_web_key: "b493d48364afe44d"
+
+      host: debian.tail561849.ts.net
+      
+      base_path: /home/astral/astralcoin
+      
+      solana_command: heysolana
+      
+      wallet_bank_store_admin: "dadhcDXHiHDrWkT2Z4pSZyF6HWmHwQMG3HtGciwccVP"
+      
+      api_web_key: "b493d48364afe44d"
 
 store:
+
   value_of_in-game_currency: "1000" # 1 SOL = 1000 moedas do jogo
+  
   price:
-    apple: 500
-    emerald: 1000
-    lapis: 1000
-    quartz: 1000
-    redstone: 1000
-    clay: 1000
-    buySandBlock: 1000
-    buySpinningWand: 800
-    buyEmeraldBlock: 10000
-    buyDiamondBlock: 50000
-    buyGoldBlock: 20000
-    buyIronBlock: 10000
-    buyNetheriteBlock: 100000
-    buyAllTools: 5000
-    buyAllEnchantmentBooks: 5000
-    buyAllFood: 2000
-    buySimpleBook: 50
-    buySimpleMap: 100
-    buySimpleCompass: 150
-    buySimpleFishingRod: 200
-    buyAxolotlBucket: 400
+        apple: 500
+        
+        emerald: 1000
+        
+        lapis: 1000
+        
+        quartz: 1000
+        
+        redstone: 1000
+        
+        clay: 1000
+        
+        buySandBlock: 1000
+        
+        buySpinningWand: 800
+        
+        buyEmeraldBlock: 10000
+        
+        buyDiamondBlock: 50000
+        
+        buyGoldBlock: 20000
+        
+        buyIronBlock: 10000
+        
+        buyNetheriteBlock: 100000
+        
+        buyAllTools: 5000
+        
+        buyAllEnchantmentBooks: 5000
+        
+        buyAllFood: 2000
+        
+        buySimpleBook: 50
+        
+        buySimpleMap: 100
+        
+        buySimpleCompass: 150
+        
+        buySimpleFishingRod: 200
+        
+        buyAxolotlBucket: 400
 
 language:
+
   default: "pt-BR"
+  
   supported:
+  
     - "pt-BR"
+    
     - "en-US"
+    
     - "es-ES"
+    
     - "fr-FR"  # Francês off
+    
     - "de-DE"  # Alemão off 
+    
     - "it-IT"  # Italiano off 
+    
     - "ja-JP"  # Japonês off
+    
     - "ko-KR"  # Coreano off
+    
     - "zh-CN"  # Chinês simplificado off
+    
     - "zh-TW"  # Chinês tradicional off
+    
     - "ru-RU"  # Russo off
+    
     - "ar-SA"  # Árabe off
+    
     - "hi-IN"  # Hindi off
+    
     - "pt-PT"  # Português de Portugal off
+    
     - "es-MX"  # Espanhol do México off
+    
     - "fr-CA"  # Francês canadense off
+    
     - "de-AT"  # Alemão da Áustria off
+    
     - "it-CH"  # Italiano da Suíça off
+    
     - "ja-JP"  # Japonês do Japão off
+    
     - "ko-KR"  # Coreano da Coreia do Sul off
 
 
