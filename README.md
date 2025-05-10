@@ -3,11 +3,11 @@ To configure everything first, I recommend watching this video in English, it he
 
 # Dependencia mod do Fabric server https://fabricmc.net/use/server/
 
-          Cardboard-1.21.4.jar 	
+          Cardboard-1.21.4.jar (Cardboard-1.19.x or 1.20.x or 1.21.x)	
           
-          fabric-api-0.119.21.21.4.jar 	
+          fabric-api-0.119.21.21.4.jar 	 
           
-          iCommon-Fabric-bundle1.jar 
+          iCommon-Fabric-bundle1.jar (1.19 a 1.21.5)
 
 SolanaDevMinecraft
 
