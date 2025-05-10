@@ -91,7 +91,7 @@ Here is a basic flow diagram for your plugin commands:
 
 ---
 
-### **Fluxo de Compras na Loja**
+### **Store Purchase Flow**
 
 ```plaintext
                           [Jogador Executa Comando de Compra]
@@ -99,8 +99,8 @@ Here is a basic flow diagram for your plugin commands:
                                     v
         +---------------------------+---------------------------+
         |                           |                           |
-  /buyapple                   /buyemerald              /buynetheritepickaxe
-  Compra Maçã Encantada       Compra Esmeralda         Compra Picareta de Netherite
+  /buyapple                   /buyemerald              /buynetherite
+  buy apple Encantada       buy Emerald       9 Netherite + book Netherite upgrade
         |                           |                           |
         v                           v                           v
 [Verifica saldo no banco]   [Verifica saldo no banco]   [Verifica saldo no banco]
@@ -117,7 +117,7 @@ Here is a basic flow diagram for your plugin commands:
 
 ---
 
-### **Fluxo de Transferência de Solana**
+### **Solana Transfer Flow**
 
 ```plaintext
                           [Jogador Executa /soltransfer]
@@ -140,7 +140,7 @@ Here is a basic flow diagram for your plugin commands:
 
 ---
 
-### **Fluxo de Criação de Carteira**
+### **Wallet Creation Flow**
 
 ```plaintext
                           [Jogador Executa /createwallet]
