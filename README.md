@@ -10,7 +10,10 @@ To configure everything first, I recommend watching this video in English, it he
           iCommon-Fabric-bundle1.jar 
 
 SolanaDevMinecraft
-![image](https://github.com/user-attachments/assets/45c02d12-4759-42b3-b5a8-885796fdcbcc)
+
+
+![image](https://github.com/user-attachments/assets/1a40a6c9-a8fa-44f8-bf96-59b5109b015e)
+
 
 Example URL:
 http://your_server/consulta.php?apikey=2f4164616e614e61&command=your_command_here
