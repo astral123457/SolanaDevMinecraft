@@ -117,16 +117,6 @@ public boolean onCommand(CommandSender sender, Command command, String label, St
         if (sender instanceof Player) {
             Player player = (Player) sender;
             String lang = store.getPlayerLanguage(player); // Obtém o idioma do jogador
-            if (lang.equals("pt")) {
-                player.sendMessage(Component.text("⚡ Aguarde! ", NamedTextColor.GOLD) // Correção aqui
-                .append(Component.text("Pode levar 5 segundos...", NamedTextColor.GREEN))
-                .append(Component.text("\n🌐 Conectando ao banco Solana...", NamedTextColor.AQUA)));
-                } else {
-                    player.sendMessage(Component.text("⚡ Please wait! ", NamedTextColor.GOLD)
-                    .append(Component.text("This may take 5 seconds...", NamedTextColor.GREEN))
-                    .append(Component.text("\n🌐 Connecting to Solana bank...", NamedTextColor.AQUA))); // Certifique-se de que este está correto!
-                }
-
             checkBalance(player);
         } else {
             sender.sendMessage("Este comando só pode ser usado por jogadores.");
@@ -172,15 +162,19 @@ public boolean onCommand(CommandSender sender, Command command, String label, St
         if (args.length == 1) {
             try {
                 String lang = store.getPlayerLanguage(player); // Obtém o idioma do jogador
-                if (lang.equals("pt")) {
-                    player.sendMessage(Component.text("⚡ Aguarde! ", NamedTextColor.GOLD) // Correção aqui
-                    .append(Component.text("Pode levar 5 segundos...", NamedTextColor.GREEN))
-                    .append(Component.text("\n🌐 Conectando ao banco Solana...", NamedTextColor.AQUA)));
-                    } else {
-                        player.sendMessage(Component.text("⚡ Please wait! ", NamedTextColor.GOLD)
-                        .append(Component.text("This may take 5 seconds...", NamedTextColor.GREEN))
-                        .append(Component.text("\n🌐 Connecting to Solana bank...", NamedTextColor.AQUA))); // Certifique-se de que este está correto!
-                    }
+               if (lang.equals("pt-BR")) {
+                        player.sendMessage(Component.text("⚡ Aguarde! ", NamedTextColor.GOLD)
+                        .append(Component.text("Pode levar 5 segundos...", NamedTextColor.GREEN))
+                        .append(Component.text("\n🌐 Conectando ao banco Solana...", NamedTextColor.AQUA)));
+                        } else if (lang.equals("es-ES")) {
+                            player.sendMessage(Component.text("⚡ ¡Espere! ", NamedTextColor.GOLD)
+                            .append(Component.text("Puede tardar 5 segundos...", NamedTextColor.GREEN))
+                            .append(Component.text("\n🌐 Conectando al banco Solana...", NamedTextColor.AQUA)));
+                            } else { // Inglês como padrão
+                            player.sendMessage(Component.text("⚡ Please wait! ", NamedTextColor.GOLD)
+                            .append(Component.text("This may take 5 seconds...", NamedTextColor.GREEN))
+                            .append(Component.text("\n🌐 Connecting to Solana bank...", NamedTextColor.AQUA)));
+                        }
                 double solAmount = Double.parseDouble(args[0]);
                 solana.buyGameCurrency(player, solAmount);
             } catch (NumberFormatException e) {
@@ -212,11 +206,11 @@ public boolean onCommand(CommandSender sender, Command command, String label, St
                 String recipient = args[0];
                 try {
                     String lang = store.getPlayerLanguage(player); // Obtém o idioma do jogador
-                    if (lang.equals("pt")) {
+                    if (lang.equals("pt-BR")) {
                         player.sendMessage(Component.text("⚡ Aguarde! ", NamedTextColor.GOLD)
                         .append(Component.text("Pode levar 5 segundos...", NamedTextColor.GREEN))
                         .append(Component.text("\n🌐 Conectando ao banco Solana...", NamedTextColor.AQUA)));
-                        } else if (lang.equals("es")) {
+                        } else if (lang.equals("es-ES")) {
                             player.sendMessage(Component.text("⚡ ¡Espere! ", NamedTextColor.GOLD)
                             .append(Component.text("Puede tardar 5 segundos...", NamedTextColor.GREEN))
                             .append(Component.text("\n🌐 Conectando al banco Solana...", NamedTextColor.AQUA)));
@@ -296,6 +290,37 @@ public boolean onCommand(CommandSender sender, Command command, String label, St
             store.buyClayBlock(player);
         }
         return true;
+    } else if (command.getName().equalsIgnoreCase("buySimpleMap")) {
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            store.buySimpleMap(player);
+        }
+        return true;
+    } else if (command.getName().equalsIgnoreCase("buySimpleCompass")) {
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            store.buySimpleCompass(player);
+        }
+        return true;
+    } else if (command.getName().equalsIgnoreCase("buySimpleFishingRod")) {
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            store.buySimpleFishingRod(player);
+        }
+        return true;
+    }
+     else if (command.getName().equalsIgnoreCase("buyEnchantmentShulkerBox")) {
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            store.buyEnchantmentShulkerBox(player);
+        }
+        return true;
+    } else if (command.getName().equalsIgnoreCase("buyAxolotlBucket")) {
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            store.buyAxolotlBucket(player);
+        }
+        return true;
     } else if (command.getName().equalsIgnoreCase("buyRedstone")) {
         if (sender instanceof Player) {
             Player player = (Player) sender;
@@ -330,6 +355,12 @@ public boolean onCommand(CommandSender sender, Command command, String label, St
         if (sender instanceof Player) {
             Player player = (Player) sender;
             store.buySimpleBook(player);
+        }
+        return true;
+    } else if (command.getName().equalsIgnoreCase("buy1EnchantedPickaxe")) {
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            store.buyEnchantedPickaxe(player);
         }
         return true;
     } else if (command.getName().equalsIgnoreCase("buynetherite")) {

@@ -21,10 +21,12 @@ import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.PotionMeta; // 🔹 Correto para poções
+import org.bukkit.inventory.meta.BlockStateMeta; // 🔹 Necessário para Shulker Box
 
 import org.bukkit.enchantments.Enchantment; // 🔹 Correto para encantamentos
 import org.bukkit.inventory.meta.EnchantmentStorageMeta; // 🔹 Necessário para livros encantados
-
+import org.bukkit.block.ShulkerBox;
+import org.bukkit.block.BlockState;
 
 
 import net.kyori.adventure.text.Component;
@@ -65,7 +67,7 @@ public class Store {
                     return true;
                 } else {
                     String lang = getPlayerLanguage(player);
-                    player.sendMessage(lang.equals("pt") ?
+                    player.sendMessage(lang.equals("pt-BR") ?
                         Component.text("💰 Saldo insuficiente para realizar a compra.", NamedTextColor.RED) :
                         Component.text("💰 Insufficient balance to make the purchase.", NamedTextColor.RED));
                     return false;
@@ -81,15 +83,17 @@ public class Store {
     // 📌 Compra de Maçã Encantada
     public void buyEnchantedApple(Player player) {
         int price = config.getInt("store.price.apple"); // 🔹 Obtém preço 
+        String lang = getPlayerLanguage(player);
+        player.sendMessage("🍳. Lang= " + lang);
         //int price = 500;
         if (processPurchase(player, price)) {
             player.getInventory().addItem(new ItemStack(Material.ENCHANTED_GOLDEN_APPLE, 1));
 
-            String lang = getPlayerLanguage(player);
+            
            player.sendMessage(
-            lang.equals("pt") ? 
+            lang.equals("pt-BR") ? 
            Component.text("🍎 Você comprou uma Maçã Encantada por $" + price + "!", NamedTextColor.GOLD) :
-           lang.equals("es") ? 
+           lang.equals("es-ES") ? 
            Component.text("🍎 ¡Has comprado una Manzana Encantada por $" + price + "!", NamedTextColor.GOLD) :
            Component.text("🍎 You bought an Enchanted Apple for $" + price + "!", NamedTextColor.GOLD)
            );
@@ -105,9 +109,9 @@ public class Store {
 
             String lang = getPlayerLanguage(player);
             player.sendMessage(
-                lang.equals("pt") ? 
+                lang.equals("pt-BR") ? 
                 Component.text("💎 Você comprou uma Esmeralda por $" + price + "!", NamedTextColor.GOLD) :
-                lang.equals("es") ? 
+                lang.equals("es-ES") ? 
                 Component.text("💎 ¡Has comprado una Esmeralda por $" + price + "!", NamedTextColor.GOLD) :
                 Component.text("💎 You bought an Emerald for $" + price + "!", NamedTextColor.GOLD)
             );
@@ -124,9 +128,9 @@ public class Store {
 
             String lang = getPlayerLanguage(player);
             player.sendMessage(
-                lang.equals("pt") ? 
+                lang.equals("pt-BR") ? 
                 Component.text("🏆 Você comprou um Bloco de Ouro por $" + price + "!", NamedTextColor.GOLD) :
-                lang.equals("es") ? 
+                lang.equals("es-ES") ? 
                 Component.text("🏆 ¡Has comprado un Bloque de Oro por $" + price + "!", NamedTextColor.GOLD) :
                 Component.text("🏆 You bought a Gold Block for $" + price + "!", NamedTextColor.GOLD)
             );
@@ -143,9 +147,9 @@ public class Store {
 
             String lang = getPlayerLanguage(player);
             player.sendMessage(
-                lang.equals("pt") ? 
+                lang.equals("pt-BR") ? 
                 Component.text("💎 Você comprou um Bloco de Diamante por $" + price + "!", NamedTextColor.GOLD) :
-                lang.equals("es") ? 
+                lang.equals("es-ES") ? 
                 Component.text("💎 ¡Has comprado un Bloque de Diamante por $" + price + "!", NamedTextColor.GOLD) :
                 Component.text("💎 You bought a Diamond Block for $" + price + "!", NamedTextColor.GOLD)
             );
@@ -163,9 +167,9 @@ public class Store {
 
             String lang = getPlayerLanguage(player);
             player.sendMessage(
-                lang.equals("pt") ? 
+                lang.equals("pt-BR") ? 
                 Component.text("💎 Você comprou um Bloco de Esmeralda por $" + price + "!", NamedTextColor.GOLD) :
-                lang.equals("es") ? 
+                lang.equals("es-ES") ? 
                 Component.text("💎 ¡Has comprado un Bloque de Esmeralda por $" + price + "!", NamedTextColor.GOLD) :
                 Component.text("💎 You bought an Emerald Block for $" + price + "!", NamedTextColor.GOLD)
             );
@@ -181,9 +185,9 @@ public class Store {
 
             String lang = getPlayerLanguage(player);
             player.sendMessage(
-                lang.equals("pt") ? 
+                lang.equals("pt-BR") ? 
                 Component.text("💎 Você comprou um Bloco de Netherite por $" + price + "!", NamedTextColor.GOLD) :
-                lang.equals("es") ? 
+                lang.equals("es-ES") ? 
                 Component.text("💎 ¡Has comprado un Bloque de Netherite por $" + price + "!", NamedTextColor.GOLD) :
                 Component.text("💎 You bought a Netherite Block for $" + price + "!", NamedTextColor.GOLD)
             );
@@ -199,9 +203,9 @@ public class Store {
 
             String lang = getPlayerLanguage(player);
             player.sendMessage(
-                lang.equals("pt") ? 
+                lang.equals("pt-BR") ? 
                 Component.text("🏆 Você comprou um Bloco de Ferro por $" + price + "!", NamedTextColor.GOLD) :
-                lang.equals("es") ? 
+                lang.equals("es-ES") ? 
                 Component.text("🏆 ¡Has comprado un Bloque de Hierro por $" + price + "!", NamedTextColor.GOLD) :
                 Component.text("🏆 You bought an Iron Block for $" + price + "!", NamedTextColor.GOLD)
             );
@@ -217,9 +221,9 @@ public class Store {
 
             String lang = getPlayerLanguage(player);
             player.sendMessage(
-                lang.equals("pt") ? 
+                lang.equals("pt-BR") ? 
                 Component.text("💎 Você comprou um Bloco de Lápis por $" + price + "!", NamedTextColor.GOLD) :
-                lang.equals("es") ? 
+                lang.equals("es-ES") ? 
                 Component.text("💎 ¡Has comprado un Bloque de Lápiz por $" + price + "!", NamedTextColor.GOLD) :
                 Component.text("💎 You bought a Lapis Block for $" + price + "!", NamedTextColor.GOLD)
             );
@@ -235,9 +239,9 @@ public class Store {
 
             String lang = getPlayerLanguage(player);
             player.sendMessage(
-                lang.equals("pt") ? 
+                lang.equals("pt-BR") ? 
                 Component.text("💎 Você comprou um Bloco de Redstone por $" + price + "!", NamedTextColor.GOLD) :
-                lang.equals("es") ? 
+                lang.equals("es-ES") ? 
                 Component.text("💎 ¡Has comprado un Bloque de Redstone por $" + price + "!", NamedTextColor.GOLD) :
                 Component.text("💎 You bought a Redstone Block for $" + price + "!", NamedTextColor.GOLD)
             );
@@ -253,9 +257,9 @@ public class Store {
 
             String lang = getPlayerLanguage(player);
             player.sendMessage(
-                lang.equals("pt") ? 
+                lang.equals("pt-BR") ? 
                 Component.text("💎 Você comprou um Bloco de Quartzo por $" + price + "!", NamedTextColor.GOLD) :
-                lang.equals("es") ? 
+                lang.equals("es-ES") ? 
                 Component.text("💎 ¡Has comprado un Bloque de Quartzo por $" + price + "!", NamedTextColor.GOLD) :
                 Component.text("💎 You bought a Quartz Block for $" + price + "!", NamedTextColor.GOLD)
             );
@@ -271,9 +275,9 @@ public class Store {
 
             String lang = getPlayerLanguage(player);
             player.sendMessage(
-                lang.equals("pt") ? 
+                lang.equals("pt-BR") ? 
                 Component.text("💎 Você comprou um Bloco de Argila por $" + price + "!", NamedTextColor.GOLD) :
-                lang.equals("es") ? 
+                lang.equals("es-ES") ? 
                 Component.text("💎 ¡Has comprado un Bloque de Argila por $" + price + "!", NamedTextColor.GOLD) :
                 Component.text("💎 You bought a Clay Block for $" + price + "!", NamedTextColor.GOLD)
             );
@@ -289,9 +293,9 @@ public class Store {
 
             String lang = getPlayerLanguage(player);
             player.sendMessage(
-                lang.equals("pt") ? 
+                lang.equals("pt-BR") ? 
                 Component.text("💎 Você comprou um Bloco de Areia por $" + price + "!", NamedTextColor.GOLD) :
-                lang.equals("es") ? 
+                lang.equals("es-ES") ? 
                 Component.text("💎 ¡Has comprado un Bloque de Areia por $" + price + "!", NamedTextColor.GOLD) :
                 Component.text("💎 You bought a Sand Block for $" + price + "!", NamedTextColor.GOLD)
             );
@@ -325,46 +329,93 @@ public class Store {
 
         String lang = getPlayerLanguage(player);
         player.sendMessage(
-            lang.equals("pt") ? Component.text("🧪 Você comprou todas as poções por $" + totalPrice + "!", NamedTextColor.GREEN) :
-            lang.equals("es") ? Component.text("🧪 ¡Has comprado todas las pociones por $" + totalPrice + "!", NamedTextColor.GREEN) :
+            lang.equals("pt-BR") ? Component.text("🧪 Você comprou todas as poções por $" + totalPrice + "!", NamedTextColor.GREEN) :
+            lang.equals("es-ES") ? Component.text("🧪 ¡Has comprado todas las pociones por $" + totalPrice + "!", NamedTextColor.GREEN) :
             Component.text("🧪 You bought all potions for $" + totalPrice + "!", NamedTextColor.GREEN)
         );
     }
 }
 
+@SuppressWarnings("deprecation")
+public void buyEnchantmentShulkerBox(Player player) {
+    int totalPrice = config.getInt("store.price.enchantmentshulkerbox", 5000); // 🔹 Obtém preço do config.yml, com fallback de 10000
+    if (!processPurchase(player, totalPrice)) return; // 🔹 Interrompe se a compra falhar
+
+    // 🔹 Criar a Shulker Box verde
+    ItemStack shulkerBox = new ItemStack(Material.GREEN_SHULKER_BOX);
+    BlockStateMeta meta = (BlockStateMeta) shulkerBox.getItemMeta();
+    ShulkerBox shulker = (ShulkerBox) meta.getBlockState();
+
+    // 🔹 Adicionar os itens na Shulker Box
+    shulker.getInventory().addItem(new ItemStack(Material.IRON_INGOT, 64));
+    shulker.getInventory().addItem(new ItemStack(Material.IRON_INGOT, 6));
+    shulker.getInventory().addItem(new ItemStack(Material.EMERALD, 10));
+    shulker.getInventory().addItem(new ItemStack(Material.WOLF_SPAWN_EGG, 1));
+    shulker.getInventory().addItem(new ItemStack(Material.SHEEP_SPAWN_EGG, 1));
+    shulker.getInventory().addItem(new ItemStack(Material.ENCHANTED_GOLDEN_APPLE, 2));
+    shulker.getInventory().addItem(new ItemStack(Material.FLOWER_POT, 10));
+
+    // 🔹 Criar uma espada de Netherite encantada
+    ItemStack sword = new ItemStack(Material.NETHERITE_SWORD, 1);
+    sword.addUnsafeEnchantment(Enchantment.DAMAGE_ALL, 5);
+    sword.addUnsafeEnchantment(Enchantment.getByName("UNBREAKING"), 3);
+    sword.addUnsafeEnchantment(Enchantment.MENDING, 1);
+    sword.addUnsafeEnchantment(Enchantment.FIRE_ASPECT, 2);
+    sword.addUnsafeEnchantment(Enchantment.LOOT_BONUS_MOBS, 3);
+
+    // 🔹 Adicionar a espada encantada na Shulker Box
+    shulker.getInventory().addItem(sword);
+
+    // 🔹 Salvar e aplicar as mudanças na Shulker Box
+    meta.setBlockState(shulker);
+    shulkerBox.setItemMeta(meta);
+
+    // 🔹 Adicionar a Shulker Box ao inventário do jogador
+    player.getInventory().addItem(shulkerBox);
+
+    // 🔹 Mensagem para o jogador
+    String lang = getPlayerLanguage(player);
+    player.sendMessage(
+        Component.text("📦 ").append(
+            lang.equals("pt-BR") ? Component.text("Você comprou uma Shulker Box encantada cheia de tesouros por $" + totalPrice + "!", NamedTextColor.GOLD) :
+            lang.equals("es-ES") ? Component.text("¡Has comprado una Shulker Box encantada llena de tesoros por $" + totalPrice + "!", NamedTextColor.GOLD) :
+            Component.text("You bought an enchanted Shulker Box full of treasures for $" + totalPrice + "!", NamedTextColor.GOLD)
+        )
+    );
+}
+
 
 
     public void buyAllEnchantmentBooks(Player player) {
-    int totalPrice = config.getInt("store.price.buyAllEnchantmentBooks");
-    //int totalPrice = 5000; // Defina o preço total para todos os livros
-    if (processPurchase(player, totalPrice)) {
-        // Lista de encantamentos disponíveis
-        List<Enchantment> enchantments = List.of(
-            Enchantment.PROTECTION_ENVIRONMENTAL,
-            Enchantment.DAMAGE_ALL,
-            Enchantment.FIRE_ASPECT,
-            Enchantment.LOOT_BONUS_BLOCKS,
-            Enchantment.LOOT_BONUS_MOBS
-        );
+    int totalPrice = config.getInt("store.price.buyAllEnchantmentBooks", 8000); // 🔹 Obtém preço do config.yml, com fallback de 8000
+    if (!processPurchase(player, totalPrice)) return; // 🔹 Interrompe se a compra falhar
 
-        // Adiciona todos os livros encantados ao inventário do jogador
-        for (Enchantment enchantment : enchantments) {
-            ItemStack book = new ItemStack(Material.ENCHANTED_BOOK);
-            EnchantmentStorageMeta meta = (EnchantmentStorageMeta) book.getItemMeta();
-            if (meta != null) {
-                meta.addStoredEnchant(enchantment, 1, true);
-                book.setItemMeta(meta);
-            }
-            player.getInventory().addItem(book);
-        }
+    // 🔹 Lista de comandos para dar cada livro encantado separadamente
+    List<String> commands = List.of(
+        String.format("give %s enchanted_book{StoredEnchantments:[{id:\"sharpness\",lvl:5}]}", player.getName()),        // Afiação V
+        String.format("give %s enchanted_book{StoredEnchantments:[{id:\"smite\",lvl:5}]}", player.getName()),            // Julgamento V
+        String.format("give %s enchanted_book{StoredEnchantments:[{id:\"bane_of_arthropods\",lvl:5}]}", player.getName()), // Ruína dos Artrópodes V
+        String.format("give %s enchanted_book{StoredEnchantments:[{id:\"knockback\",lvl:2}]}", player.getName()),         // Repulsão II
+        String.format("give %s enchanted_book{StoredEnchantments:[{id:\"fire_aspect\",lvl:2}]}", player.getName()),       // Aspecto Flamejante II
+        String.format("give %s enchanted_book{StoredEnchantments:[{id:\"looting\",lvl:3}]}", player.getName()),          // Pilhagem III
+        String.format("give %s enchanted_book{StoredEnchantments:[{id:\"unbreaking\",lvl:3}]}", player.getName()),       // Inquebrável III
+        String.format("give %s enchanted_book{StoredEnchantments:[{id:\"mending\",lvl:1}]}", player.getName())           // Remendo I
+    );
 
-        String lang = getPlayerLanguage(player);
-        player.sendMessage(
-            lang.equals("pt") ? Component.text("📚 Você comprou todos os livros de encantamento por $" + totalPrice + "!", NamedTextColor.GOLD) :
-            lang.equals("es") ? Component.text("📚 ¡Has comprado todos los libros encantados por $" + totalPrice + "!", NamedTextColor.GOLD) :
-            Component.text("📚 You bought all enchantment books for $" + totalPrice + "!", NamedTextColor.GOLD)
-        );
+    // 🔹 Executa cada comando para dar os livros ao jogador
+    for (String command : commands) {
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
     }
+
+    // 🔹 Mensagem para o jogador
+    String lang = getPlayerLanguage(player);
+    player.sendMessage(
+        Component.text("📚 ").append(
+            lang.equals("pt-BR") ? Component.text("Você comprou todos os livros de encantamento no nível máximo por $" + totalPrice + "!", NamedTextColor.GOLD) :
+            lang.equals("es-ES") ? Component.text("¡Has comprado todos los libros encantados en el nivel máximo por $" + totalPrice + "!", NamedTextColor.GOLD) :
+            Component.text("You bought all max-level enchantment books for $" + totalPrice + "!", NamedTextColor.GOLD)
+        )
+    );
 }
 
 
@@ -387,8 +438,8 @@ public void buyAllFood(Player player) {
 
         String lang = getPlayerLanguage(player);
         player.sendMessage(
-            lang.equals("pt") ? Component.text("🍽️ Você comprou todos os alimentos por $" + totalPrice + "!", NamedTextColor.GOLD) :
-            lang.equals("es") ? Component.text("🍽️ ¡Has comprado todos los alimentos por $" + totalPrice + "!", NamedTextColor.GOLD) :
+            lang.equals("pt-BR") ? Component.text("🍽️ Você comprou todos os alimentos por $" + totalPrice + "!", NamedTextColor.GOLD) :
+            lang.equals("es-ES") ? Component.text("🍽️ ¡Has comprado todos los alimentos por $" + totalPrice + "!", NamedTextColor.GOLD) :
             Component.text("🍽️ You bought all food items for $" + totalPrice + "!", NamedTextColor.GOLD)
         );
     }
@@ -396,62 +447,143 @@ public void buyAllFood(Player player) {
 
 
 public void buySimpleBook(Player player) {
-    int price = config.getInt("store.price.buySimpleBook");
-    //int price = 50; // Preço do livro comum
-    if (processPurchase(player, price)) {
-        ItemStack book = new ItemStack(Material.BOOK);
-        ItemMeta meta = book.getItemMeta();
-        if (meta != null) {
-            meta.displayName(Component.text("📖 Livro Simples", NamedTextColor.GRAY));
-            meta.lore(List.of(Component.text("Um livro para suas anotações!", NamedTextColor.DARK_GRAY)));
-            book.setItemMeta(meta);
-        }
+    int price = config.getInt("store.price.buySimpleBook", 50); // 🔹 Obtém preço do config.yml, com fallback de 50
+    if (!processPurchase(player, price)) return; // 🔹 Interrompe se a compra falhar
 
-        player.getInventory().addItem(book);
+    // 🔹 Executa o comando para dar um livro ao jogador
+    String command = String.format("give %s minecraft:book 1", player.getName());
+    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command); // 🔹 Executa o comando como console
 
-        String lang = getPlayerLanguage(player);
-        player.sendMessage(
-            lang.equals("pt") ? Component.text("📖 Você comprou um livro simples por $" + price + "!", NamedTextColor.GRAY) :
-            lang.equals("es") ? Component.text("📖 ¡Has comprado un libro simple por $" + price + "!", NamedTextColor.GRAY) :
-            Component.text("📖 You bought a simple book for $" + price + "!", NamedTextColor.GRAY)
-        );
-    }
+    // 🔹 Mensagem para o jogador
+    String lang = getPlayerLanguage(player);
+    player.sendMessage(
+        Component.text("📖 ").append(
+            lang.equals("pt-BR") ? Component.text("Você comprou um livro simples por $" + price + "!", NamedTextColor.GRAY) :
+            lang.equals("es-ES") ? Component.text("¡Has comprado un libro simple por $" + price + "!", NamedTextColor.GRAY) :
+            Component.text("You bought a simple book for $" + price + "!", NamedTextColor.GRAY)
+        )
+    );
 }
 
-    public void buySpinningWand(Player player) {
-    int price = config.getInt("store.price.buySpinningWand");
-    //int price = 800; // Defina o preço da varinha
-    if (processPurchase(player, price)) {
-        ItemStack wand = new ItemStack(Material.STICK, 1); // Usando um bastão como base da varinha
-        ItemMeta meta = wand.getItemMeta();
-        if (meta != null) {
-    // ✅ Corrigido para usar Component.text() em vez de setDisplayName(String)
-    meta.displayName(Component.text("✨ Varinha Giratória que vibra ✨"));
+public void buySimpleMap(Player player) {
+    int price = config.getInt("store.price.buySimpleMap", 100); // 🔹 Obtém preço do config.yml, com fallback de 100
+    if (!processPurchase(player, price)) return; // 🔹 Interrompe se a compra falhar
 
-    // ✅ Corrigido para usar setLore(List<Component>) com Adventure API
-    meta.lore(List.of(
-        Component.text("Gira objetos ao redor!").color(NamedTextColor.AQUA),
-        Component.text("Poder mágico incrível!").color(NamedTextColor.LIGHT_PURPLE)
+    // 🔹 Executa o comando para dar um mapa ao jogador
+    String command = String.format("give %s minecraft:filled_map 1", player.getName());
+    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command); // Executa o comando como console
+
+    // 🔹 Mensagem para o jogador
+    String lang = getPlayerLanguage(player);
+    player.sendMessage(
+        Component.text("🗺️ ").append(
+            lang.equals("pt-BR") ? Component.text("Você comprou um mapa simples por $" + price + "!", NamedTextColor.GRAY) :
+            lang.equals("es-ES") ? Component.text("¡Has comprado un mapa simple por $" + price + "!", NamedTextColor.GRAY) :
+            Component.text("You bought a simple map for $" + price + "!", NamedTextColor.GRAY)
+        )
+    );
+}
+
+public void buySimpleCompass(Player player) {
+    int price = config.getInt("store.price.buySimpleCompass", 150); // 🔹 Obtém preço do config.yml, com fallback de 150
+    if (!processPurchase(player, price)) return; // 🔹 Interrompe se a compra falhar
+
+    // 🔹 Executa o comando para dar uma bússola ao jogador
+    //String command = String.format("give %s minecraft:compass 1", player.getName());
+    String command = String.format("/give 007amauri minecraft:recovery_compass 1", player.getName());
+    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command); // Executa o comando como console
+
+    // 🔹 Mensagem para o jogador
+    String lang = getPlayerLanguage(player);
+    player.sendMessage(
+        Component.text("🧭 ").append(
+            lang.equals("pt-BR") ? Component.text("Você comprou uma bússola simples por $" + price + "!", NamedTextColor.GRAY) :
+            lang.equals("es-ES") ? Component.text("¡Has comprado una brújula simple por $" + price + "!", NamedTextColor.GRAY) :
+            Component.text("You bought a simple compass for $" + price + "!", NamedTextColor.GRAY)
+        )
+    );
+}
+
+public void buySimpleFishingRod(Player player) {
+    int price = config.getInt("store.price.buySimpleFishingRod", 200); // 🔹 Obtém preço do config.yml, com fallback de 200
+    if (!processPurchase(player, price)) return; // 🔹 Interrompe se a compra falhar
+
+    // 🔹 Executa o comando para dar uma vara de pesca encantada ao jogador
+    String command = String.format(
+        "give %s minecraft:fishing_rod 1", 
+        player.getName()
+    );
+    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command); // 🔹 Executa o comando como console
+
+    // 🔹 Mensagem para o jogador
+    String lang = getPlayerLanguage(player);
+    player.sendMessage(
+        Component.text("🎣 ").append(
+            lang.equals("pt-BR") ? Component.text("Você comprou uma Vara de Pesca com Isca por $" + price + "!", NamedTextColor.GRAY) :
+            lang.equals("es-ES") ? Component.text("¡Has comprado una Caña de Pescar con Cebo por $" + price + "!", NamedTextColor.GRAY) :
+            Component.text("You bought a Fishing Rod with Bait for $" + price + "!", NamedTextColor.GRAY)
+        )
+    );
+}
+
+public void buySpinningWand(Player player) {
+    int price = config.getInt("store.price.buySpinningWand", 800); // 🔹 Obtém do config.yml, com fallback de 800
+    if (!processPurchase(player, price)) return; // 🔹 Interrompe se a compra falhar
+
+    // 🔹 Executa o comando para dar um Debug Stick ao jogador
+    String command = String.format("give %s minecraft:debug_stick 1", player.getName());
+    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command); // 🔹 Executa o comando como console
+
+    // 🔹 Mensagem para o jogador
+    String lang = getPlayerLanguage(player);
+    player.sendMessage(Component.text("✨ ").append(
+        lang.equals("pt-BR") ? Component.text("Você comprou um Debug Stick por $" + price + "!", NamedTextColor.LIGHT_PURPLE) :
+        lang.equals("es-ES") ? Component.text("¡Has comprado un Debug Stick por $" + price + "!", NamedTextColor.LIGHT_PURPLE) :
+        Component.text("You bought a Debug Stick for $" + price + "!", NamedTextColor.LIGHT_PURPLE)
     ));
-
-    wand.setItemMeta(meta);
 }
 
 
-        player.getInventory().addItem(wand); // Adiciona a varinha ao inventário do jogador
+public void buyAxolotlBucket(Player player) {
+    int price = config.getInt("store.price.axolotl_bucket", 500); // 🔹 Obtém preço do config.yml, com fallback de 500
+    if (!processPurchase(player, price)) return; // 🔹 Interrompe se a compra falhar
 
-        String lang = getPlayerLanguage(player);
-        player.sendMessage(
-            lang.equals("pt") ? Component.text("✨ Você comprou uma Varinha Giratória por $" + price + "!", NamedTextColor.LIGHT_PURPLE) :
-            lang.equals("es") ? Component.text("✨ ¡Has comprado una Varita Giratoria por $" + price + "!", NamedTextColor.LIGHT_PURPLE) :
-            Component.text("✨ You bought a Spinning Wand for $" + price + "!", NamedTextColor.LIGHT_PURPLE)
-        );
-    }
+    // 🔹 Executa o comando para dar um balde com Axolote ao jogador
+    String command = String.format("give %s minecraft:axolotl_bucket 1", player.getName());
+    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command); // 🔹 Executa o comando como console
+
+    // 🔹 Mensagem para o jogador
+    String lang = getPlayerLanguage(player);
+    player.sendMessage(
+        Component.text("🪣 ").append(
+            lang.equals("pt-BR") ? Component.text("Você comprou um balde com Axolote por $" + price + "!", NamedTextColor.AQUA) :
+            lang.equals("es-ES") ? Component.text("¡Has comprado un cubo con Axolote por $" + price + "!", NamedTextColor.AQUA) :
+            Component.text("You bought an Axolotl Bucket for $" + price + "!", NamedTextColor.AQUA)
+        )
+    );
 }
-
-
-   
     
+    public void buyEnchantedPickaxe(Player player) {
+    int price = config.getInt("store.price.enchanted_pickaxe", 5000); // 🔹 Obtém preço do config.yml, com fallback de 5000
+    if (!processPurchase(player, price)) return; // 🔹 Interrompe se a compra falhar
 
-    
+    // 🔹 Executa o comando para dar a picareta encantada ao jogador
+    String command = String.format(
+    "minecraft:give %s diamond_pickaxe 1 0 {Enchantments:[{id:\"efficiency\",lvl:5},{id:\"unbreaking\",lvl:3},{id:\"fortune\",lvl:3}]}", 
+    player.getName()
+);
+    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command); // Executa o comando como console
+
+    // 🔹 Mensagem para o jogador
+    String lang = getPlayerLanguage(player);
+    player.sendMessage(
+        Component.text("⛏️ ").append(
+            lang.equals("pt-BR") ? Component.text("Você comprou uma Picareta Encantada por $" + price + "!", NamedTextColor.GOLD) :
+            lang.equals("es-ES") ? Component.text("¡Has comprado un Pico Encantado por $" + price + "!", NamedTextColor.GOLD) :
+            Component.text("You bought an Enchanted Pickaxe for $" + price + "!", NamedTextColor.GOLD)
+        )
+    );
 }
+
+
+}// 🔹 Fim da classe Store

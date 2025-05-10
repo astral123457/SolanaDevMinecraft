@@ -80,7 +80,24 @@ commands:
   buyEmeraldBlock:
     description: Compra um Bloco de Esmeralda.
     usage: /buyEmeraldBlock
-  
+  buySimpleMap:
+    description: Compra um Mapa Simples.
+    usage: /buySimpleMap
+  buySimpleCompass:
+    description: Compra uma Bússola Simples.
+    usage: /buySimpleCompass
+  buySimpleFishingRod:
+    description: Compra uma Vara de Pesca Simples.
+    usage: /buySimpleFishingRod
+  buyAxolotlBucket:
+    description: Balde com peixe Simples.
+    usage: /buyAxolotlBucket
+  buy1EnchantedPickaxe:
+    description: Compra uma Picareta Encantada.
+    usage: /buy1EnchantedPickaxe
+  buyEnchantmentShulkerBox:
+    description: Compra uma Caixa de Shulker Encantada.
+    usage: /buyEnchantmentShulkerBox
   
   
   

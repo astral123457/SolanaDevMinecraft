@@ -30,7 +30,13 @@ store:
     buyAllPotions: 3000
     buyAllEnchantmentBooks: 5000
     buyAllFood: 2000
-    buySimpleBook: 1000
+    buySimpleBook: 50
+    buySimpleMap: 100
+    buySimpleCompass: 150
+    buySimpleFishingRod: 200
+    buyAxolotlBucket: 400
+    buy12EnchantedPickaxe: 1000
+    enchantmentshulkerbox: 5000
 
 language:
   default: "pt-BR"

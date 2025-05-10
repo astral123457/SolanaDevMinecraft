@@ -277,10 +277,10 @@ private String executeHttpGet(String urlString) throws Exception {
         LOGGER.warning("Nenhuma carteira encontrada para o jogador: " + player.getName());
         String lang = getPlayerLanguage(player);
 
-        if (lang.equals("pt")) {
+        if (lang.equals("pt-BR")) {
             player.sendMessage(Component.text("💳 Você ainda não possui uma carteira registrada.")
                 .color(TextColor.color(0xFF0000))); // Vermelho
-        } else if (lang.equals("es")) {
+        } else if (lang.equals("es-ES")) {
             player.sendMessage(Component.text("💳 Aún no tienes una billetera registrada.")
                 .color(TextColor.color(0xFF0000))); // Vermelho
         } else {
@@ -310,10 +310,10 @@ private String executeHttpGet(String urlString) throws Exception {
 
 String lang = getPlayerLanguage(player);
 
-        if (lang.equals("pt")) {
+        if (lang.equals("pt-BR")) {
             player.sendMessage(Component.text("💰 Seu saldo de SOL é: ")
                 .color(TextColor.color(0x800080))); // Roxo
-        } else if (lang.equals("es")) {
+        } else if (lang.equals("es-ES")) {
             player.sendMessage(Component.text("💰 Tu saldo de SOL es: ")
                 .color(TextColor.color(0x800080))); // Roxo
             } else {
@@ -344,7 +344,7 @@ String lang = getPlayerLanguage(player);
 
 String lang = getPlayerLanguage(player);
 
-        if (lang.equals("pt")) {
+        if (lang.equals("pt-BR")) {
     player.sendMessage(Component.text("💸 Transferência de ")
         .color(TextColor.color(0x00FF00)) // Verde
         .append(Component.text(amount + " SOL ").color(TextColor.color(0xFFD700))) // Dourado
@@ -352,7 +352,7 @@ String lang = getPlayerLanguage(player);
         .append(Component.text(recipient).color(TextColor.color(0x00FFFF))) // Azul Claro
         .append(Component.text(" concluída com sucesso! Assinatura: ").color(TextColor.color(0x00FF00))) // Verde
         .append(Component.text(signature).color(TextColor.color(0xFFFF00)))); // Amarelo - Fechamento correto
-} else if (lang.equals("es")) {
+} else if (lang.equals("es-ES")) {
     player.sendMessage(Component.text("💸 Transferencia de ")
         .color(TextColor.color(0x00FF00)) // Verde
         .append(Component.text(amount + " SOL ").color(TextColor.color(0xFFD700))) // Dourado
@@ -388,11 +388,11 @@ public void buyGameCurrency(Player player, double solAmount) {
     if (playerWallet == null) {
         
         
-        if (lang.equals("pt")) {
+        if (lang.equals("pt-BR")) {
             player.sendMessage("❌ Você ainda não possui uma carteira registrada.");
             player.sendMessage(Component.text("💳 Crie uma carteira usando /createwallet.")
                 .color(TextColor.color(0xFF0000))); // Vermelho
-        } else if (lang.equals("es")) {
+        } else if (lang.equals("es-ES")) {
             player.sendMessage("❌ Aún no tienes una billetera registrada.");
             player.sendMessage(Component.text("💳 Crea una billetera usando /createwallet.")
                 .color(TextColor.color(0xFF0000))); // Vermelho
@@ -408,9 +408,9 @@ public void buyGameCurrency(Player player, double solAmount) {
         // 🔹 Verifica saldo da carteira do jogador antes da compra
         double solBalance = getSolanaBalance(playerWallet);
         if (solBalance < solAmount) {
-            if (lang.equals("pt")) {
+            if (lang.equals("pt-BR")) {
                 player.sendMessage("💰 Saldo insuficiente de SOL. Saldo atual: " + solBalance);
-            } else if (lang.equals("es")) {
+            } else if (lang.equals("es-ES")) {
                 player.sendMessage("💰 Saldo insuficiente de SOL. Saldo actual: " + solBalance);
                 }
             else {
@@ -458,7 +458,7 @@ String comando = String.format(
                 if (rowsUpdated > 0) {
                     // 🔹 Registra a transação no livro caixa
                     registerTransaction(player.getName(), "compra", solAmount, "SOL", signature);
-                    if (lang.equals("pt")) {
+                    if (lang.equals("pt-BR")) {
                         player.sendMessage(Component.text("✅ Compra realizada com sucesso! ")
                         .color(TextColor.color(0x00FF00)) // Verde
                         .append(Component.text("Você recebeu " + gameCurrencyAmount + " moedas.")
@@ -467,7 +467,7 @@ String comando = String.format(
                         player.sendMessage(Component.text("💸 Transação registrada com assinatura: ")
                         .color(TextColor.color(0x00FFFF)) // Azul Claro
                         .append(Component.text(signature).color(TextColor.color(0xFFFF00))));
-                    } else if (lang.equals("es")) {
+                    } else if (lang.equals("es-ES")) {
                         player.sendMessage(Component.text("✅ Compra realizada con éxito! ")
                         .color(TextColor.color(0x00FF00)) // Verde
                         .append(Component.text("Recibiste " + gameCurrencyAmount + " monedas.")
@@ -594,11 +594,11 @@ String comando = String.format(
         // 🔹 Feedback ao jogador
         
 
-        if (lang.equals("pt")) {
+        if (lang.equals("pt-BR")) {
             player.sendMessage(Component.text("✅ Carteira criada com sucesso! Endereço: " + walletAddress).color(TextColor.color(0x00FF00)));
             player.sendMessage(Component.text("🛡️ Guarde sua frase secreta com segurança!").color(TextColor.color(0xFFD700)));
             player.sendMessage(Component.text("✅ SecretPhrase: " + (secretPhrase != null ? secretPhrase : "NULO")));
-            } else if (lang.equals("es")) {
+            } else if (lang.equals("es-ES")) {
                 player.sendMessage(Component.text("✅ Billetera creada con éxito! Dirección: " + walletAddress).color(TextColor.color(0x00FF00)));
                 player.sendMessage(Component.text("🛡️ ¡Guarda tu frase secreta a salvo!").color(TextColor.color(0xFFD700)));
                 player.sendMessage(Component.text("✅ Frase secreta: " + (secretPhrase != null ? secretPhrase : "NULO")));
