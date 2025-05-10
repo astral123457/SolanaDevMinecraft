@@ -5,31 +5,79 @@ session_start(); // Inicia a sessão
 include 'connection.php';
 
 $conn = new mysqli($host, $user, $password, $dbname);
-
 if ($conn->connect_error) {
-    die("Erro ao conectar ao banco de dados: " . $conn->connect_error);
+    die(json_encode(['status' => 'error', 'message' => 'Erro ao conectar ao banco de dados: ' . $conn->connect_error]));
 }
 
-// Inicializamos a mensagem vazia
-$error_message = "";
+$error_message = ""; // Inicializa a mensagem vazia
+$ipUsuario = $_SERVER['REMOTE_ADDR']; // Obtém o IP do usuário
 
-// Processar login
+// ---- Exibir erros para depuração ----
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+// ---- Verificação de IP banido ANTES do login ----
+$stmt = $conn->prepare("SELECT * FROM ban_ip WHERE ip = ?");
+$stmt->bind_param("s", $ipUsuario);
+$stmt->execute();
+if ($stmt->fetch()) {
+    echo "<h1 style='color:red;text-align:center;'>Seu IP está banido por tentativas excessivas.</h1>";
+    exit;
+}
+$stmt->close();
+
+// ---- Processar login ----
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $username = $_POST["username"];
     $password = $_POST["password"];
 
+    // Consulta de usuário
     $stmt = $conn->prepare("SELECT password FROM users WHERE user = ?");
     $stmt->bind_param("s", $username);
     $stmt->execute();
+    $stmt->store_result(); // Libera resultado anterior
     $stmt->bind_result($hashed_password);
     $stmt->fetch();
 
-    if (password_verify($password, $hashed_password)) {
+    if ($stmt->num_rows === 0) {
+        // Se o usuário não existir, trata como senha errada
+        $hashed_password = null;
+    }
+    $stmt->close();
+
+    if ($hashed_password !== null && password_verify($password, $hashed_password)) {
         $_SESSION["user"] = $username;
         header("Location: protected_page.php");
         exit();
     } else {
-        $error_message = "Usuário ou senha inválidos"; // Define a mensagem de erro
+        // ---- Registrar tentativa de login falha ----
+        $stmt = $conn->prepare("INSERT INTO login_attempts (ip, attempts, last_attempt) 
+                               VALUES (?, 1, NOW()) 
+                               ON DUPLICATE KEY UPDATE attempts = attempts + 1, last_attempt = NOW()");
+        $stmt->bind_param("s", $ipUsuario);
+        $stmt->execute();
+        $stmt->close();
+
+        // ---- Verificar se IP deve ser banido após 3 falhas ----
+        $stmt = $conn->prepare("SELECT attempts FROM login_attempts WHERE ip = ?");
+        $stmt->bind_param("s", $ipUsuario);
+        $stmt->execute();
+        $stmt->store_result();
+        $stmt->bind_result($attempts);
+        $stmt->fetch();
+        $stmt->close();
+
+        if ($attempts >= 3) {
+            $stmtBan = $conn->prepare("INSERT INTO ban_ip (ip) VALUES (?)");
+            $stmtBan->bind_param("s", $ipUsuario);
+            $stmtBan->execute();
+            $stmtBan->close();
+
+            echo "<h1 style='color:red;text-align:center;'>Seu IP foi banido por 3 tentativas inválidas.</h1>";
+            exit;
+        }
+
+        $error_message = "Usuário ou senha inválidos"; // Define mensagem de erro
     }
 }
 ?>
@@ -50,7 +98,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             margin: 0;
             background: linear-gradient(135deg, #4CAF50, #81C784);
         }
-
         .container {
             background: #fff;
             padding: 2rem;
@@ -59,25 +106,21 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             max-width: 400px;
             width: 100%;
         }
-
         h1 {
             text-align: center;
             margin-bottom: 1rem;
             color: #4CAF50;
             font-size: 1.8rem;
         }
-
         form {
             display: flex;
             flex-direction: column;
             gap: 1rem;
         }
-
         label {
             font-weight: bold;
             margin-bottom: 0.5rem;
         }
-
         input {
             padding: 0.8rem;
             font-size: 1rem;
@@ -85,13 +128,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             border-radius: 5px;
             transition: all 0.3s ease-in-out;
         }
-
         input:focus {
             border-color: #4CAF50;
             outline: none;
             box-shadow: 0px 0px 5px rgba(76, 175, 80, 0.5);
         }
-
         button {
             background: #4CAF50;
             color: white;
@@ -102,11 +143,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             cursor: pointer;
             transition: background 0.3s ease-in-out;
         }
-
         button:hover {
             background: #81C784;
         }
-
         .cloud-message {
             margin-top: 1rem;
             padding: 1rem 1.5rem;
@@ -119,7 +158,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             text-align: center;
             position: relative;
         }
-
         .cloud-message:after {
             content: '';
             position: absolute;
@@ -147,7 +185,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             <button type="submit">Entrar</button>
         </form>
 
-        <!-- Exibir mensagem de erro, se existir -->
         <?php if (!empty($error_message)): ?>
         <div class="cloud-message">
             <?php echo htmlspecialchars($error_message); ?>
