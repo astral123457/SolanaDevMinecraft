@@ -21,6 +21,8 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import java.util.List;
 import java.util.Locale;
 import org.bukkit.entity.Player;
+import org.bukkit.Bukkit;
+
 
 
 
@@ -61,7 +63,9 @@ public class App extends JavaPlugin {
         new BukkitRunnable() {
             @Override
             public void run() {
-                processInvestments();
+                for (Player player : Bukkit.getOnlinePlayers()) { // Itera sobre os jogadores conectados
+                     processInvestments(player, player.locale().toString()); // Usa o idioma do jogador
+                }
             }
         }.runTaskTimer(this, 0L, 6000L); // 6000 ticks = 5 minutos
     }
@@ -139,7 +143,16 @@ public boolean onCommand(CommandSender sender, Command command, String label, St
             sender.sendMessage("Este comando só pode ser usado por jogadores.");
         }
         return true;
-    } else if (command.getName().equalsIgnoreCase("paydebt")) {
+    } else if (command.getName().equalsIgnoreCase("createWallet")) {
+    if (sender instanceof Player) {
+        Player player = (Player) sender;
+        solana.createWallet(player);
+    } else {
+        sender.sendMessage("Este comando só pode ser usado por jogadores.");
+
+    }
+    return true;
+} else if (command.getName().equalsIgnoreCase("paydebt")) {
         if (sender instanceof Player) {
             Player player = (Player) sender;
             if (args.length == 1) {
@@ -448,14 +461,32 @@ private void updateDebts() {
     }
 }
 
-private void processInvestments() {
+private void processInvestments(Player player, String lang) {
     try {
-        PreparedStatement statement = connection.prepareStatement(
-            "UPDATE banco SET saldo = saldo + investimento * 1.25, investimento = 0 WHERE investimento > 0"
-        );
-        int rowsUpdated = statement.executeUpdate();
-        if (rowsUpdated > 0) {
-            getLogger().info("Retorno de investimentos processado.");
+        // Obtendo saldo antes do update
+        PreparedStatement getSaldoStmt = connection.prepareStatement("SELECT saldo, investimento FROM banco WHERE investimento > 0");
+        ResultSet resultSet = getSaldoStmt.executeQuery();
+
+        if (resultSet.next()) {
+            double saldoAtual = resultSet.getDouble("saldo");
+            double investimento = resultSet.getDouble("investimento");
+            double saldoAtualizado = saldoAtual + (investimento * 1.25);
+
+            // Atualizando saldo e zerando investimento
+            PreparedStatement updateStmt = connection.prepareStatement(
+                "UPDATE banco SET saldo = saldo + investimento * 1.25, investimento = 0 WHERE investimento > 0"
+            );
+            int rowsUpdated = updateStmt.executeUpdate();
+
+            if (rowsUpdated > 0) {
+                getLogger().info("Retorno de investimentos processado.");
+
+                Component message = Component.text("💰 Retorno de investimentos processado! \nNovo saldo: $ ")
+                        .color(TextColor.color(0x00FFFF)) // Azul Claro
+                        .append(Component.text(String.format("%.2f", saldoAtualizado)).color(TextColor.color(0xFFFF00))); // Formatação decimal
+
+                player.sendMessage(message);
+            }
         }
     } catch (Exception e) {
         getLogger().severe("Erro ao processar investimentos: " + e.getMessage());
@@ -473,9 +504,22 @@ private void processInvestments() {
 
         if (resultSet.next()) {
             // Se já estiver registrado, mostra o saldo com cor
+
             double saldo = resultSet.getDouble("saldo");
-            player.sendMessage(Component.text("💰 Seu saldo bancário é: $" + saldo)
-                .color(TextColor.color(0xFFD700))); // Dourado para destacar o saldo
+            String lang = store.getPlayerLanguage(player); // Obtém o idioma do jogador
+            if (lang.equals("pt-BR")) {
+            player.sendMessage(Component.text("💰 Seu saldo bancário é: \n")
+                        .color(TextColor.color(0x800080)) // Azul Claro
+                        .append(Component.text(" $" + saldo).color(TextColor.color(0xFFFF00))));
+            } else if (lang.equals("es-ES")) {
+                player.sendMessage(Component.text("💰 Su saldo bancario es: \n")
+                        .color(TextColor.color(0x800080)) // Azul Claro
+                        .append(Component.text(" $" + saldo).color(TextColor.color(0xFFFF00))));
+            } else { // Inglês como padrão
+                player.sendMessage(Component.text("💰 Your bank balance is: \n")
+                        .color(TextColor.color(0x800080)) // Azul Claro
+                        .append(Component.text(" $" + saldo).color(TextColor.color(0xFFFF00))));
+            }
         } else {
             // 📌 Jogador não está registrado no banco, então adicionamos ele com saldo inicial de 500 moedas
             PreparedStatement insertStatement = connection.prepareStatement(
@@ -483,9 +527,18 @@ private void processInvestments() {
             );
             insertStatement.setString(1, player.getName());
             insertStatement.executeUpdate();
+            String lang = store.getPlayerLanguage(player); // Obtém o idioma do jogador
 
-            player.sendMessage(Component.text("✅ Você foi cadastrado no banco! Seu saldo inicial é de 500 moedas.")
-                .color(TextColor.color(0x00FF00))); // Verde para indicar sucesso
+            if (lang.equals("pt-BR")) {
+                player.sendMessage(Component.text("✅ Você foi cadastrado no banco! Seu saldo inicial é de 500 moedas.")
+                        .color(TextColor.color(0x00FF00))); // Verde para indicar sucesso
+            } else if (lang.equals("es-ES")) {
+                player.sendMessage(Component.text("✅ ¡Te has registrado en el banco! Tu saldo inicial es de 500 monedas.")
+                        .color(TextColor.color(0x00FF00))); // Verde para indicar sucesso
+            } else { // Inglês como padrão
+                player.sendMessage(Component.text("✅ You have been registered in the bank! Your initial balance is 500 coins.")
+                        .color(TextColor.color(0x00FF00))); // Verde para indicar sucesso
+            }
         }
 
     } catch (SQLException e) {

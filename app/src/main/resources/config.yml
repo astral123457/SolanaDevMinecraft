@@ -12,7 +12,7 @@ docker:
   api_web_key: "b493d48364afe44d"
 
 store:
-  value_of_in-game_currency: "1000" # 1 SOL = 1000 moedas do jogo
+  value_of_in_game_currency: 1000 # 1 SOL = 1000 moedas do jogo
   price:
     apple: 500
     emerald: 1000
