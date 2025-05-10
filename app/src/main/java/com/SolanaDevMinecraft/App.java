@@ -112,9 +112,25 @@ public class App extends JavaPlugin {
     }
 
 
+    private void ensureConnection() {
+    try {
+        if (connection == null || connection.isClosed()) {
+            getLogger().warning("Conexão com o banco de dados perdida, tentando reconectar...");
+            connectToDatabase();
+        }
+    } catch (SQLException e) {
+        getLogger().severe("Erro ao verificar a conexão com o banco de dados: " + e.getMessage());
+    }
+}
+
+
+
 
 @Override
 public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+
+    ensureConnection(); // Verifica a conexão antes de processar o comando
+        
 
     
     if (command.getName().equalsIgnoreCase("saldo")) {
@@ -596,6 +612,6 @@ private void processInvestments(Player player, String lang) {
         }
     }
 
-
+    
 
 }
