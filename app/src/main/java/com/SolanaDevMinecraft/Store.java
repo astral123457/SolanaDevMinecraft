@@ -11,15 +11,11 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.potion.PotionType;
 import org.bukkit.potion.Potion;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.potion.PotionData;
-import org.bukkit.inventory.meta.EnchantmentStorageMeta;
-import org.bukkit.Material;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.PotionMeta; // 🔹 Correto para poções
 import org.bukkit.inventory.meta.BlockStateMeta; // 🔹 Necessário para Shulker Box
 
@@ -182,6 +178,7 @@ public class Store {
         //int price = 100000;
         if (processPurchase(player, price)) {
             player.getInventory().addItem(new ItemStack(Material.NETHERITE_BLOCK, 1));
+            player.getInventory().addItem(new ItemStack(Material.NETHERITE_UPGRADE_SMITHING_TEMPLATE, 1));
 
             String lang = getPlayerLanguage(player);
             player.sendMessage(
@@ -302,122 +299,28 @@ public class Store {
         }
     }
 
-    public void buyAllPotions(Player player) {
-    int totalPrice = config.getInt("store.price.buyAllPotions");
-    //int totalPrice = 3000; // Preço total para todas as poções
+public void buyAllTools(Player player) {
+    int totalPrice = config.getInt("store.price.buyAllTools");
+    //int totalPrice = 5000; // Defina o preço total para todas as ferramentas
     if (processPurchase(player, totalPrice)) {
-        List<PotionType> potionTypes = List.of(
-            PotionType.SPEED, PotionType.FIRE_RESISTANCE, PotionType.INSTANT_HEAL,
-            PotionType.JUMP, PotionType.REGEN, PotionType.STRENGTH, PotionType.WATER_BREATHING,
-            PotionType.NIGHT_VISION
+        List<Material> tools = List.of(
+            Material.DIAMOND_PICKAXE, Material.DIAMOND_AXE, Material.DIAMOND_SHOVEL,
+            Material.DIAMOND_HOE, Material.DIAMOND_SWORD
         );
 
-        for (PotionType potionType : potionTypes) {
-            ItemStack potionItem = new ItemStack(Material.POTION, 1);
-            PotionMeta meta = (PotionMeta) potionItem.getItemMeta();
-            if (meta != null) {
-                meta.setBasePotionData(new PotionData(potionType));
-                meta.displayName(Component.text("🧪 Poção de " + potionType.name(), NamedTextColor.AQUA));
-                potionItem.setItemMeta(meta);
-            }
-            player.getInventory().addItem(potionItem);
-
-            // 🔹 Efeito especial ao jogador ao comprar as poções
-            player.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 200, 1)); // Brilho por 10 segundos
-            player.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 100, 1)); // Leve flutuação por 5 segundos
+        for (Material tool : tools) {
+            ItemStack toolItem = new ItemStack(tool, 1);
+            player.getInventory().addItem(toolItem);
         }
 
         String lang = getPlayerLanguage(player);
         player.sendMessage(
-            lang.equals("pt-BR") ? Component.text("🧪 Você comprou todas as poções por $" + totalPrice + "!", NamedTextColor.GREEN) :
-            lang.equals("es-ES") ? Component.text("🧪 ¡Has comprado todas las pociones por $" + totalPrice + "!", NamedTextColor.GREEN) :
-            Component.text("🧪 You bought all potions for $" + totalPrice + "!", NamedTextColor.GREEN)
+            lang.equals("pt-BR") ? Component.text("🛠️ Você comprou todas as ferramentas por $" + totalPrice + "!", NamedTextColor.GOLD) :
+            lang.equals("es-ES") ? Component.text("🛠️ ¡Has comprado todas las herramientas por $" + totalPrice + "!", NamedTextColor.GOLD) :
+            Component.text("🛠️ You bought all tools for $" + totalPrice + "!", NamedTextColor.GOLD)
         );
     }
 }
-
-@SuppressWarnings("deprecation")
-public void buyEnchantmentShulkerBox(Player player) {
-    int totalPrice = config.getInt("store.price.enchantmentshulkerbox", 5000); // 🔹 Obtém preço do config.yml, com fallback de 10000
-    if (!processPurchase(player, totalPrice)) return; // 🔹 Interrompe se a compra falhar
-
-    // 🔹 Criar a Shulker Box verde
-    ItemStack shulkerBox = new ItemStack(Material.GREEN_SHULKER_BOX);
-    BlockStateMeta meta = (BlockStateMeta) shulkerBox.getItemMeta();
-    ShulkerBox shulker = (ShulkerBox) meta.getBlockState();
-
-    // 🔹 Adicionar os itens na Shulker Box
-    shulker.getInventory().addItem(new ItemStack(Material.IRON_INGOT, 64));
-    shulker.getInventory().addItem(new ItemStack(Material.IRON_INGOT, 6));
-    shulker.getInventory().addItem(new ItemStack(Material.EMERALD, 10));
-    shulker.getInventory().addItem(new ItemStack(Material.WOLF_SPAWN_EGG, 1));
-    shulker.getInventory().addItem(new ItemStack(Material.SHEEP_SPAWN_EGG, 1));
-    shulker.getInventory().addItem(new ItemStack(Material.ENCHANTED_GOLDEN_APPLE, 2));
-    shulker.getInventory().addItem(new ItemStack(Material.FLOWER_POT, 10));
-
-    // 🔹 Criar uma espada de Netherite encantada
-    ItemStack sword = new ItemStack(Material.NETHERITE_SWORD, 1);
-    sword.addUnsafeEnchantment(Enchantment.DAMAGE_ALL, 5);
-    sword.addUnsafeEnchantment(Enchantment.getByName("UNBREAKING"), 3);
-    sword.addUnsafeEnchantment(Enchantment.MENDING, 1);
-    sword.addUnsafeEnchantment(Enchantment.FIRE_ASPECT, 2);
-    sword.addUnsafeEnchantment(Enchantment.LOOT_BONUS_MOBS, 3);
-
-    // 🔹 Adicionar a espada encantada na Shulker Box
-    shulker.getInventory().addItem(sword);
-
-    // 🔹 Salvar e aplicar as mudanças na Shulker Box
-    meta.setBlockState(shulker);
-    shulkerBox.setItemMeta(meta);
-
-    // 🔹 Adicionar a Shulker Box ao inventário do jogador
-    player.getInventory().addItem(shulkerBox);
-
-    // 🔹 Mensagem para o jogador
-    String lang = getPlayerLanguage(player);
-    player.sendMessage(
-        Component.text("📦 ").append(
-            lang.equals("pt-BR") ? Component.text("Você comprou uma Shulker Box encantada cheia de tesouros por $" + totalPrice + "!", NamedTextColor.GOLD) :
-            lang.equals("es-ES") ? Component.text("¡Has comprado una Shulker Box encantada llena de tesoros por $" + totalPrice + "!", NamedTextColor.GOLD) :
-            Component.text("You bought an enchanted Shulker Box full of treasures for $" + totalPrice + "!", NamedTextColor.GOLD)
-        )
-    );
-}
-
-
-
-    public void buyAllEnchantmentBooks(Player player) {
-    int totalPrice = config.getInt("store.price.buyAllEnchantmentBooks", 8000); // 🔹 Obtém preço do config.yml, com fallback de 8000
-    if (!processPurchase(player, totalPrice)) return; // 🔹 Interrompe se a compra falhar
-
-    // 🔹 Lista de comandos para dar cada livro encantado separadamente
-    List<String> commands = List.of(
-        String.format("give %s enchanted_book{StoredEnchantments:[{id:\"sharpness\",lvl:5}]}", player.getName()),        // Afiação V
-        String.format("give %s enchanted_book{StoredEnchantments:[{id:\"smite\",lvl:5}]}", player.getName()),            // Julgamento V
-        String.format("give %s enchanted_book{StoredEnchantments:[{id:\"bane_of_arthropods\",lvl:5}]}", player.getName()), // Ruína dos Artrópodes V
-        String.format("give %s enchanted_book{StoredEnchantments:[{id:\"knockback\",lvl:2}]}", player.getName()),         // Repulsão II
-        String.format("give %s enchanted_book{StoredEnchantments:[{id:\"fire_aspect\",lvl:2}]}", player.getName()),       // Aspecto Flamejante II
-        String.format("give %s enchanted_book{StoredEnchantments:[{id:\"looting\",lvl:3}]}", player.getName()),          // Pilhagem III
-        String.format("give %s enchanted_book{StoredEnchantments:[{id:\"unbreaking\",lvl:3}]}", player.getName()),       // Inquebrável III
-        String.format("give %s enchanted_book{StoredEnchantments:[{id:\"mending\",lvl:1}]}", player.getName())           // Remendo I
-    );
-
-    // 🔹 Executa cada comando para dar os livros ao jogador
-    for (String command : commands) {
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
-    }
-
-    // 🔹 Mensagem para o jogador
-    String lang = getPlayerLanguage(player);
-    player.sendMessage(
-        Component.text("📚 ").append(
-            lang.equals("pt-BR") ? Component.text("Você comprou todos os livros de encantamento no nível máximo por $" + totalPrice + "!", NamedTextColor.GOLD) :
-            lang.equals("es-ES") ? Component.text("¡Has comprado todos los libros encantados en el nivel máximo por $" + totalPrice + "!", NamedTextColor.GOLD) :
-            Component.text("You bought all max-level enchantment books for $" + totalPrice + "!", NamedTextColor.GOLD)
-        )
-    );
-}
-
 
 public void buyAllFood(Player player) {
     int totalPrice = config.getInt("store.price.buyAllFood");
@@ -562,28 +465,7 @@ public void buyAxolotlBucket(Player player) {
         )
     );
 }
-    
-    public void buyEnchantedPickaxe(Player player) {
-    int price = config.getInt("store.price.enchanted_pickaxe", 5000); // 🔹 Obtém preço do config.yml, com fallback de 5000
-    if (!processPurchase(player, price)) return; // 🔹 Interrompe se a compra falhar
 
-    // 🔹 Executa o comando para dar a picareta encantada ao jogador
-    String command = String.format(
-    "minecraft:give %s diamond_pickaxe 1 0 {Enchantments:[{id:\"efficiency\",lvl:5},{id:\"unbreaking\",lvl:3},{id:\"fortune\",lvl:3}]}", 
-    player.getName()
-);
-    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command); // Executa o comando como console
-
-    // 🔹 Mensagem para o jogador
-    String lang = getPlayerLanguage(player);
-    player.sendMessage(
-        Component.text("⛏️ ").append(
-            lang.equals("pt-BR") ? Component.text("Você comprou uma Picareta Encantada por $" + price + "!", NamedTextColor.GOLD) :
-            lang.equals("es-ES") ? Component.text("¡Has comprado un Pico Encantado por $" + price + "!", NamedTextColor.GOLD) :
-            Component.text("You bought an Enchanted Pickaxe for $" + price + "!", NamedTextColor.GOLD)
-        )
-    );
-}
 
 
 }// 🔹 Fim da classe Store

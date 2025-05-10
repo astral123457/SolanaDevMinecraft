@@ -65,12 +65,9 @@ commands:
   buySandBlock:
     description: Compra um Bloco de Areia.
     usage: /buySandBlock
-  buyAllEnchantmentBooks:
-    description: Compra todos os Livros Encantados.
-    usage: /buyAllEnchantmentBooks
-  buyAllPotions:
-    description: Compra todas as Poções.
-    usage: /buyAllPotions
+  buyAllTools:
+    description: Compra todas as Ferramentas.
+    usage: /buyAllTools
   buyAllFood:
     description: Compra toda a Comida.
     usage: /buyAllFood
@@ -92,12 +89,6 @@ commands:
   buyAxolotlBucket:
     description: Balde com peixe Simples.
     usage: /buyAxolotlBucket
-  buy1EnchantedPickaxe:
-    description: Compra uma Picareta Encantada.
-    usage: /buy1EnchantedPickaxe
-  buyEnchantmentShulkerBox:
-    description: Compra uma Caixa de Shulker Encantada.
-    usage: /buyEnchantmentShulkerBox
   
   
   

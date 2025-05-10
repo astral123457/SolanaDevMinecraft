@@ -308,13 +308,6 @@ public boolean onCommand(CommandSender sender, Command command, String label, St
             store.buySimpleFishingRod(player);
         }
         return true;
-    }
-     else if (command.getName().equalsIgnoreCase("buyEnchantmentShulkerBox")) {
-        if (sender instanceof Player) {
-            Player player = (Player) sender;
-            store.buyEnchantmentShulkerBox(player);
-        }
-        return true;
     } else if (command.getName().equalsIgnoreCase("buyAxolotlBucket")) {
         if (sender instanceof Player) {
             Player player = (Player) sender;
@@ -333,16 +326,10 @@ public boolean onCommand(CommandSender sender, Command command, String label, St
             store.buySandBlock(player);
         }
         return true;
-    } else if (command.getName().equalsIgnoreCase("buyAllEnchantmentBooks")) {
+    } else if (command.getName().equalsIgnoreCase("buyAllTools")) {
         if (sender instanceof Player) {
             Player player = (Player) sender;
-            store.buyAllEnchantmentBooks(player);
-        }
-        return true;
-    } else if (command.getName().equalsIgnoreCase("buyAllPotions")) {
-        if (sender instanceof Player) {
-            Player player = (Player) sender;
-            store.buyAllEnchantmentBooks(player);
+            store.buyAllTools(player);
         }
         return true;
     } else if (command.getName().equalsIgnoreCase("buyAllFood")) {
@@ -355,12 +342,6 @@ public boolean onCommand(CommandSender sender, Command command, String label, St
         if (sender instanceof Player) {
             Player player = (Player) sender;
             store.buySimpleBook(player);
-        }
-        return true;
-    } else if (command.getName().equalsIgnoreCase("buy1EnchantedPickaxe")) {
-        if (sender instanceof Player) {
-            Player player = (Player) sender;
-            store.buyEnchantedPickaxe(player);
         }
         return true;
     } else if (command.getName().equalsIgnoreCase("buynetherite")) {
