@@ -116,40 +116,40 @@ Here is a basic flow diagram for your plugin commands:
 
 
 
-  buyapple:
+  buyapple:🍎
     description: Buy a magic apple.
     usage: /buyapple
-  buyemerald:
+  buyemerald:💎
     description: Buy an Emerald.
     usage: /buyemerald
-  buydiamond:
+  buydiamond:💎
     description: Compra um Diamante.
     usage: /buydiamond
-  buygold:
+  buygold:🏆
     description: Buy a gold bar.
     usage: /buygold
-  buyiron:
+  buyiron:🔨
     description: Buy an Iron Bar.
     usage: /buyiron
-  buynetherite:
+  buynetherite:🥈
     description: Buy a block and a Netherite upgrade book.
     usage: /buynetherite
-  buySpinningWand:
+  buySpinningWand:🖍🖌
     description: Buy a Twirling Wand.
     usage: /buySpinningWand
-  buyLapis:
+  buyLapis:✏✒🖋🖊
     description: Buy a Lapis Lazuli.
     usage: /buyLapis
   buyQuartz:
     description: Buy a Quartz.
     usage: /buyQuartz
-  buyRedstone:
+  buyRedstone:🧧
     description: Buy a Redstone.
     usage: /buyRedstone
-  buyClay:
+  buyClay:🧥
     description: Buy a block of clay.
     usage: /buyClay
-  buySandBlock:
+  buySandBlock:👝
     description: Buy a block of sand.
     usage: /buySandBlock
   buyAllTools:
