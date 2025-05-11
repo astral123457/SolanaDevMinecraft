@@ -419,3 +419,6 @@ For the tutorial:
 - If the script requires additional adjustments, such as environment variables, explain how to set them.
 
 With these steps, you will have a working guide to setting up your Linux environment and running the Docker command in the context of your project. Need help formatting this in plain text or adding more details? 🚀
+
+![image](https://github.com/user-attachments/assets/99b53f7e-d58c-4877-bc74-994e947f7932)
+
