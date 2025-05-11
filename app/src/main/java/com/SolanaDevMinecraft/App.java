@@ -228,7 +228,7 @@ public boolean onCommand(CommandSender sender, Command command, String label, St
         store.buyEmerald(player);
     }
     return true;
-}  else if (command.getName().equalsIgnoreCase("soltransfer")) {
+} else if (command.getName().equalsIgnoreCase("soltransfer")) {
         if (sender instanceof Player) {
             Player player = (Player) sender;
             if (args.length == 2) {

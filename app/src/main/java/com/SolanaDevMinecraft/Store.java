@@ -23,6 +23,8 @@ import org.bukkit.enchantments.Enchantment; // 🔹 Correto para encantamentos
 import org.bukkit.inventory.meta.EnchantmentStorageMeta; // 🔹 Necessário para livros encantados
 import org.bukkit.block.ShulkerBox;
 import org.bukkit.block.BlockState;
+import org.bukkit.enchantments.Enchantment;
+
 
 
 import net.kyori.adventure.text.Component;
@@ -178,6 +180,7 @@ public class Store {
         //int price = 100000;
         if (processPurchase(player, price)) {
             player.getInventory().addItem(new ItemStack(Material.NETHERITE_BLOCK, 1));
+            player.getInventory().addItem(new ItemStack(Material.ANCIENT_DEBRIS, 10));
             player.getInventory().addItem(new ItemStack(Material.NETHERITE_UPGRADE_SMITHING_TEMPLATE, 1));
 
             String lang = getPlayerLanguage(player);
@@ -321,6 +324,7 @@ public void buyAllTools(Player player) {
         );
     }
 }
+
 
 public void buyAllFood(Player player) {
     int totalPrice = config.getInt("store.price.buyAllFood");
