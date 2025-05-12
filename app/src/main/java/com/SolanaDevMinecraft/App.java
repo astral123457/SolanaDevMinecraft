@@ -261,6 +261,26 @@ public boolean onCommand(CommandSender sender, Command command, String label, St
             sender.sendMessage("Este comando só pode ser usado por jogadores.");
         }
         return true;
+    } else if (command.getName().equalsIgnoreCase("transferirtokengamer")) {
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            if (args.length == 2) {
+                String recipient = args[0];
+                try {
+                    String lang = store.getPlayerLanguage(player); // Obtém o idioma do jogador
+
+                    double amount = Double.parseDouble(args[1]);
+                    store.transferirtokengamer(player, recipient, amount);
+                } catch (NumberFormatException e) {
+                    player.sendMessage("Uso correto: /transferirtokengamer <jogador> <quantidade_SOL>");
+                }
+            } else {
+                player.sendMessage("Uso correto: /transferirtokengamer <jogador> <quantidade_SOL>");
+            }
+        } else {
+            sender.sendMessage("Este comando só pode ser usado por jogadores.");
+        }
+        return true;
     } else if (command.getName().equalsIgnoreCase("solbalance")) {
         if (sender instanceof Player) {
             Player player = (Player) sender;
@@ -432,6 +452,8 @@ private void payDebt(Player player, double amount) {
         int rowsUpdated = statement.executeUpdate();
 
         if (rowsUpdated > 0) {
+            // Agora, define o saldo igual ao do banco
+            ajustarSaldo(player, "take", amount);
             player.sendMessage("Pagamento de $" + amount + " realizado com sucesso.");
         } else {
             player.sendMessage("Você ainda não está registrado no banco.");
@@ -453,6 +475,8 @@ private void invest(Player player, double amount) {
         int rowsUpdated = statement.executeUpdate();
 
         if (rowsUpdated > 0) {
+            // Agora, define o saldo igual ao do banco
+            ajustarSaldo(player, "take", amount);
             player.sendMessage("Investimento de $" + amount + " realizado com sucesso.");
         } else {
             player.sendMessage("Você ainda não está registrado no banco.");
@@ -487,6 +511,9 @@ private void processInvestments(Player player, String lang) {
             double saldoAtual = resultSet.getDouble("saldo");
             double investimento = resultSet.getDouble("investimento");
             double saldoAtualizado = saldoAtual + (investimento * 1.25);
+
+            // Agora, define o saldo igual ao do banco
+            ajustarSaldo(player, "set", saldoAtualizado);
 
             // Atualizando saldo e zerando investimento
             PreparedStatement updateStmt = connection.prepareStatement(
@@ -532,7 +559,6 @@ private void processInvestments(Player player, String lang) {
 
 
             // Agora, define o saldo igual ao do banco
-
             ajustarSaldo(player, "set", saldoBanco);
 
 

@@ -89,6 +89,9 @@ commands:
   buyAxolotlBucket:
     description: Balde com peixe Simples.
     usage: /buyAxolotlBucket
+  transferirtokengamer:
+    description: Transfere moeda do banco para o jogador.
+    usage: /transferirtokengamer <quantidade>
   
   
   

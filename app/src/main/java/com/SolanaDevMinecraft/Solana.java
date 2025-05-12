@@ -22,6 +22,8 @@ import org.json.JSONObject;
 
 
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Player;
+import org.bukkit.Bukkit;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
@@ -472,6 +474,7 @@ String comando = String.format(
                 if (rowsUpdated > 0) {
                     // 🔹 Registra a transação no livro caixa
                     registerTransaction(player.getName(), "compra", solAmount, "SOL", signature);
+                    ajustarSaldo(player, "give", gameCurrencyAmount);
                     if (lang.equals("pt-BR")) {
                         player.sendMessage(Component.text("✅ Compra realizada com sucesso! ")
                         .color(TextColor.color(0x00FF00)) // Verde
@@ -711,6 +714,30 @@ public static String convertPrivateKeyToHex(String jsonResponse) {
             e.printStackTrace();
             return null;
         }
+    }
+
+    // 📌 Método para ajustar o saldo do jogador do sql do plugin EssentialsX (nao e necessario mas tenta mater os dados iguais do sql e do mysql)
+
+    public void ajustarSaldo(Player player, String tipo, double valor) {
+    if (tipo.equalsIgnoreCase("give")) {
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco give " + player.getName() + " " + valor);
+    } else if (tipo.equalsIgnoreCase("take")) {
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco take " + player.getName() + " " + valor);
+    }  else if (tipo.equalsIgnoreCase("set")) {
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco set " + player.getName() + " " + valor);
+    } else {
+        player.sendMessage("Comando inválido! Use 'give' ou 'take' ou set.");
+    }
+}
+
+    public void transferirMoeda(Player player, String destinatario, double valor) {
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco give " + destinatario + " " + valor);
+        player.sendMessage("Você transferiu " + valor + " moedas para " + destinatario);
+    }
+
+    public void transferirMoedaBanco(String jogador, String destinatario, double valor) {
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco give " + destinatario + " " + valor);
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco take " + jogador + " " + valor);
     }
 
 }

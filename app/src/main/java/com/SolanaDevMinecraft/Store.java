@@ -25,6 +25,7 @@ import org.bukkit.block.ShulkerBox;
 import org.bukkit.block.BlockState;
 import org.bukkit.enchantments.Enchantment;
 import java.util.Arrays;
+import java.sql.SQLException;
 
 
 
@@ -51,13 +52,13 @@ public class Store {
 
     // 📌 Método genérico para verificar saldo e processar compras
     private boolean processPurchase(Player player, int price) {
-        try (
-            PreparedStatement stmt = connection.prepareStatement("SELECT saldo FROM banco WHERE jogador = ?");
-        ) {
-            stmt.setString(1, player.getName());
+    try (PreparedStatement stmt = connection.prepareStatement("SELECT saldo FROM banco WHERE jogador = ?")) {
+        stmt.setString(1, player.getName());
 
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next() && rs.getInt("saldo") >= price) {
+        try (ResultSet rs = stmt.executeQuery()) {
+            if (rs.next()) {
+                int saldo = rs.getInt("saldo");
+                if (saldo >= price) {
                     try (PreparedStatement updateStmt = connection.prepareStatement("UPDATE banco SET saldo = saldo - ? WHERE jogador = ?")) {
                         updateStmt.setInt(1, price);
                         updateStmt.setString(2, player.getName());
@@ -65,18 +66,24 @@ public class Store {
                     }
                     return true;
                 } else {
+                    int falta = price - saldo;
                     String lang = getPlayerLanguage(player);
                     player.sendMessage(lang.equals("pt-BR") ?
-                        Component.text("💰 Saldo insuficiente para realizar a compra.", NamedTextColor.RED) :
-                        Component.text("💰 Insufficient balance to make the purchase.", NamedTextColor.RED));
+                        Component.text("💰 Saldo insuficiente para realizar a compra. Falta: ", NamedTextColor.RED)
+                        .append(Component.text(falta, NamedTextColor.YELLOW)) :
+                        Component.text("💰 Insufficient balance to make the purchase. Missing: ", NamedTextColor.RED)
+                        .append(Component.text(falta, NamedTextColor.YELLOW)));
                     return false;
                 }
             }
-        } catch (Exception e) {
-            player.sendMessage(Component.text("⚠ Erro ao acessar o banco de dados.", NamedTextColor.RED));
-            e.printStackTrace();
-            return false;
         }
+    } catch (Exception e) {
+        player.sendMessage(Component.text("⚠ Erro ao acessar o banco de dados.", NamedTextColor.RED));
+        e.printStackTrace();
+        return false;
+    }
+
+    return false;
     }
 
     // 📌 Compra de Maçã Encantada
@@ -102,23 +109,14 @@ public class Store {
         }
     }
 
-
-    public void ajustarSaldo(Player player, String tipo, double valor) {
-    if (tipo.equalsIgnoreCase("give")) {
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco give " + player.getName() + " " + valor);
-    } else if (tipo.equalsIgnoreCase("take")) {
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco take " + player.getName() + " " + valor);
-    } else {
-        player.sendMessage("Comando inválido! Use 'give' ou 'take'.");
-    }
-}
-
     // 📌 Compra de Esmeralda
     public void buyEmerald(Player player) {
         int price = config.getInt("store.price.emerald"); // 🔹 Obtém preço 
         //int price = 1000;
         if (processPurchase(player, price)) {
             player.getInventory().addItem(new ItemStack(Material.EMERALD, 1));
+            // Ajusta o saldo do jogador após a compra
+        ajustarSaldo(player, "take", price);
 
             String lang = getPlayerLanguage(player);
             player.sendMessage(
@@ -138,6 +136,8 @@ public class Store {
         //int price = 10000;
         if (processPurchase(player, price)) {
             player.getInventory().addItem(new ItemStack(Material.GOLD_BLOCK, 1));
+            // Ajusta o saldo do jogador após a compra
+        ajustarSaldo(player, "take", price);
 
             String lang = getPlayerLanguage(player);
             player.sendMessage(
@@ -157,6 +157,8 @@ public class Store {
         int price = config.getInt("store.price.buyDiamondBlock"); // 🔹 Obtém preço 
         if (processPurchase(player, price)) {
             player.getInventory().addItem(new ItemStack(Material.DIAMOND_BLOCK, 1));
+            // Ajusta o saldo do jogador após a compra
+        ajustarSaldo(player, "take", price);
 
             String lang = getPlayerLanguage(player);
             player.sendMessage(
@@ -177,6 +179,8 @@ public class Store {
         //int price = 50000;
         if (processPurchase(player, price)) {
             player.getInventory().addItem(new ItemStack(Material.EMERALD_BLOCK, 1));
+            // Ajusta o saldo do jogador após a compra
+        ajustarSaldo(player, "take", price);
 
             String lang = getPlayerLanguage(player);
             player.sendMessage(
@@ -197,6 +201,8 @@ public class Store {
             //player.getInventory().addItem(new ItemStack(Material.NETHERITE_BLOCK, 1));
             player.getInventory().addItem(new ItemStack(Material.ANCIENT_DEBRIS, 10));
             player.getInventory().addItem(new ItemStack(Material.NETHERITE_UPGRADE_SMITHING_TEMPLATE, 1));
+            // Ajusta o saldo do jogador após a compra
+        ajustarSaldo(player, "take", price);
 
             String lang = getPlayerLanguage(player);
             player.sendMessage(
@@ -215,6 +221,8 @@ public class Store {
         //int price = 5000;
         if (processPurchase(player, price)) {
             player.getInventory().addItem(new ItemStack(Material.IRON_BLOCK, 1));
+            // Ajusta o saldo do jogador após a compra
+        ajustarSaldo(player, "take", price);
 
             String lang = getPlayerLanguage(player);
             player.sendMessage(
@@ -233,6 +241,8 @@ public class Store {
         //int price = 1000;
         if (processPurchase(player, price)) {
             player.getInventory().addItem(new ItemStack(Material.LAPIS_BLOCK, 1));
+            // Ajusta o saldo do jogador após a compra
+        ajustarSaldo(player, "take", price);
 
             String lang = getPlayerLanguage(player);
             player.sendMessage(
@@ -251,6 +261,8 @@ public class Store {
         //int price = 1000;
         if (processPurchase(player, price)) {
             player.getInventory().addItem(new ItemStack(Material.REDSTONE_BLOCK, 1));
+            // Ajusta o saldo do jogador após a compra
+        ajustarSaldo(player, "take", price);
 
             String lang = getPlayerLanguage(player);
             player.sendMessage(
@@ -269,6 +281,8 @@ public class Store {
         //int price = 1000;
         if (processPurchase(player, price)) {
             player.getInventory().addItem(new ItemStack(Material.QUARTZ_BLOCK, 1));
+            // Ajusta o saldo do jogador após a compra
+        ajustarSaldo(player, "take", price);
 
             String lang = getPlayerLanguage(player);
             player.sendMessage(
@@ -287,6 +301,8 @@ public class Store {
         //int price = 1000;
         if (processPurchase(player, price)) {
             player.getInventory().addItem(new ItemStack(Material.CLAY, 1));
+            // Ajusta o saldo do jogador após a compra
+        ajustarSaldo(player, "take", price);
 
             String lang = getPlayerLanguage(player);
             player.sendMessage(
@@ -305,6 +321,8 @@ public class Store {
         //int price = 1000;
         if (processPurchase(player, price)) {
             player.getInventory().addItem(new ItemStack(Material.SAND, 1));
+            // Ajusta o saldo do jogador após a compra
+        ajustarSaldo(player, "take", price);
 
             String lang = getPlayerLanguage(player);
             player.sendMessage(
@@ -325,6 +343,8 @@ public void buyAllTools(Player player) {
             Material.DIAMOND_PICKAXE, Material.DIAMOND_AXE, Material.DIAMOND_SHOVEL,
             Material.DIAMOND_HOE, Material.DIAMOND_SWORD
         );
+        // Ajusta o saldo do jogador após a compra
+        ajustarSaldo(player, "take", totalPrice);
 
         for (Material tool : tools) {
             ItemStack toolItem = new ItemStack(tool, 1);
@@ -353,6 +373,9 @@ public void buyAllFood(Player player) {
             Material.MELON_SLICE, Material.PUMPKIN_PIE, Material.COOKIE
         );
 
+        // Ajusta o saldo do jogador após a compra
+        ajustarSaldo(player, "take", totalPrice);
+
         for (Material food : foodItems) {
             ItemStack foodItem = new ItemStack(food, 5); // Adiciona 5 unidades de cada comida ao inventário
             player.getInventory().addItem(foodItem);
@@ -372,6 +395,9 @@ public void buySimpleBook(Player player) {
     int price = config.getInt("store.price.buySimpleBook", 50); // 🔹 Obtém preço do config.yml, com fallback de 50
     if (!processPurchase(player, price)) return; // 🔹 Interrompe se a compra falhar
 
+    // Ajusta o saldo do jogador após a compra
+        ajustarSaldo(player, "take", price);
+
     // 🔹 Executa o comando para dar um livro ao jogador
     String command = String.format("give %s minecraft:book 1", player.getName());
     Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command); // 🔹 Executa o comando como console
@@ -390,6 +416,8 @@ public void buySimpleBook(Player player) {
 public void buySimpleMap(Player player) {
     int price = config.getInt("store.price.buySimpleMap", 100); // 🔹 Obtém preço do config.yml, com fallback de 100
     if (!processPurchase(player, price)) return; // 🔹 Interrompe se a compra falhar
+    // Ajusta o saldo do jogador após a compra
+        ajustarSaldo(player, "take", price);
 
     // 🔹 Executa o comando para dar um mapa ao jogador
     String command = String.format("give %s minecraft:filled_map 1", player.getName());
@@ -409,6 +437,8 @@ public void buySimpleMap(Player player) {
 public void buySimpleCompass(Player player) {
     int price = config.getInt("store.price.buySimpleCompass", 150);
     if (!processPurchase(player, price)) return;
+    // Ajusta o saldo do jogador após a compra
+        ajustarSaldo(player, "take", price);
 
     // Lista de comandos ajustados
     List<String> commands = Arrays.asList(
@@ -439,6 +469,8 @@ public void buySimpleCompass(Player player) {
 public void buySimpleFishingRod(Player player) {
     int price = config.getInt("store.price.buySimpleFishingRod", 200); // 🔹 Obtém preço do config.yml, com fallback de 200
     if (!processPurchase(player, price)) return; // 🔹 Interrompe se a compra falhar
+    // Ajusta o saldo do jogador após a compra
+        ajustarSaldo(player, "take", price);
 
     // 🔹 Executa o comando para dar uma vara de pesca encantada ao jogador
     String command = String.format(
@@ -461,6 +493,8 @@ public void buySimpleFishingRod(Player player) {
 public void buySpinningWand(Player player) {
     int price = config.getInt("store.price.buySpinningWand", 800); // 🔹 Obtém do config.yml, com fallback de 800
     if (!processPurchase(player, price)) return; // 🔹 Interrompe se a compra falhar
+    // Ajusta o saldo do jogador após a compra
+        ajustarSaldo(player, "take", price);
 
     // 🔹 Executa o comando para dar um Debug Stick ao jogador
     String command = String.format("give %s minecraft:debug_stick 1", player.getName());
@@ -479,6 +513,8 @@ public void buySpinningWand(Player player) {
 public void buyAxolotlBucket(Player player) {
     int price = config.getInt("store.price.axolotl_bucket", 500); // 🔹 Obtém preço do config.yml, com fallback de 500
     if (!processPurchase(player, price)) return; // 🔹 Interrompe se a compra falhar
+    // Ajusta o saldo do jogador após a compra
+        ajustarSaldo(player, "take", price);
 
     // 🔹 Executa o comando para dar um balde com Axolote ao jogador
     String command = String.format("give %s minecraft:axolotl_bucket 1", player.getName());
@@ -493,6 +529,40 @@ public void buyAxolotlBucket(Player player) {
             Component.text("You bought an Axolotl Bucket for $" + price + "!", NamedTextColor.AQUA)
         )
     );
+}
+
+
+// 📌 Método para ajustar o saldo do jogador do sql do plugin EssentialsX (nao e necessario mas tenta mater os dados iguais do sql e do mysql)
+    public void ajustarSaldo(Player player, String tipo, double valor) {
+    if (tipo.equalsIgnoreCase("give")) {
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco give " + player.getName() + " " + valor);
+    } else if (tipo.equalsIgnoreCase("take")) {
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco take " + player.getName() + " " + valor);
+    } else {
+        player.sendMessage("Comando inválido! Use 'give' ou 'take'.");
+    }
+}
+
+public void transferirtokengamer(Player player, String recipient, double amount) {
+    try (PreparedStatement stmtJogador = connection.prepareStatement("UPDATE banco SET saldo = saldo - ? WHERE jogador = ?");
+         PreparedStatement stmtDestinatario = connection.prepareStatement("UPDATE banco SET saldo = saldo + ? WHERE jogador = ?")) {
+
+        stmtJogador.setDouble(1, amount);
+        stmtJogador.setString(2, player.getName()); // Corrigido: Usar o nome do jogador
+        stmtJogador.executeUpdate();
+
+        stmtDestinatario.setDouble(1, amount);
+        stmtDestinatario.setString(2, recipient); // Já está correto
+        stmtDestinatario.executeUpdate();
+
+        // Comandos do Bukkit para manter a sincronização com o sistema do jogo
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco give " + recipient + " " + amount);
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco take " + player.getName() + " " + amount); // Corrigido
+
+    } catch (SQLException e) {
+        System.out.println("⚠ Erro ao atualizar o banco de dados: " + e.getMessage());
+        e.printStackTrace();
+    }
 }
 
 
