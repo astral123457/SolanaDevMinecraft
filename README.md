@@ -9,6 +9,19 @@ To configure everything first, I recommend watching this video in English, it he
           
           iCommon-Fabric-bundle1.jar (1.19 a 1.21.5)
 
+# Option custom mod do Fabric user https://fabricmc.net/use/installer/
+
+          fabric-api-0.119.2+1.21.4.jar
+          Essential-1.21.4.jar
+          iris-fabric-1.8.8+mc1.21.4.jar
+          sodium-fabric-0.6.13+mc1.21.4.jar
+          Xaeros_Minimap_25.2.0_Fabric_1.21.4.jar
+          XaerosWorldMap_1.39.4_Fabric_1.21.4.jar
+
+          entity_model_features_fabric_1.21.4-2.4.1.jar
+          entity_texture_features_fabric_1.21.4-6.2.10.jar
+
+
 SolanaDevMinecraft
 
 The Solana Dev token has no real value and is used only for fun and economic experimentation. It is not subject to regulations or financial laws, functioning solely as a fictional asset within a testing environment and playful interactions. Its purpose is to provide entertainment and learning about economic concepts without involving real financial transactions.
