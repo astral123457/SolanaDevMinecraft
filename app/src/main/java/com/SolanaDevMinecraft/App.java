@@ -511,7 +511,7 @@ private void processInvestments(Player player, String lang) {
 
     private void checkBalance(Player player) {
     try {
-        // 🔍 Verifica se o jogador já tem saldo na tabela 'banco'
+        // 🔍 Verifica o saldo do jogador na tabela 'banco'
         PreparedStatement checkStatement = connection.prepareStatement(
             "SELECT saldo FROM banco WHERE jogador = ?"
         );
@@ -519,48 +519,81 @@ private void processInvestments(Player player, String lang) {
         ResultSet resultSet = checkStatement.executeQuery();
 
         if (resultSet.next()) {
-            // Se já estiver registrado, mostra o saldo com cor
+            double saldoBanco = resultSet.getDouble("saldo");
 
-            double saldo = resultSet.getDouble("saldo");
-            String lang = store.getPlayerLanguage(player); // Obtém o idioma do jogador
+
+            // Depois, atualiza o saldo no banco de dados
+            PreparedStatement updateStatement = connection.prepareStatement(
+                "UPDATE banco SET saldo = ? WHERE jogador = ?"
+            );
+            updateStatement.setDouble(1, saldoBanco);
+            updateStatement.setString(2, player.getName());
+            updateStatement.executeUpdate();
+
+
+            // Agora, define o saldo igual ao do banco
+
+            ajustarSaldo(player, "set", saldoBanco);
+
+
+            // Exibe mensagem personalizada com o saldo atualizado
+            String lang = store.getPlayerLanguage(player);
+            Component message;
             if (lang.equals("pt-BR")) {
-            player.sendMessage(Component.text("💰 Seu saldo bancário é: \n")
-                        .color(TextColor.color(0x800080)) // Azul Claro
-                        .append(Component.text(" $" + saldo).color(TextColor.color(0xFFFF00))));
+                message = Component.text("💰 Seu saldo bancário foi atualizado: \n")
+                        .color(TextColor.color(0x800080))
+                        .append(Component.text(" $" + saldoBanco).color(TextColor.color(0xFFFF00)));
             } else if (lang.equals("es-ES")) {
-                player.sendMessage(Component.text("💰 Su saldo bancario es: \n")
-                        .color(TextColor.color(0x800080)) // Azul Claro
-                        .append(Component.text(" $" + saldo).color(TextColor.color(0xFFFF00))));
-            } else { // Inglês como padrão
-                player.sendMessage(Component.text("💰 Your bank balance is: \n")
-                        .color(TextColor.color(0x800080)) // Azul Claro
-                        .append(Component.text(" $" + saldo).color(TextColor.color(0xFFFF00))));
+                message = Component.text("💰 Su saldo bancario ha sido actualizado: \n")
+                        .color(TextColor.color(0x800080))
+                        .append(Component.text(" $" + saldoBanco).color(TextColor.color(0xFFFF00)));
+            } else {
+                message = Component.text("💰 Your bank balance has been updated: \n")
+                        .color(TextColor.color(0x800080))
+                        .append(Component.text(" $" + saldoBanco).color(TextColor.color(0xFFFF00)));
             }
+            player.sendMessage(message);
         } else {
-            // 📌 Jogador não está registrado no banco, então adicionamos ele com saldo inicial de 500 moedas
+            // Se o jogador não estiver registrado, adicionamos ele com saldo inicial de 500 moedas
             PreparedStatement insertStatement = connection.prepareStatement(
                 "INSERT INTO banco (jogador, saldo) VALUES (?, 500)"
             );
             insertStatement.setString(1, player.getName());
             insertStatement.executeUpdate();
-            String lang = store.getPlayerLanguage(player); // Obtém o idioma do jogador
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco give " + player.getName() + " 500");
 
+            String lang = store.getPlayerLanguage(player);
+            Component message;
             if (lang.equals("pt-BR")) {
-                player.sendMessage(Component.text("✅ Você foi cadastrado no banco! Seu saldo inicial é de 500 moedas.")
-                        .color(TextColor.color(0x00FF00))); // Verde para indicar sucesso
+                message = Component.text("✅ Você foi cadastrado no banco! Seu saldo inicial é de 500 moedas.")
+                        .color(TextColor.color(0x00FF00));
             } else if (lang.equals("es-ES")) {
-                player.sendMessage(Component.text("✅ ¡Te has registrado en el banco! Tu saldo inicial es de 500 monedas.")
-                        .color(TextColor.color(0x00FF00))); // Verde para indicar sucesso
-            } else { // Inglês como padrão
-                player.sendMessage(Component.text("✅ You have been registered in the bank! Your initial balance is 500 coins.")
-                        .color(TextColor.color(0x00FF00))); // Verde para indicar sucesso
+                message = Component.text("✅ ¡Te has registrado en el banco! Tu saldo inicial es de 500 monedas.")
+                        .color(TextColor.color(0x00FF00));
+            } else {
+                message = Component.text("✅ You have been registered in the bank! Your initial balance is 500 coins.")
+                        .color(TextColor.color(0x00FF00));
             }
+            player.sendMessage(message);
         }
 
     } catch (SQLException e) {
         player.sendMessage(Component.text("❌ Erro ao acessar o banco de dados.")
-            .color(TextColor.color(0xFF0000))); // Vermelho para indicar erro
+            .color(TextColor.color(0xFF0000)));
         getLogger().severe("Erro ao consultar saldo: " + e.getMessage());
+    }
+}
+
+
+public void ajustarSaldo(Player player, String tipo, double valor) {
+    if (tipo.equalsIgnoreCase("give")) {
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco give " + player.getName() + " " + valor);
+    } else if (tipo.equalsIgnoreCase("take")) {
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco take " + player.getName() + " " + valor);
+    }  else if (tipo.equalsIgnoreCase("set")) {
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco set " + player.getName() + " " + valor);
+    } else {
+        player.sendMessage("Comando inválido! Use 'give' ou 'take' ou set.");
     }
 }
 

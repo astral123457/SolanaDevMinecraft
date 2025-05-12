@@ -88,6 +88,9 @@ public class Store {
         if (processPurchase(player, price)) {
             player.getInventory().addItem(new ItemStack(Material.ENCHANTED_GOLDEN_APPLE, 1));
 
+        // Ajusta o saldo do jogador após a compra
+        ajustarSaldo(player, "take", price);
+
             
            player.sendMessage(
             lang.equals("pt-BR") ? 
@@ -98,6 +101,17 @@ public class Store {
            );
         }
     }
+
+
+    public void ajustarSaldo(Player player, String tipo, double valor) {
+    if (tipo.equalsIgnoreCase("give")) {
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco give " + player.getName() + " " + valor);
+    } else if (tipo.equalsIgnoreCase("take")) {
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco take " + player.getName() + " " + valor);
+    } else {
+        player.sendMessage("Comando inválido! Use 'give' ou 'take'.");
+    }
+}
 
     // 📌 Compra de Esmeralda
     public void buyEmerald(Player player) {
