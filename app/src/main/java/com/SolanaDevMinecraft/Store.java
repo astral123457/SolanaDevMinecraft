@@ -24,6 +24,7 @@ import org.bukkit.inventory.meta.EnchantmentStorageMeta; // 🔹 Necessário par
 import org.bukkit.block.ShulkerBox;
 import org.bukkit.block.BlockState;
 import org.bukkit.enchantments.Enchantment;
+import java.util.Arrays;
 
 
 
@@ -179,7 +180,7 @@ public class Store {
         int price = config.getInt("store.price.buyNetheriteBlock");
         //int price = 100000;
         if (processPurchase(player, price)) {
-            player.getInventory().addItem(new ItemStack(Material.NETHERITE_BLOCK, 1));
+            //player.getInventory().addItem(new ItemStack(Material.NETHERITE_BLOCK, 1));
             player.getInventory().addItem(new ItemStack(Material.ANCIENT_DEBRIS, 10));
             player.getInventory().addItem(new ItemStack(Material.NETHERITE_UPGRADE_SMITHING_TEMPLATE, 1));
 
@@ -392,23 +393,33 @@ public void buySimpleMap(Player player) {
 }
 
 public void buySimpleCompass(Player player) {
-    int price = config.getInt("store.price.buySimpleCompass", 150); // 🔹 Obtém preço do config.yml, com fallback de 150
-    if (!processPurchase(player, price)) return; // 🔹 Interrompe se a compra falhar
+    int price = config.getInt("store.price.buySimpleCompass", 150);
+    if (!processPurchase(player, price)) return;
 
-    // 🔹 Executa o comando para dar uma bússola ao jogador
-    //String command = String.format("give %s minecraft:compass 1", player.getName());
-    String command = String.format("/give 007amauri minecraft:recovery_compass 1", player.getName());
-    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command); // Executa o comando como console
-
-    // 🔹 Mensagem para o jogador
-    String lang = getPlayerLanguage(player);
-    player.sendMessage(
-        Component.text("🧭 ").append(
-            lang.equals("pt-BR") ? Component.text("Você comprou uma bússola simples por $" + price + "!", NamedTextColor.GRAY) :
-            lang.equals("es-ES") ? Component.text("¡Has comprado una brújula simple por $" + price + "!", NamedTextColor.GRAY) :
-            Component.text("You bought a simple compass for $" + price + "!", NamedTextColor.GRAY)
-        )
+    // Lista de comandos ajustados
+    List<String> commands = Arrays.asList(
+        "minecraft:enchant " + player.getName() + " looting 3",
+        "minecraft:enchant " + player.getName() + " mending 1",
+        "minecraft:enchant " + player.getName() + " smite 5",
+        "minecraft:enchant " + player.getName() + " knockback 2",
+        "minecraft:enchant " + player.getName() + " fire_aspect 2",
+        "minecraft:enchant " + player.getName() + " unbreaking 3",
+        "minecraft:give " + player.getName() + " recovery_compass 1"
     );
+
+    for (String command : commands) {
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+    }
+
+    // Mensagem para o jogador
+    String lang = getPlayerLanguage(player);
+    String message = lang.equals("pt-BR") ? 
+        "🧭 Você comprou uma bússola simples por $" + price + "!" :
+        lang.equals("es-ES") ? 
+        "🧭 ¡Has comprado una brújula simple por $" + price + "!" :
+        "🧭 You bought a simple compass for $" + price + "!";
+
+    player.sendMessage(Component.text(message).color(NamedTextColor.GRAY));
 }
 
 public void buySimpleFishingRod(Player player) {
