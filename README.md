@@ -198,7 +198,7 @@ Here is a basic flow diagram for your plugin commands:
     description: Buy a Simple Map.
     usage: /buySimpleMap
   buySimpleCompass:
-    description: Buy a Simple Compass.
+    description: Buy a Simple Compass. ⌚🧿🔮 Here is a secret: if you are holding the sword at the time of purchasing the compass, it grants enchantments to the sword...🎇🎆✨🎉
     usage: /buySimpleCompass
   buySimpleFishingRod:
     description: Buy a simple fishing rod.
