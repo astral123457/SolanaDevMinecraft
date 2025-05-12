@@ -209,6 +209,9 @@ Here is a basic flow diagram for your plugin commands:
   buyAxolotlBucket:
     description: Bucket with simple fish.
     usage: /buyAxolotlBucket
+transfertokengamer:
+description: Transfers currency from the bank to the player.
+usage: /transfertokengamer <amount>
 
 
 ```
