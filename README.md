@@ -41,7 +41,9 @@ To configure everything first, I recommend watching this video in English, it he
 
 SolanaDevMinecraft
 
-The Solana Dev token has no real value and is used only for fun and economic experimentation. It is not subject to regulations or financial laws, functioning solely as a fictional asset within a testing environment and playful interactions. Its purpose is to provide entertainment and learning about economic concepts without involving real financial transactions.
+The Solana Dev token has no real value and is used only for fun and economic experimentation. It is not subject to regulations or financial laws,
+
+functioning solely as a fictional asset within a testing environment and playful interactions. Its purpose is to provide entertainment and learning about economic concepts without involving real financial transactions.
 
 this dev coin can be obtained every 8 hours, 2 drops of values from 1 to 5
 https://faucet.solana.com/
@@ -198,7 +200,8 @@ Here is a basic flow diagram for your plugin commands:
     description: Buy a Simple Map.
     usage: /buySimpleMap
   buySimpleCompass:
-    description: Buy a Simple Compass. ⌚🧿🔮 Here is a secret: if you are holding the sword at the time of purchasing the compass, it grants enchantments to the sword...🎇🎆✨🎉
+    description: Buy a Simple Compass. ⌚🧿🔮 Here is a secret: if you are holding the sword at the time of purchasing the compass,
+           it grants enchantments to the sword...🎇🎆✨🎉
     usage: /buySimpleCompass
   buySimpleFishingRod:
     description: Buy a simple fishing rod.
