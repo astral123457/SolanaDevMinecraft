@@ -9,6 +9,15 @@ To configure everything first, I recommend watching this video in English, it he
           
           iCommon-Fabric-bundle1.jar (1.19 a 1.21.5)
 
+          antixray-fabric-1.4.9+1.21.4.jar
+          
+# Plugin Custom
+
+          EssentialsX-2.21.0.jar (/back /sethome /tpa) Basic commads
+          
+          SolanaDevMinecraftAstraL-1.33-all.jar
+
+
 # Option custom mod do Fabric user https://fabricmc.net/use/installer/
 
           fabric-api-0.119.2+1.21.4.jar
@@ -20,6 +29,14 @@ To configure everything first, I recommend watching this video in English, it he
 
           entity_model_features_fabric_1.21.4-2.4.1.jar
           entity_texture_features_fabric_1.21.4-6.2.10.jar
+
+# Option custom resourcepacks
+
+          enchant icons 1.21.4 v1.3.zip
+
+
+
+
 
 
 SolanaDevMinecraft
