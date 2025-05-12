@@ -241,7 +241,9 @@ usage: /transfertokengamer <amount>
 
 ---
 
-### **Wallet Creation Flow**
+### **Wallet Creation Flow** 
+
+The idea is to have a very visible wallet where you put a little money just to buy the game currency, it is not an invisible secret wallet.
 
 ```plaintext
                           [Player Executes /createwallet]
