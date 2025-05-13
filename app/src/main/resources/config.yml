@@ -15,18 +15,19 @@ store:
   value_of_in_game_currency: 1000 # 1 SOL = 1000 moedas do jogo
   price:
     apple: 500
-    emerald: 1000
-    lapis: 1000
+    emerald: 250
+    lapis: 250
+    diamond: 400
     quartz: 1000
     redstone: 1000
     clay: 1000
     buySandBlock: 1000
     buySpinningWand: 800
-    buyEmeraldBlock: 10000
-    buyDiamondBlock: 50000
-    buyGoldBlock: 20000
-    buyIronBlock: 10000
-    buyNetheriteBlock: 100000
+    buyEmeraldBlock: 1000
+    buyDiamondBlock: 5000
+    buyGoldBlock: 2000
+    buyIronBlock: 1000
+    buyNetheriteBlock: 9000
     buyAllTools: 5000
     buyAllEnchantmentBooks: 5000
     buyAllFood: 2000

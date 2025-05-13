@@ -419,9 +419,28 @@ public void buySimpleMap(Player player) {
     // Ajusta o saldo do jogador após a compra
         ajustarSaldo(player, "take", price);
 
+        // Lista de comandos ajustados
+    List<String> commands = Arrays.asList(
+        "minecraft:enchant " + player.getName() + " mending 1",
+        "minecraft:enchant " + player.getName() + " efficiency 5",
+        "minecraft:enchant " + player.getName() + " fortune 3",
+        "minecraft:enchant " + player.getName() + " unbreaking 3",
+        "minecraft:enchant " + player.getName() + " featherfall 4",
+        "minecraft:enchant " + player.getName() + " frostwalker 2",
+        "minecraft:enchant " + player.getName() + " projectileprotection 4",
+        "minecraft:enchant " + player.getName() + " soulspeed 3",
+        "minecraft:enchant " + player.getName() + " swiftsneak 3",
+        "minecraft:enchant " + player.getName() + " respiration 3",
+        "minecraft:enchant " + player.getName() + " thorns 3",
+        "minecraft:give " + player.getName() + " filled_map 1"
+    );
     // 🔹 Executa o comando para dar um mapa ao jogador
-    String command = String.format("give %s minecraft:filled_map 1", player.getName());
-    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command); // Executa o comando como console
+
+    for (String command : commands) {
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+    }
+
+    
 
     // 🔹 Mensagem para o jogador
     String lang = getPlayerLanguage(player);
