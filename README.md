@@ -197,7 +197,7 @@ Here is a basic flow diagram for your plugin commands:
     description: Buy an Emerald Block.
     usage: /buyEmeraldBlock
   buySimpleMap:
-    description: Buy a Simple Map.
+    description: Buy a Simple Map. 🎉🎇🎁🎃there is a special effect that enchants the pickaxe if you are holding it and any piece of armor must be held
     usage: /buySimpleMap
   buySimpleCompass:
     description: Buy a Simple Compass. ⌚🧿🔮 Here is a secret: if you are holding the sword at the time of purchasing the compass,
