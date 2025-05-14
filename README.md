@@ -69,8 +69,16 @@ PHP
 sudo usermod -aG docker www-data
 
 ![image](https://github.com/user-attachments/assets/454fedd8-840c-472e-a1d1-f19be016b9a6)
-test dock
+test dock option 1
+
        sudo -u www-data docker run --rm -v /home/astral/astralcoin:/solana-token -v /home/astral/astralcoin/solana-data:/root/.config/solana heysolana ls
+
+test dock option 2
+       
+       sudo -u www-data docker run --rm -v /root/solana:/solana-token -v /root/solana/solana-data:/root/.config/solana heysolana ls
+
+![image](https://github.com/user-attachments/assets/6d32ebfb-3f88-45f2-b143-b2ccf1c75c9e)
+
 
 
 Api consulta.php:
