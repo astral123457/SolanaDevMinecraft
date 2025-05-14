@@ -123,6 +123,10 @@ test dock option 2
 Api consulta.php:
 
 
+![image](https://github.com/user-attachments/assets/ef577acc-a11e-440b-b63a-da61738b7098)
+
+
+
 
 tests ssh
  
