@@ -66,7 +66,7 @@ PHP
 
 ![image](https://github.com/user-attachments/assets/3808718f-a04c-48f1-b4cf-7cde0e76b7f7)
 
-sudo usermod -aG docker www-data
+              sudo usermod -aG docker www-data
 
 ![image](https://github.com/user-attachments/assets/454fedd8-840c-472e-a1d1-f19be016b9a6)
 test dock option 1
