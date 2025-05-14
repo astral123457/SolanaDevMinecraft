@@ -26,21 +26,20 @@ try {
             last_attempt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         );
     ");
-
 } catch (PDOException $e) {
-    die(json_encode(['status' => 'error', 'message' => 'Erro ao conectar ao banco de dados: ' . $e->getMessage()]));
+    error_log("Erro ao conectar ao banco de dados: " . $e->getMessage());
+    die(json_encode(['status' => 'error', 'message' => 'Error connecting to database.']));
 }
 
 // ---- Captura o IP do usuário ----
 $ipUsuario = $_SERVER['REMOTE_ADDR'];
-
 header('Content-Type: application/json');
 
-// ---- Verificação do IP banido ANTES da chave de API ----
+// ---- Verificação do IP banido ----
 $stmt = $pdo->prepare("SELECT * FROM ban_ip WHERE ip = :ip");
 $stmt->execute(['ip' => $ipUsuario]);
 if ($stmt->fetch()) {
-    echo json_encode(['status' => 'error', 'message' => 'Seu IP está banido por tentativas inválidas.']);
+    echo json_encode(['status' => 'error', 'message' => 'Your IP is banned due to invalid attempts.']);
     exit;
 }
 
@@ -51,13 +50,13 @@ $hashBinario64BitsEsperado = substr($hashBinarioCompletoEsperado, 0, 8);
 $chaveApiCorreta = bin2hex($hashBinario64BitsEsperado);
 
 if (!isset($_GET['apikey']) || !hash_equals($chaveApiCorreta, $_GET['apikey'])) {
-    // ---- Atualiza tentativas de acesso ----
+    // Atualiza tentativas de acesso
     $stmt = $pdo->prepare("INSERT INTO access_attempts (ip, attempts, last_attempt) 
                            VALUES (:ip, 1, NOW()) 
                            ON DUPLICATE KEY UPDATE attempts = attempts + 1, last_attempt = NOW()");
     $stmt->execute(['ip' => $ipUsuario]);
 
-    // ---- Verifica se deve banir o IP após 2 falhas ----
+    // Verifica se deve banir o IP após 2 falhas
     $stmt = $pdo->prepare("SELECT attempts FROM access_attempts WHERE ip = :ip");
     $stmt->execute(['ip' => $ipUsuario]);
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -66,34 +65,40 @@ if (!isset($_GET['apikey']) || !hash_equals($chaveApiCorreta, $_GET['apikey'])) 
         $stmtBan = $pdo->prepare("INSERT INTO ban_ip (key_genere, name, ip) VALUES ('API_SECURITY', 'Tentativas Excessivas', :ip)");
         $stmtBan->execute(['ip' => $ipUsuario]);
 
-        echo json_encode(['status' => 'error', 'message' => 'Seu IP foi banido por tentativas excessivas.']);
+        echo json_encode(['status' => 'error', 'message' => 'Your IP has been banned for excessive attempts.']);
         exit;
     }
 
-    echo json_encode(['status' => 'error', 'message' => 'Chave de API inválida.']);
+    echo json_encode(['status' => 'error', 'message' => 'Invalid API key.']);
     exit;
 }
 
 // ---- Processamento do Comando ----
 if ($_SERVER['REQUEST_METHOD'] !== 'GET' || !isset($_GET['comando'])) {
-    echo json_encode(['status' => 'error', 'message' => 'Método inválido ou comando não fornecido.']);
+    echo json_encode(['status' => 'error', 'message' => 'Invalid method or command not provided.']);
     exit;
 }
 
 $comandoRecebido = urldecode(trim($_GET['comando']));
 
+// Proteção contra caracteres perigosos no comando
 if (preg_match('/[;&|`]/', $comandoRecebido)) {
-    echo json_encode(['status' => 'error', 'message' => 'Comando contém caracteres proibidos.']);
+    echo json_encode(['status' => 'error', 'message' => 'Command contains prohibited characters.']);
     exit;
 }
 
 // ---- Registrar o comando no log ----
 $logFile = '/home/astral/logs/consulta_log.txt';
-@file_put_contents($logFile, date('Y-m-d H:i:s') . " - Comando recebido: " . $comandoRecebido . "\n", FILE_APPEND);
+$logEntry = date('Y-m-d H:i:s') . " - Comando recebido: " . $comandoRecebido . "\n";
+
+if (!file_put_contents($logFile, $logEntry, FILE_APPEND)) {
+    error_log("Falha ao escrever no log: $logFile");
+}
 
 // ---- Execução do comando via Docker ----
 $comandoSeguroParaExec = escapeshellcmd($comandoRecebido);
-$fullDockerCommand = "sudo -u www-data docker run --rm -v /home/astral/astralcoin:/solana-token -v /home/astral/astralcoin/solana-data:/root/.config/solana heysolana " . $comandoSeguroParaExec;
+//$fullDockerCommand = "sudo -u www-data docker run --rm -v /home/astral/astralcoin:/solana-token -v /home/astral/astralcoin/solana-data:/root/.config/solana heysolana " . $comandoSeguroParaExec;
+$fullDockerCommand = "sudo -u www-data docker run --rm -v /root/solana:/solana-token -v /root/solana/solana-data:/root/.config/solana heysolana " . $comandoSeguroParaExec;
 
 exec($fullDockerCommand, $output, $codigoRetorno);
 
