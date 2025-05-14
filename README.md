@@ -38,8 +38,18 @@ https://github.com/astral123457/SolanaDevMinecraft/blob/main/web_sol/maria_banco
 
 ![image](https://github.com/user-attachments/assets/ea73cc42-234a-47a7-811a-993053c5ca61)
 
+    ssh name_user@ip
+    yes
+    password *****
+    su -
+    password
 
+    apt install curl
     curl -fsSL https://tailscale.com/install.sh | sh
+    tailscale up
+
+![image](https://github.com/user-attachments/assets/212504f6-327d-467b-ae49-4e0428a5fca0)
+
 
 # doc linux debian 12 solana console create and configure a dock
 
