@@ -9,6 +9,9 @@
 
 debian-12.9.0-amd64-netinst.iso
 
+![image](https://github.com/user-attachments/assets/32aacb40-5edd-4d85-b4c5-7a0501fe5be3)
+
+
 # panel gamer Open Game Panel Php e Mysql config
 
 https://github.com/astral123457/SolanaDevMinecraft/blob/main/web_sol/ogp.txt
