@@ -425,7 +425,8 @@ Create a group called dockerusers (or whatever name you prefer) and add the user
 3. Allow Access to Docker
 Ensure that the dockerusers group has permission to use Docker without needing sudo:
 
-                sudo usermod -aG docker www
+
+               sudo usermod -aG docker www-data
 
 After that, reboot to ensure that the permissions are applied:
 newgrp docker
