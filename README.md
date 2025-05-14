@@ -68,6 +68,17 @@ PHP
 
        sudo usermod -aG docker www-data
 
+       sudo nano /etc/sudoers
+
+ # Allow members of group sudo to execute any command
+ 
+        %sudo   ALL=(ALL:ALL) ALL
+
+        www-data ALL=(ALL) NOPASSWD: /usr/bin/docker
+# See sudoers(5) for more information on "@include" directives:
+
+       
+
 ![image](https://github.com/user-attachments/assets/454fedd8-840c-472e-a1d1-f19be016b9a6)
 test dock option 1
 
