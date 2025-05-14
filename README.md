@@ -406,7 +406,8 @@ If you want to create an astral user and an astral folder and a www user
 
 1. Create a User in Linux
 To create the user that will have specific permissions:
-sudo adduser www
+
+             sudo adduser www
 
 - The command will ask you to set a password and other basic information.
 
@@ -414,22 +415,27 @@ sudo adduser www
 
 2. Create a Group and Add the User
 Create a group called dockerusers (or whatever name you prefer) and add the user www:
-sudo groupadd dockerusers
-sudo usermod -aG dockerusers www
+
+           sudo groupadd dockerusers
+   
+           sudo usermod -aG dockerusers www
 
 - This will add the user to the group and allow them to run Docker-related commands (if configured).
 
 3. Allow Access to Docker
 Ensure that the dockerusers group has permission to use Docker without needing sudo:
-sudo usermod -aG docker www
+
+                sudo usermod -aG docker www
 
 After that, reboot to ensure that the permissions are applied:
 newgrp docker
 
 4. Configure Folders
 Ensure that the folders required for the Docker command are accessible to the www user:
-sudo mkdir -p /home/astral/astralcoin /home/astral/astralcoin/solana-data
-sudo chown -R www:www /home/astral/astralcoin
+
+        sudo mkdir -p /home/astral/astralcoin /home/astral/astralcoin/solana-data
+   
+        sudo chown -R www:www /home/astral/astralcoin
 
 
 This sets read/write permissions for the www user.
@@ -440,10 +446,23 @@ sudo apt update
 sudo apt install docker.io
 
 Then, you can run the command with the www user:
-sudo docker run --rm \
--v /home/astral/astralcoin:/solana-token \
--v /home/astral/astralcoin/solana-data:/root/.config/solana \
-heysolana solana balance
+
+
+root@debian:~/solana# bash carteira.sh
+
+root@350bf931f092:/solana-token# solana-keygen new -o /root/.config/solana/id.json
+
+Generating a new keypair
+
+For added security, enter a BIP39 passphrase
+
+NOTE! This passphrase improves security of the recovery seed phrase NOT the
+keypair file itself, which is stored as insecure plain text
+
+BIP39 Passphrase (empty for none):
+Enter same passphrase again:
+
+sudo docker run --rm \ -v /home/astral/astralcoin:/solana-token\ -v /home/astral/astralcoin/solana-data:/root/.config/solana \heysolana solana balance
 
 6. Configure Permissions on the www User
 If you need the www user to have access to additional groups, you can edit it directly:
