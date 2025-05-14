@@ -20,6 +20,9 @@ Sistema Operacional: Será instalado de C:\Users\bzm36\Desktop\debian-12.9.0-amd
 
 ![image](https://github.com/user-attachments/assets/001add6f-b860-497d-b527-f3d1a14e6ecf)
 
+![image](https://github.com/user-attachments/assets/880d12b2-a029-49a1-842c-7ed69e66008a)
+
+
 
 
 
