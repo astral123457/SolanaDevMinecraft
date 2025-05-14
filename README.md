@@ -77,6 +77,32 @@ PHP
         www-data ALL=(ALL) NOPASSWD: /usr/bin/docker
 # See sudoers(5) for more information on "@include" directives:
 
+Test 1 root@debian:/var/www/html# 
+
+        nano shell.php
+
+        <?php
+        $command = "sudo -u www-data docker run --rm -v /root/solana:/solana-token -v /root/solana/solana-data:/root/.config/so>$output = shell_exec($command);
+        echo "<pre>Comando executado: $command</pre>";
+        echo "<pre>Saída do comando:\n$output</pre>";
+        ?>
+or Test 2
+
+         nano shell.php
+         
+        <?php
+        $command = "sudo -u www-data docker run --rm -v /home/astral/astralcoin:/solana-token -v /home/astral/astralcoin/solana-data:/root/.config/solana heysolana ls 2>&1";
+        $output = shell_exec($command);
+        echo "<pre>Comando executado: $command</pre>";
+        echo "<pre>Saída do comando:\n$output</pre>";
+        ?>
+
+![image](https://github.com/user-attachments/assets/12b87ece-8d45-4990-86a6-a463f5c537a5)
+
+
+rm shell.php (test)
+
+
        
 
 ![image](https://github.com/user-attachments/assets/454fedd8-840c-472e-a1d1-f19be016b9a6)
@@ -95,6 +121,9 @@ test dock option 2
 
 
 Api consulta.php:
+
+
+
 tests ssh
  
       curl -X GET "http://192.168.100.170/consulta.php?apikey=b493d48364afe44d&comando=solana%20balance%207PJBFH7sRPDjmQk7n2qQzaFSn4oxsMv8BFS43vKKb3S2"
