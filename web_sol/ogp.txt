@@ -1,0 +1,136 @@
+Tutorial de instalação  Open Game Panel 
+installer for OGP Agent 
+sudo apt-get update 
+sudo apt-get upgrade 
+sudo apt-get install libxml-parser-perl libpath-class-perl perl-modules screen rsync sudo e2fsprogs 
+unzip subversion libarchive-extract-perl pure-ftpd libarchive-zip-perl libc6 libgcc1 git curl 
+sudo apt-get install libc6-i386 
+sudo apt-get install libgcc1:i386 
+sudo apt-get install lib32gcc-s1 
+sudo apt-get install libhttp-daemon-perl 
+apt-get install sudo 
+usermod -aG sudo amauri 
+sudo apt-get install libarchive-extract-perl 
+wget -N "https://github.com/OpenGamePanel/Easy-Installers/raw/master/Linux/Debian
+Ubuntu/ogp-agent-latest.deb" -O "ogp-agent-latest.deb" 
+sudo dpkg -i "ogp-agent-latest.deb" 
+sudo cat /root/ogp_user_password 
+root@debian:~# sudo cat /root/ogp_user_password 
+ogpUser=ogp_agent 
+ogpPass=GFkfweXDf9ilfUZ 
+ogpEnc=9hNOsGoa 
+root@debian:~# 
+vendo  obs php-gettext git php-bcmath 
+sudo apt -y install php-php-gettext 
+sudo apt -y install libc6-dbg gdb valgrind 
+installer for OGP Panel 
+root@debian:~# 
+sudo apt -y install apache2 curl subversion php8.2 php8.2-gd php8.2-zip libapache2-mod-php8.2 
+php8.2-curl php8.2-mysql php8.2-xmlrpc php8.2-mbstring php8.2-xmlrpc php8.2-bcmath 
+sudo apt -y install php8.2-xmlrpc 
+sudo apt -y install php8.2-bcmath 
+sudo apt -y install php-pear 
+sudo apt install mariadb-server 
+sudo mysql_secure_installation 
+senha do mysql: 0073007 
+Switch to unix_socket authentication [Y/n] Y 
+Change the root password? [Y/n] Y 
+New password 0073007 
+Re-enter new password: 0073007 
+Password updated successfully! 
+Reloading privilege tables.. 
+... Success! 
+Remove anonymous users? [Y/n] n 
+Disallow root login remotely? [Y/n] n 
+Remove test database and access to it? [Y/n] y 
+Reload privilege tables now? [Y/n] y 
+Thanks for using MariaDB! 
+sudo mariadb 
+exit 
+sudo apt install php libapache2-mod-php php-mysql 
+sudo apt -y install phpmyadmin 
+php -v 
+sudo mkdir /var/www/html/fastdl 
+sudo nano /var/www/html/fastdl/info.php 
+<?php 
+phpinfo(); 
+?> 
+sudo service apache2 restart 
+http://localhost/fastdl/info.php 
+sudo mariadb 
+CREATE USER 'ogpuser'@'%' IDENTIFIED BY '0073007'; 
+ 
+REVOKE ALL PRIVILEGES ON *.* FROM 'ogpuser'@'%'; GRANT ALL PRIVILEGES ON *.* TO 'ogpuser'@'%' REQUIRE NONE 
+WITH GRANT OPTION MAX_QUERIES_PER_HOUR 0 MAX_CONNECTIONS_PER_HOUR 0 MAX_UPDATES_PER_HOUR 0 
+MAX_USER_CONNECTIONS 0; 
+ 
+exit 
+ 
+mariadb -u ogpuser -p 
+ 
+CREATE DATABASE ogp_panel; 
+ 
+SHOW DATABASES; 
+ 
+MariaDB [(none)]> SHOW DATABASES; 
++--------------------+ 
+| Database           | 
++--------------------+ 
+| information_schema | 
+| mysql              | 
+| ogp_panel          | 
+| performance_schema | 
+| phpmyadmin         | 
++--------------------+ 
+5 rows in set (0,000 sec) 
+ 
+CREATE TABLE ogp_panel.todo_list ( 
+        item_id INT AUTO_INCREMENT, 
+        content VARCHAR(255), 
+        PRIMARY KEY(item_id) 
+); 
+ 
+INSERT INTO ogp_panel.todo_list (content) VALUES ("Ok meu banco de dados :) Amauri Mysql"); 
+SELECT * FROM ogp_panel.todo_list; 
+exit 
+ 
+sudo nano /var/www/html/fastdl/todo_list.php 
+ 
+<?php 
+$user = "ogpuser"; 
+$password = "0073007"; 
+$database = "ogp_panel"; 
+$table = "todo_list"; 
+ 
+try { 
+  $db = new PDO("mysql:host=localhost;dbname=$database", $user, $password); 
+  echo "<h2>TODO</h2><ol>"; 
+  foreach($db->query("SELECT content FROM $table") as $row) { 
+    echo "<li>" . $row['content'] . "</li>"; 
+  } 
+  echo "</ol>"; 
+} catch (PDOException $e) { 
+    print "Error!: " . $e->getMessage() . "<br/>"; 
+    die(); 
+} 
+?> 
+https://www.phpmyadmin.net/ 
+Install Panel PHP OPEN GAME PANEL 
+wget -N "https://github.com/OpenGamePanel/Easy-Installers/raw/master/Linux/Debian
+Ubuntu/ogp-panel-latest.deb" -O "ogp-panel-latest.deb" 
+sudo dpkg -i "ogp-panel-latest.deb" 
+Please enter the MySQL root user password so that a MySQL database can be preconfigured for 
+OGP: 0073007 
+Acess http://localhost/install.php 
+cd /var/www/html/ 
+rm -r install.php 
+sudo cat /root/ogp_panel_mysql_info 
+sudo chmod 777 /var/www/html/fastdl/ 
+first locate this file copy it in my documents 
+**libgcc_s.so.1** 
+/home/amauri/.local/share/Steam/steamapps/common/SteamLinuxRuntime_sniper/sniper_platfo
+ rm_0.20230605.51441/files/lib/i386-linux-gnu/ 
+**i386-linux-gnu** 
+then you must put in the two OGP server directory 
+cp '/home/amauri/Downloads/libgcc_s.so.1' /home/ogp_agent/OGP_User_Files/1/bin 
+cp '/home/amauri/Downloads/libgcc_s.so.1' /home/ogp_agent/OGP_User_Files/1/csgo/bin
