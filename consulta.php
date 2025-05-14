@@ -28,7 +28,7 @@ try {
     ");
 } catch (PDOException $e) {
     error_log("Erro ao conectar ao banco de dados: " . $e->getMessage());
-    die(json_encode(['status' => 'error', 'message' => 'Erro ao conectar ao banco de dados.']));
+    die(json_encode(['status' => 'error', 'message' => 'Error connecting to database.']));
 }
 
 // ---- Captura o IP do usuário ----
@@ -39,7 +39,7 @@ header('Content-Type: application/json');
 $stmt = $pdo->prepare("SELECT * FROM ban_ip WHERE ip = :ip");
 $stmt->execute(['ip' => $ipUsuario]);
 if ($stmt->fetch()) {
-    echo json_encode(['status' => 'error', 'message' => 'Seu IP está banido por tentativas inválidas.']);
+    echo json_encode(['status' => 'error', 'message' => 'Your IP is banned due to invalid attempts.']);
     exit;
 }
 
@@ -65,17 +65,17 @@ if (!isset($_GET['apikey']) || !hash_equals($chaveApiCorreta, $_GET['apikey'])) 
         $stmtBan = $pdo->prepare("INSERT INTO ban_ip (key_genere, name, ip) VALUES ('API_SECURITY', 'Tentativas Excessivas', :ip)");
         $stmtBan->execute(['ip' => $ipUsuario]);
 
-        echo json_encode(['status' => 'error', 'message' => 'Seu IP foi banido por tentativas excessivas.']);
+        echo json_encode(['status' => 'error', 'message' => 'Your IP has been banned for excessive attempts.']);
         exit;
     }
 
-    echo json_encode(['status' => 'error', 'message' => 'Chave de API inválida.']);
+    echo json_encode(['status' => 'error', 'message' => 'Invalid API key.']);
     exit;
 }
 
 // ---- Processamento do Comando ----
 if ($_SERVER['REQUEST_METHOD'] !== 'GET' || !isset($_GET['comando'])) {
-    echo json_encode(['status' => 'error', 'message' => 'Método inválido ou comando não fornecido.']);
+    echo json_encode(['status' => 'error', 'message' => 'Invalid method or command not provided.']);
     exit;
 }
 
@@ -83,7 +83,7 @@ $comandoRecebido = urldecode(trim($_GET['comando']));
 
 // Proteção contra caracteres perigosos no comando
 if (preg_match('/[;&|`]/', $comandoRecebido)) {
-    echo json_encode(['status' => 'error', 'message' => 'Comando contém caracteres proibidos.']);
+    echo json_encode(['status' => 'error', 'message' => 'Command contains prohibited characters.']);
     exit;
 }
 
@@ -97,7 +97,8 @@ if (!file_put_contents($logFile, $logEntry, FILE_APPEND)) {
 
 // ---- Execução do comando via Docker ----
 $comandoSeguroParaExec = escapeshellcmd($comandoRecebido);
-$fullDockerCommand = "sudo -u www-data docker run --rm -v /home/astral/astralcoin:/solana-token -v /home/astral/astralcoin/solana-data:/root/.config/solana heysolana " . $comandoSeguroParaExec;
+//$fullDockerCommand = "sudo -u www-data docker run --rm -v /home/astral/astralcoin:/solana-token -v /home/astral/astralcoin/solana-data:/root/.config/solana heysolana " . $comandoSeguroParaExec;
+$fullDockerCommand = "sudo -u www-data docker run --rm -v /root/solana:/solana-token -v /root/solana/solana-data:/root/.config/solana heysolana " . $comandoSeguroParaExec;
 
 exec($fullDockerCommand, $output, $codigoRetorno);
 
