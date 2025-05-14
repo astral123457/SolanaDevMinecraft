@@ -127,6 +127,25 @@ nano Dockerfile
 
 ------------------------DockerfileEnd-----------------------------
 
+    docker build -t heysolana .
+    
+    docker run -it --rm -v $(pwd):/solana-token -v $(pwd)/solana-data:/root/.config/solana heysolana
+
+    solana-keygen grind --starts-with dad:1
+
+    solana config set --keypair dad-your-token-acount.json
+
+    solana config set --url devnet
+
+    solana config get
+    
+    solana address
+    
+# https://faucet.solana.com/ to have SOL airdropped
+
+    solana balance
+
+
 # Dependencia mod do Fabric server https://fabricmc.net/use/server/
 
           Cardboard-1.21.4.jar (Cardboard-1.19.x or 1.20.x or 1.21.x)	
