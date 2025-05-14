@@ -5,11 +5,22 @@
 ![image](https://github.com/user-attachments/assets/d4876677-67bd-47a1-bcdd-952afe291502)
 
 
-![image](https://github.com/user-attachments/assets/001add6f-b860-497d-b527-f3d1a14e6ecf)
+
 
 debian-12.9.0-amd64-netinst.iso
 
 ![image](https://github.com/user-attachments/assets/32aacb40-5edd-4d85-b4c5-7a0501fe5be3)
+
+Nome: Debina 12
+Geração: Geração 2
+Memória: 4024 MB
+Rede: Default Switch
+Disco Rígido: C:\ProgramData\Microsoft\Windows\Virtual Hard Disks\Debina 12.vhdx (VHDX, expansão dinâmica)
+Sistema Operacional: Será instalado de C:\Users\bzm36\Desktop\debian-12.9.0-amd64-netinst.iso
+
+![image](https://github.com/user-attachments/assets/001add6f-b860-497d-b527-f3d1a14e6ecf)
+
+
 
 
 # panel gamer Open Game Panel Php e Mysql config
