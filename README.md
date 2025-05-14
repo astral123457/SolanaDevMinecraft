@@ -17,6 +17,12 @@ https://github.com/astral123457/SolanaDevMinecraft/blob/main/web_sol/ogp.txt
 
 https://github.com/astral123457/SolanaDevMinecraft/blob/main/web_sol/maria_banco_de_dados.txt
 
+# vpn for frendys tailscale 
+
+curl -fsSL https://tailscale.com/install.sh | sh
+
+# doc linux debian 12 solana console create and configure a dock
+
 To configure everything first, I recommend watching this video in English, it helped me create and configure a dock for Solana https://www.youtube.com/watch?v=L4ASwqLZVV0
 
 # Dependencia mod do Fabric server https://fabricmc.net/use/server/
