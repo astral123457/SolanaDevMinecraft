@@ -126,6 +126,13 @@ Api consulta.php:
 ![image](https://github.com/user-attachments/assets/ef577acc-a11e-440b-b63a-da61738b7098)
 
 
+         http://100.85.188.51/consulta.php?apikey=b493d48364afe44d&comando=ls
+
+
+![image](https://github.com/user-attachments/assets/4740e2a3-0960-4603-b7b0-17b2d1ef135f)
+
+
+
 
 
 tests ssh
