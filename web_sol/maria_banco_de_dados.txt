@@ -1,0 +1,34 @@
+sudo nano /etc/mysql/mariadb.conf.d/50-server.cnf
+
+Alterar o bind-address:
+
+Procure pela linha bind-address = 127.0.0.1.
+Comente essa linha adicionando um # no início, ou altere-a para bind-address = 0.0.0.0 para permitir conexões de qualquer endereço IP.
+
+sudo systemctl restart mariadb
+
+sudo mysql -u root -p
+
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '0073007' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
+
+sudo ss -tulnp | grep mariadb
+
+sudo mysql -u root -p
+
+SELECT User, Host FROM mysql.user WHERE User = 'root';
+
+#  Conceda permissões ao usuário root para o endereço IP '192.168.100.170': 
+
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'192.168.100.170' IDENTIFIED BY '0073007' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
+
+
+# Se você quer permitir que o root se conecte de qualquer lugar:
+
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '0073007' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
+
+# Ver de novo
+
+SELECT User, Host FROM mysql.user WHERE User = 'root';
