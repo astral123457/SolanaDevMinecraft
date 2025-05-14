@@ -1,0 +1,246 @@
+sudo apt update && sudo apt upgrade
+sudo apt install openvpn easy-rsa
+
+cd /usr/share/easy-rsa
+sudo mv vars.example vars
+sudo mkdir /etc/openvpn/easy-rsa
+sudo cp -r /usr/share/easy-rsa/* /etc/openvpn/easy-rsa
+cd /etc/openvpn/easy-rsa
+sudo chmod -R 700 /etc/openvpn/easy-rsa
+sudo ./vars
+# sudo ./vars ars' Easy-RSA. Isso não é mais necessário
+sudo mkdir /etc/openvpn/easy-rsa/pki
+sudo chown -R $(whoami) /etc/openvpn/easy-rsa/pki
+ls -ld /etc/openvpn/easy-rsa/pki
+
+
+openvpn --genkey secret /etc/openvpn/easy-rsa/pki/ta.key
+
+
+
+
+
+
+
+sudo nano /etc/openvpn/server.conf
+===============================================================server.conf=====================================================
+mode server
+tls-server
+port 1194
+proto udp
+dev tun
+server 10.8.0.0 255.255.255.0
+push "redirect-gateway def1 bypass-dhcp"
+push "dhcp-option DNS 8.8.8.8"
+push "dhcp-option DNS 8.8.4.4"
+push "route 192.168.100.170 255.255.255.255 vpn_gateway"
+ifconfig-pool-persist ipp.txt
+keepalive 10 60
+cipher AES-256-CBC
+user root
+group root
+client-to-client
+dh /etc/openvpn/easy-rsa/pki/dh.pem
+ca /etc/openvpn/easy-rsa/pki/ca.crt
+cert /etc/openvpn/easy-rsa/pki/issued/server.crt
+key /etc/openvpn/easy-rsa/pki/private/server.key
+tls-auth /etc/openvpn/easy-rsa/pki/ta.key 0
+key-direction 0
+persist-key
+persist-tun
+status /var/log/openvpn-status.log
+log /var/log/openvpn.log
+verb 5
+
+===================================================================server.conf end==========================================================================
+
+cd /etc/openvpn
+
+#Vamos refrescar a memória! inicializar o PKI:
+
+
+cd easy-rsa
+ls -l
+chmod +x ./easyrsa
+
+
+sudo ./easyrsa init-pki
+
+#Construir a CA:
+
+sudo ./easyrsa build-ca
+Enter New CA Key Passphrase:Amauri,007.
+Re-Enter New CA Key Passphrase:Amauri,007.
+Common Name (eg: your user, host, or server name) [Easy-RSA CA]:HostingAmauri
+
+Your new CA certificate file for publishing is at:
+/etc/openvpn/easy-rsa/pki/ca.crt
+
+# Criar chave do servidor:
+
+sudo ./easyrsa gen-req server nopass
+Common Name (eg: your user, host, or server name) [server]:	HostingAmauriServer
+Keypair and certificate request completed. Your files are:
+req: /etc/openvpn/easy-rsa/pki/reqs/server.req
+key: /etc/openvpn/easy-rsa/pki/private/server.key
+
+# Criar Certificado do servidor:
+sudo ./easyrsa sign-req server server
+Type the word 'yes' to continue, or any other input to abort.
+  Confirm request details:yes
+Enter pass phrase for /etc/openvpn/easy-rsa/pki/private/ca.key:Amauri,007.
+
+Certificate created at: /etc/openvpn/easy-rsa/pki/issued/server.crt
+
+# Gerar o Diffie-Hellman:
+
+sudo ./easyrsa gen-dh
+DH parameters of size 2048 created at /etc/openvpn/easy-rsa/pki/dh.pem
+
+# Gerar chaves para os clientes:
+sudo ./easyrsa gen-req client1 nopass
+Common Name (eg: your user, host, or server name) [client1]:bryan
+
+Keypair and certificate request completed. Your files are:
+req: /etc/openvpn/easy-rsa/pki/reqs/client1.req
+key: /etc/openvpn/easy-rsa/pki/private/client1.key
+
+# Gerar certificados para os clientes:
+sudo ./easyrsa sign-req client client1
+
+Type the word 'yes' to continue, or any other input to abort.
+  Confirm request details: yes
+
+Using configuration from /etc/openvpn/easy-rsa/pki/easy-rsa-5204.gItEDV/tmp.8iSHuj
+Enter pass phrase for /etc/openvpn/easy-rsa/pki/private/ca.key:Amauri,007.
+
+Certificate created at: /etc/openvpn/easy-rsa/pki/issued/client1.crt
+
+
+#anota isto dos 3 arquivos 
+
+sudo nano /etc/openvpn/easy-rsa/pki/ca.crt
+-----BEGIN CERTIFICATE-----
+[certificado CA]
+-----END CERTIFICATE-----
+
+
+sudo nano /etc/openvpn/easy-rsa/pki/issued/client1.crt
+-----BEGIN CERTIFICATE-----
+[certificado CA]
+-----END CERTIFICATE-----
+
+
+sudo nano /etc/openvpn/easy-rsa/pki/private/client1.key
+-----BEGIN PRIVATE KEY-----
+[chave privada do cliente]
+-----END PRIVATE KEY-----
+
+
+
+crie um arquivo no seu comcupador com este nome conneta.ovpn
+
+============================================================conneta.ovpn=================================================
+client
+dev tun
+proto udp
+remote 192.168.100.170 1194
+resolv-retry infinite
+nobind
+persist-key
+persist-tun
+<ca>
+-----BEGIN CERTIFICATE-----
+[certificado CA]
+-----END CERTIFICATE-----
+</ca>
+<cert>
+-----BEGIN CERTIFICATE-----
+[certificado do cliente]
+-----END CERTIFICATE-----
+</cert>
+<key>
+-----BEGIN PRIVATE KEY-----
+[chave privada do cliente]
+-----END PRIVATE KEY-----
+</key>
+key-direction 1
+<tls-auth>
+-----BEGIN OpenVPN Static key V1-----
+[chave privada do server]
+-----END OpenVPN Static key V1-----
+</tls-auth>
+
+remote-cert-tls server
+cipher AES-256-GCM
+verb 5
+===========================================================conneta.ovpn end===================================================
+# GERAR <tls-auth> OpenVPN Static key V1 pki/ta.key
+cd /etc/openvpn/easy-rsa
+sudo openvpn --genkey secret /etc/openvpn/easy-rsa/pki/ta.key
+
+Salve e feche o arquivo.
+
+#Verifique as permissões dos arquivos:
+sudo chown -R openvpn:openvpn /etc/openvpn/easy-rsa/pki
+sudo chmod -R 755 /etc/openvpn/easy-rsa/pki
+
+
+#Ative o encaminhamento de IP no kernel do Linux:
+sudo nano /etc/sysctl.conf
+#Certifique-se de que o encaminhamento de IP está habilitado no Linux:
+net.ipv4.ip_forward = 1
+
+sudo sysctl -p
+
+sudo chmod 600 /etc/openvpn/server.conf
+sudo chown root:root /etc/openvpn/server.conf
+
+
+sudo systemctl restart openvpn@server
+
+ 
+
+#Configure as regras de NAT usando iptables:
+sudo iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o eth0 -j MASQUERADE
+
+#Salve as regras de iptables para que sejam aplicadas em cada reinicialização:
+sudo apt-get install iptables-persistent
+sudo netfilter-persistent save
+sudo netfilter-persistent reload
+
+#Reinicie o serviço OpenVPN para aplicar as mudanças:
+
+cada cliente vai ter que esta as configs deles no servidor 
+
+sudo chmod 644 /etc/openvpn/client1.conf
+sudo chown root:root /etc/openvpn/client1.conf
+
+sudo systemctl daemon-reload
+sudo systemctl restart openvpn@client.service
+
+garanta que as portas esteje abertas
+
+
+sudo ufw allow 1194/udp
+sudo ufw allow 1194/tcp
+sudo ufw allow 443/tcp
+sudo ufw allow 25340/tcp
+sudo ufw allow 7495/tcp
+sudo ufw reload
+
+
+
+
+
+
+
+ 
+
+
+
+
+              
+
+
+

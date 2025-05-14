@@ -1,0 +1,182 @@
+sudo nano /root/mi.sh
+
+=======================================================================================
+#!/bin/bash
+cd /root/minecraft
+screen -A -m -d -S mi java -Xmx1024M -Xms1024M -jar server.jar nogui
+while true; do
+    sleep 86400 # Dorme por 1 dia antes de verificar novamente
+done
+
+=======================================================================================
+
+sudo chmod +x /root/mi.sh
+
+sudo nano /etc/systemd/system/minecraft.service
+
+=======================================================================================
+[Unit]
+Description=Minecraft Server
+
+[Service]
+User=root
+WorkingDirectory=/root/minecraft
+ExecStart=/root/mi.sh
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+========================================================================================
+
+sudo systemctl enable minecraft.service
+sudo systemctl start minecraft.service
+
+
+sudo systemctl daemon-reload
+sudo systemctl restart minecraft.service
+
+
+sudo systemctl status minecraft.service
+
+
+
+#fim tutorial de backup de Mapa#!/bin/bash
+# Script para backup
+
+
+nano mi_script_de_backup.sh
+
+
+==========================================================================================
+
+#!/bin/bash
+# Script para backup
+
+SOURCE="/root/minecraft/world"  # Ajustei o nome do diretório para "world"
+DEST="/var/www/html/fastdl"
+BACKUP_FILE="$DEST/backup_$(date +%F).tar.gz"
+
+tar -czf $BACKUP_FILE $SOURCE
+
+echo "Backup realizado com sucesso: $BACKUP_FILE"
+
+
+===========================================================================================
+shmod +x mi_script_de_backup.sh
+
+crontab -e
+
+0 2 * * * /root/mi_script_de_backup.sh
+
+Ótimo! Agendando com o crontab para rodar diariamente às 2 da manhã, seu backup estará sempre atualizado. 😎
+
+
+-----------------------------------------------------------------------------------------------------------------
+
+
+monitorar e finalizar coisa travada 
+
+sudo apt install htop
+
+top
+
+
+sudo kill -9 <PID>
+
+
+---------------------------------------------------------------------------------------------------------------
+Para remover o serviço Discordbotv4Dog.service do systemd, siga os seguintes passos:
+
+Parar o serviço: Use o comando systemctl stop para parar o serviço.
+
+bash
+sudo systemctl stop Discordbotv4Dog.service
+Desabilitar o serviço: Use o comando systemctl disable para impedir que o serviço seja iniciado automaticamente.
+
+bash
+sudo systemctl disable Discordbotv4Dog.service
+Remover o arquivo do serviço: Exclua o arquivo do serviço da diretoria /etc/systemd/system/.
+
+bash
+sudo rm /etc/systemd/system/Discordbotv4Dog.service
+Recarregar o daemon: Use o comando systemctl daemon-reload para recarregar o systemd e remover completamente o serviço.
+
+bash
+sudo systemctl daemon-reload
+Limpar o estado falhado: Use o comando systemctl reset-failed para remover qualquer entrada de estado falhado para o serviço.
+
+bash
+sudo systemctl reset-failed
+Após seguir esses passos, o serviço Discordbotv4Dog.service deve ser removido do seu sistema. Se precisar de mais alguma coisa, estou aqui para ajudar!
+
+curl -fsSL https://ollama.com/install.sh | sh
+
+ollama run llama3.2
+
+
+
+
+# Pterodactyl Queue Worker File
+# ----------------------------------
+
+[Unit]
+Description=Pterodactyl Queue Worker
+After=redis-server.service
+
+[Service]
+# On some systems the user and group might be different.
+# Some systems use `apache` or `nginx` as the user and group.
+User=www-data
+Group=www-data
+Restart=always
+ExecStart=/usr/bin/php /var/www/pterodactyl/artisan queue:work --queue=high,standard,low --sleep=3 --tries=3
+StartLimitInterval=180
+StartLimitBurst=30
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
+
+
+
+sudo nano /etc/systemd/system/cs2.service
+
+[Unit]
+Description=Counter-Strike: Source 2 Server
+
+[Service]
+User=astral
+WorkingDirectory=/home/ogp_agent/OGP_User_Files/7/game/bin/linuxsteamrt64
+ExecStart=/home/ogp_agent/OGP_User_Files/7/game/bin/linuxsteamrt64/cs2.sh
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+sudo nano /etc/systemd/system/cs2.service
+
+sudo systemctl start cs2.service
+
+sudo systemctl enable cs2.service
+sudo systemctl start cs2.service
+
+
+sudo systemctl daemon-reload
+sudo systemctl restartcs2.service
+
+disabled
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
