@@ -36,6 +36,9 @@ https://github.com/astral123457/SolanaDevMinecraft/blob/main/web_sol/maria_banco
 
 # vpn for frendys tailscale 
 
+![image](https://github.com/user-attachments/assets/ea73cc42-234a-47a7-811a-993053c5ca61)
+
+
     curl -fsSL https://tailscale.com/install.sh | sh
 
 # doc linux debian 12 solana console create and configure a dock
