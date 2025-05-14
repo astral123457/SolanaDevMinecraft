@@ -15,6 +15,7 @@ https://github.com/astral123457/SolanaDevMinecraft/blob/main/web_sol/ogp.txt
 
 # mysql Remot Control 
 
+https://github.com/astral123457/SolanaDevMinecraft/blob/main/web_sol/maria_banco_de_dados.txt
 
 To configure everything first, I recommend watching this video in English, it helped me create and configure a dock for Solana https://www.youtube.com/watch?v=L4ASwqLZVV0
 
