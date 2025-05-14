@@ -1,4 +1,7 @@
 # SolanaDevMinecraft 1.19.x to 1.20.x to 1.21.x Paper i.e. it also works with modern server fabric and mods
+
+![image](https://github.com/user-attachments/assets/001add6f-b860-497d-b527-f3d1a14e6ecf)
+
 To configure everything first, I recommend watching this video in English, it helped me create and configure a dock for Solana https://www.youtube.com/watch?v=L4ASwqLZVV0
 
 # Dependencia mod do Fabric server https://fabricmc.net/use/server/
