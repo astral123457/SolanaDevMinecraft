@@ -79,6 +79,8 @@ test dock option 2
 
 ![image](https://github.com/user-attachments/assets/6d32ebfb-3f88-45f2-b143-b2ccf1c75c9e)
 
+        sudo -u www-data docker run --rm -v /root/solana:/solana-token -v /root/solana/solana-data:/root/.config/solana heysolana mkdir wallets
+
 
 
 Api consulta.php:
