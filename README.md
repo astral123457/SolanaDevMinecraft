@@ -62,26 +62,35 @@ https://github.com/astral123457/SolanaDevMinecraft/blob/main/web_sol/maria_banco
 
 # doc linux debian 12 solana console create and configure a dock
 
-
+#
     sudo apt-get install ca-certificates curl
+#
     sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+#
     sudo chmod a+r /etc/apt/keyrings/docker.asc
-
+#
     sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 7EA0A9C3F273FCD8
-
+#
     echo \
     "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
     $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
     sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-  
+#
     curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+#
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian bookworm stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+#
     sudo apt update
+#
     sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+#
     sudo systemctl start docker
+#
     sudo systemctl enable docker
+#
     sudo docker run hello-world    
-🚢🐳
+#
+🚢🐳 Nice Jobs Steve
     
 root@debian:~#
 
@@ -231,14 +240,27 @@ PHP
 # See sudoers(5) for more information on "@include" directives:
 
     sudo apt -y install apache2 curl subversion php8.2 php8.2-gd php8.2-zip libapache2-mod-php8.2 php8.2-curl php8.2-mysql php8.2-xmlrpc php8.2-mbstring php8.2-xmlrpc php8.2-bcmath
+
+#
+
     sudo a2enmod php8.2
+
+#
     sudo systemctl restart apache2
+
+#
 
 Test 1 root@debian:
 
+#
+
     cd /var/www/html
 
+#
+
     nano shell.php
+
+#
 
      
     <?php
