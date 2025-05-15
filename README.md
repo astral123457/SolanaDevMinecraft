@@ -242,12 +242,17 @@ or Test 2
 
          nano shell.php
          
-        <?php
-        $command = "sudo -u www-data docker run --rm -v /home/astral/astralcoin:/solana-token -v /home/astral/astralcoin/solana-data:/root/.config/solana heysolana ls 2>&1";
-        $output = shell_exec($command);
-        echo "<pre>Comando executado: $command</pre>";
-        echo "<pre>Saída do comando:\n$output</pre>";
-        ?>
+<?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+$command = "sudo -u www-data docker run --rm -v /root/solana:/solana-token -v /root/solana/solana-data:/root/.config";
+$output = shell_exec($command);
+
+echo "<pre>Comando executado: $command</pre>";
+echo "<pre>Saída do comando:\n$output</pre>";
+?>
 
 ![image](https://github.com/user-attachments/assets/12b87ece-8d45-4990-86a6-a463f5c537a5)
 
