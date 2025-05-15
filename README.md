@@ -137,7 +137,7 @@ este video em ingles me ajudou a criar e configurar uma dock para solana https:/
 
 um pai ensinando as finhas economia e banco digital Ti e tecnologias
 
-# instal CLi SOLANA
+# install CLi SOLANA pLUGI p SOL sOLANA
 
     docker build -t heysolana .
 # 1
