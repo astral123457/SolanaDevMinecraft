@@ -10,6 +10,10 @@
 debian-12.9.0-amd64-netinst.iso
 
 ![image](https://github.com/user-attachments/assets/32aacb40-5edd-4d85-b4c5-7a0501fe5be3)
+#segure bot off 1
+#connect 2
+![image](https://github.com/user-attachments/assets/3587d163-78cb-4ace-8600-18619774d4f2)
+
 
 Nome: Debina 12
 Geração: Geração 2
