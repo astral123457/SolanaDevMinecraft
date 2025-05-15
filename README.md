@@ -654,3 +654,20 @@ language:
 # Option custom resourcepacks
 
           enchant icons 1.21.4 v1.3.zip
+
+# Recuperar carteira 
+
+solana-keygen recover --force
+
+vai pedir para digitar a frase secreta 
+
+root@f702df0e10ba:/solana-token# solana-keygen recover --force
+[recover] seed phrase:
+[recover] If this seed phrase has an associated passphrase, enter it now. Otherwise, press ENTER to continue:
+Recovered pubkey `"7PJBFH7sRPDjmQk7n2qQzaFSn4oxsMv8BFS43vKKb3S2"`. Continue? (y/n):
+y
+Wrote recovered keypair to /root/.config/solana/id.json
+
+ai depois tem que colocar no diretorio certo
+
+mv /root/.config/solana/id.json /solana-token/wallets/007amauri_wallet.json
