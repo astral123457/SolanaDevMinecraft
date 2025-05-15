@@ -157,7 +157,9 @@ nano Dockerfile
     </Directory>
     ________Apache2.conf_________ add Require all granted
 
-# user  add www-data ALL=(ALL) NOPASSWD: /usr/bin/docker
+# user  add 
+
+www-data ALL=(ALL) NOPASSWD: /usr/bin/docker
 
     sudo nano /etc/sudoers
 
