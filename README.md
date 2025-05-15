@@ -157,6 +157,23 @@ nano Dockerfile
     </Directory>
     ________Apache2.conf_________ add Require all granted
 
+# user
+
+    sudo nano /etc/sudoers
+
+    -------------sudoers------------
+    # User privilege specification
+    root    ALL=(ALL:ALL) ALL
+
+    # Allow members of group sudo to execute any command
+    %sudo   ALL=(ALL:ALL) ALL
+
+    www-data ALL=(ALL) NOPASSWD: /usr/bin/docker
+    # See sudoers(5) for more information on "@include" directives:
+    ------------sudoers------------
+
+
+
     
 SolanaDevMinecraft
 
