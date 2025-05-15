@@ -145,45 +145,19 @@ nano Dockerfile
 
     solana balance
 
+# apache2 config
+    cd /etc/apache2
+    nano apache2.conf
 
-# Dependencia mod do Fabric server https://fabricmc.net/use/server/
+    ________Apache2.conf_________remove Require all denied 
+    <Directory />
+        Options FollowSymLinks
+        AllowOverride None
+        Require all granted                           
+    </Directory>
+    ________Apache2.conf_________ add Require all granted
 
-          Cardboard-1.21.4.jar (Cardboard-1.19.x or 1.20.x or 1.21.x)	
-          
-          fabric-api-0.119.21.21.4.jar 	 
-          
-          iCommon-Fabric-bundle1.jar (1.19 a 1.21.5)
-
-          antixray-fabric-1.4.9+1.21.4.jar
-          
-# Plugin Custom
-
-          EssentialsX-2.21.0.jar (/back /sethome /tpa) Basic commads
-          
-          SolanaDevMinecraftAstraL-1.33-all.jar
-
-
-# Option custom mod do Fabric user https://fabricmc.net/use/installer/
-
-          fabric-api-0.119.2+1.21.4.jar
-          Essential-1.21.4.jar
-          iris-fabric-1.8.8+mc1.21.4.jar
-          sodium-fabric-0.6.13+mc1.21.4.jar
-          Xaeros_Minimap_25.2.0_Fabric_1.21.4.jar
-          XaerosWorldMap_1.39.4_Fabric_1.21.4.jar
-
-          entity_model_features_fabric_1.21.4-2.4.1.jar
-          entity_texture_features_fabric_1.21.4-6.2.10.jar
-
-# Option custom resourcepacks
-
-          enchant icons 1.21.4 v1.3.zip
-
-
-
-
-
-
+    
 SolanaDevMinecraft
 
 The Solana Dev token has no real value and is used only for fun and economic experimentation. It is not subject to regulations or financial laws,
@@ -607,89 +581,35 @@ language:
     
     - "ko-KR"  # Coreano da Coreia do Sul off
 
+# Dependencia mod do Fabric server https://fabricmc.net/use/server/
 
-If you need more details or adjustments, just let me know! 😊
+          Cardboard-1.21.4.jar (Cardboard-1.19.x or 1.20.x or 1.21.x)	
+          
+          fabric-api-0.119.21.21.4.jar 	 
+          
+          iCommon-Fabric-bundle1.jar (1.19 a 1.21.5)
 
-This video in English helped me create and configure a dock for Solana https://www.youtube.com/watch?v=L4ASwqLZVV0
+          antixray-fabric-1.4.9+1.21.4.jar
+          
+# Plugin Custom
 
-A father teaching the little ones about economics and digital banking IT and technologies
-
-If you want to create an astral user and an astral folder and a www user
-
-1. Create a User in Linux
-To create the user that will have specific permissions:
-
-             sudo adduser www
-
-- The command will ask you to set a password and other basic information.
-
-- Make sure that the user only has access to the necessary folders and commands.
-
-2. Create a Group and Add the User
-Create a group called dockerusers (or whatever name you prefer) and add the user www:
-
-           sudo groupadd dockerusers
-   
-           sudo usermod -aG dockerusers www
-
-- This will add the user to the group and allow them to run Docker-related commands (if configured).
-
-3. Allow Access to Docker
-Ensure that the dockerusers group has permission to use Docker without needing sudo:
+          EssentialsX-2.21.0.jar (/back /sethome /tpa) Basic commads
+          
+          SolanaDevMinecraftAstraL-1.33-all.jar
 
 
-               sudo usermod -aG docker www-data
+# Option custom mod do Fabric user https://fabricmc.net/use/installer/
 
-After that, reboot to ensure that the permissions are applied:
-newgrp docker
+          fabric-api-0.119.2+1.21.4.jar
+          Essential-1.21.4.jar
+          iris-fabric-1.8.8+mc1.21.4.jar
+          sodium-fabric-0.6.13+mc1.21.4.jar
+          Xaeros_Minimap_25.2.0_Fabric_1.21.4.jar
+          XaerosWorldMap_1.39.4_Fabric_1.21.4.jar
 
-4. Configure Folders
-Ensure that the folders required for the Docker command are accessible to the www user:
+          entity_model_features_fabric_1.21.4-2.4.1.jar
+          entity_texture_features_fabric_1.21.4-6.2.10.jar
 
-        sudo mkdir -p /home/astral/astralcoin /home/astral/astralcoin/solana-data
-   
-        sudo chown -R www:www /home/astral/astralcoin
+# Option custom resourcepacks
 
-
-This sets read/write permissions for the www user.
-
-5. Run the Docker Command
-Make sure that Docker is installed. Otherwise, install it with:
-sudo apt update
-sudo apt install docker.io
-
-Then, you can run the command with the www user:
-
-
-root@debian:~/solana# bash carteira.sh
-
-root@350bf931f092:/solana-token# solana-keygen new -o /root/.config/solana/id.json
-
-Generating a new keypair
-
-For added security, enter a BIP39 passphrase
-
-NOTE! This passphrase improves security of the recovery seed phrase NOT the
-keypair file itself, which is stored as insecure plain text
-
-BIP39 Passphrase (empty for none):
-Enter same passphrase again:
-
-sudo docker run --rm \ -v /home/astral/astralcoin:/solana-token\ -v /home/astral/astralcoin/solana-data:/root/.config/solana \heysolana solana balance
-
-6. Configure Permissions on the www User
-If you need the www user to have access to additional groups, you can edit it directly:
-sudo usermod -aG www-data www
-
-The www-data group is commonly used in web configurations, but check if it is necessary before adding it.
-
-7. Document and Simplify
-For the tutorial:
-- Describe each step in detail.
-- Include explanations about security (limiting permissions, preventing unnecessary access, etc.).
-- If the script requires additional adjustments, such as environment variables, explain how to set them.
-
-With these steps, you will have a working guide to setting up your Linux environment and running the Docker command in the context of your project. Need help formatting this in plain text or adding more details? 🚀
-
-![image](https://github.com/user-attachments/assets/99b53f7e-d58c-4877-bc74-994e947f7932)
-
+          enchant icons 1.21.4 v1.3.zip
