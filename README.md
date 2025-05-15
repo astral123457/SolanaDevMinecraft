@@ -131,18 +131,26 @@ root@debian:~/solana#
 
 ------------------------DockerfileEnd-----------------------------
 
+https://blog.networkchuck.com/posts/create-a-solana-token/
+
+este video em ingles me ajudou a criar e configurar uma dock para solana https://www.youtube.com/watch?v=L4ASwqLZVV0 
+
+um pai ensinando as finhas economia e banco digital Ti e tecnologias
+
+# instal CLi SOLANA
+
     docker build -t heysolana .
-    
+# 1
     docker run -it --rm -v $(pwd):/solana-token -v $(pwd)/solana-data:/root/.config/solana heysolana
-
+# 2
     solana-keygen grind --starts-with dad:1
-
+# 3
     solana config set --keypair dad-your-token-acount.json
-
+# 4
     solana config set --url devnet
-
+# 5
     solana config get
-    
+# 6
     solana address
     
 # https://faucet.solana.com/ to have SOL airdropped # INSS DEV SOLANA
