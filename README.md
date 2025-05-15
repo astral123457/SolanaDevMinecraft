@@ -147,8 +147,11 @@ um pai ensinando as finhas economia e banco digital Ti e tecnologias
 
 
 ls 
-dad-your-token-acount.json
+
+# dad-your-token-acount.json
+
 OBS 
+
     solana config set --keypair dad-your-token-acount.json
     
 # 4
