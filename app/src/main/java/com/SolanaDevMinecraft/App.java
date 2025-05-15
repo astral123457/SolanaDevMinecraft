@@ -34,7 +34,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 
 
-public class App extends JavaPlugin {
+public class App extends JavaPlugin implements Listener {
 
     private Connection connection;
     private Solana solana;
@@ -47,6 +47,7 @@ public class App extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        getServer().getPluginManager().registerEvents(this, this);
         // Salva o config.yml na pasta do plugin, caso ainda não exista
         saveDefaultConfig();
         config = getConfig(); // Inicializa config.yml corretamente

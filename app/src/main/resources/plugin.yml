@@ -1,34 +1,43 @@
 name: SolanaDevMinecraftAstraL
-version: 1.0
+version: 2.22
 main: com.SolanaDevMinecraft.App
 api-version: 1.19
-author: Amauri
+author: Amauri Bueno dos Santos
+website: https://solanadev.com
 description: Plugin que permite ver token Solana Dev no Minecraft
 commands:
   saldo:
     description: Verifica o saldo bancário.
     usage: /saldo
+    aliases: [bank, saldoBanco]
   loan:
     description: Solicita um empréstimo. pega emprestimo com 13 do L
     usage: /loan <quantidade>
+    aliases: [emprestimo, pegarloan, pedircredito, pegalulao, pegaladrao]
   paydebt:
     description: Paga parte ou toda a dívida.
     usage: /paydebt <quantidade>
+    aliases: [pagarconta, pagar, pagardivida]
   invest:
     description: Realiza um investimento.
     usage: /invest <quantidade>
+    aliases: [investir, aplicar]
   solbalance:
     description: Verifica o saldo da carteira Solana.
     usage: /solbalance
+    aliases: [solsaldo, saldosolana]
   soltransfer:
     description: Transfere SOL para outro jogador.
     usage: /soltransfer <quantidade> <jogador_destino>
+    aliases: [enviarSOL, solenvio]
   buycurrency:
     description: Compra moedas do jogo usando Solana.
     usage: /buycurrency <quantidade_SOL>
+    aliases: [comprarmoedas, solcompra]
   createwallet:
     description: Cria uma carteira Solana para o jogador.
     usage: /createwallet
+    aliases: [carteira, solwallet]
   buyapple:
     description: Compra uma Maçã Encantada.
     usage: /buyapple
