@@ -137,9 +137,9 @@ root@debian:~/solana#
 
 https://blog.networkchuck.com/posts/create-a-solana-token/
 
-este video em ingles me ajudou a criar e configurar uma dock para solana https://www.youtube.com/watch?v=L4ASwqLZVV0 
+This video in English helped me create and set up a dock for Solana https://www.youtube.com/watch?v=L4ASwqLZVV0 
 
-um pai ensinando as finhas economia e banco digital Ti e tecnologias
+A father teaching his daughters about economics and digital banking technologies.
 
 # install CLi SOLANA pLUGI p SOL sOLANA
 
