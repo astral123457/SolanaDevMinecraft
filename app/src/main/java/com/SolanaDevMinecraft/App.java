@@ -180,9 +180,23 @@ public boolean onCommand(CommandSender sender, Command command, String label, St
     } else if (command.getName().equalsIgnoreCase("createWallet")) {
     if (sender instanceof Player) {
         Player player = (Player) sender;
+        String lang = store.getPlayerLanguage(player); // Obtém o idioma do jogador
+                    if (lang.equals("pt-BR")) {
+                        player.sendMessage(Component.text("⚡ Aguarde! ", NamedTextColor.GOLD)
+                        .append(Component.text("Pode levar 5 segundos...", NamedTextColor.GREEN))
+                        .append(Component.text("\n🌐 Conectando ao banco Solana...", NamedTextColor.AQUA)));
+                        } else if (lang.equals("es-ES")) {
+                            player.sendMessage(Component.text("⚡ ¡Espere! ", NamedTextColor.GOLD)
+                            .append(Component.text("Puede tardar 5 segundos...", NamedTextColor.GREEN))
+                            .append(Component.text("\n🌐 Conectando al banco Solana...", NamedTextColor.AQUA)));
+                            } else { // Inglês como padrão
+                            player.sendMessage(Component.text("⚡ Please wait! ", NamedTextColor.GOLD)
+                            .append(Component.text("This may take 5 seconds...", NamedTextColor.GREEN))
+                            .append(Component.text("\n🌐 Connecting to Solana bank...", NamedTextColor.AQUA)));
+                        }
         solana.createWallet(player);
     } else {
-        sender.sendMessage("Este comando só pode ser usado por jogadores.");
+        sender.sendMessage("Este comando so pode ser usado por jogadores.");
 
     }
     return true;
@@ -276,7 +290,7 @@ public boolean onCommand(CommandSender sender, Command command, String label, St
                 player.sendMessage("Uso correto: /soltransfer <jogador> <quantidade_SOL>");
             }
         } else {
-            sender.sendMessage("Este comando só pode ser usado por jogadores.");
+            sender.sendMessage("Este comando so pode ser usado por jogadores.");
         }
         return true;
     } else if (command.getName().equalsIgnoreCase("transferirtokengamer")) {
@@ -296,7 +310,7 @@ public boolean onCommand(CommandSender sender, Command command, String label, St
                 player.sendMessage("Uso correto: /transferirtokengamer <jogador> <quantidade_SOL>");
             }
         } else {
-            sender.sendMessage("Este comando só pode ser usado por jogadores.");
+            sender.sendMessage("Este comando so pode ser usado por jogadores.");
         }
         return true;
     } else if (command.getName().equalsIgnoreCase("solbalance")) {
@@ -304,7 +318,7 @@ public boolean onCommand(CommandSender sender, Command command, String label, St
             Player player = (Player) sender;
             solana.handleSolBalance(player);
         } else {
-            sender.sendMessage("Este comando só pode ser usado por jogadores.");
+            sender.sendMessage("Este comando so pode ser usado por jogadores.");
         }
         return true;   
     
@@ -425,13 +439,13 @@ public boolean onCommand(CommandSender sender, Command command, String label, St
                     double amount = Double.parseDouble(args[0]);
                     invest(player, amount);
                 } catch (NumberFormatException e) {
-                    player.sendMessage("Por favor, insira um valor válido.");
+                    player.sendMessage("Por favor, insira um valor valido.");
                 }
             } else {
                 player.sendMessage("Uso correto: /invest <quantidade>");
             }
         } else {
-            sender.sendMessage("Este comando só pode ser usado por jogadores.");
+            sender.sendMessage("Este comando so pode ser usado por jogadores.");
         }
         return true;
     }
@@ -449,13 +463,13 @@ private void giveLoan(Player player, double amount) {
         int rowsUpdated = statement.executeUpdate();
 
         if (rowsUpdated > 0) {
-            player.sendMessage("Empréstimo aprovado! com L do 13 ಠಿ_ಠ Nova dívida: $" + (amount * 1.1));
+            player.sendMessage("Emprestimo aprovado! com banco nova divida: $" + (amount * 1.1));
         } else {
-            player.sendMessage("Você ainda não está registrado no banco.");
+            player.sendMessage("Voce ainda nao esta registrado no banco.");
         }
     } catch (Exception e) {
-        player.sendMessage("Erro ao processar empréstimo.");
-        getLogger().severe("Erro ao processar empréstimo: " + e.getMessage());
+        player.sendMessage("Erro ao processar emprestimo.");
+        getLogger().severe("Erro ao processar emprestimo: " + e.getMessage());
     }
 }
 

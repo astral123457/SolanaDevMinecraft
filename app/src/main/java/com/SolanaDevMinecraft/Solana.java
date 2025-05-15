@@ -527,6 +527,44 @@ String comando = String.format(
     }
 }
 
+public boolean hasWallet(Player player) {
+    String username = player.getName();
+    boolean exists = false;
+    Connection connection = null;
+    PreparedStatement stmt = null;
+    ResultSet rs = null;
+
+    try {
+        String url = config.getString("database.url");
+        String user = config.getString("database.user");
+        String password = config.getString("database.password");
+
+        connection = DriverManager.getConnection(url, user, password);
+
+        String query = "SELECT endereco FROM carteiras WHERE jogador_id = (SELECT id FROM jogadores WHERE nome = ?)";
+        stmt = connection.prepareStatement(query);
+        stmt.setString(1, username.trim());
+
+        rs = stmt.executeQuery();
+
+        exists = rs.next(); // Se existir um resultado, significa que a carteira já está registrada
+    } catch (Exception e) {
+        LOGGER.severe("Erro ao verificar carteira no banco: " + e.getMessage());
+    } finally {
+        try {
+            if (rs != null) rs.close();
+            if (stmt != null) stmt.close();
+            if (connection != null) connection.close();
+        } catch (Exception e) {
+            LOGGER.severe("Erro ao fechar conexão: " + e.getMessage());
+        }
+    }
+
+    return exists;
+}
+
+
+
 
 // 📌 Método para criar uma carteira Solana para o jogador
  public void createWallet(Player player) {
@@ -534,6 +572,26 @@ String comando = String.format(
     String walletPath = String.format("wallets/%s_wallet.json", playerName);
     PreparedStatement statement = null; // ✅ Declarado uma vez
     String lang = getPlayerLanguage(player);
+
+    boolean hasWallet = hasWallet(player);
+
+
+
+    if (hasWallet) { // ✅ Correto, pois `hasWallet(player)` retorna `true` ou `false`
+    if (lang.equals("pt-BR")) {
+        player.sendMessage(Component.text("❌ Você já possui uma carteira registrada.")
+            .color(TextColor.color(0xFF0000))); // Vermelho
+    } else if (lang.equals("es-ES")) {
+        player.sendMessage(Component.text("❌ Ya tienes una billetera registrada.")
+            .color(TextColor.color(0xFF0000))); // Vermelho
+    } else {
+        player.sendMessage(Component.text("❌ You already have a registered wallet.")
+            .color(TextColor.color(0xFF0000))); // Vermelho
+    }
+        return;
+    }
+    
+
 
     try {
         String host = config.getString("docker.host");
@@ -561,10 +619,6 @@ String comando = String.format(
         String walletAddress = walletInfo.walletAddress;
         String secretPhrase = walletInfo.secretPhrase;
 
-        //player.sendMessage(Component.text("? walletAddress: " + (walletAddress != null ? walletAddress : "NULO")));
-        //player.sendMessage(Component.text("? secretPhrase: " + (secretPhrase != null ? secretPhrase : "NULO")));
-
-
         // 🔹 Lendo a chave privada da carteira gerada
         String comandoLer = String.format("cat %s", walletPath);
         String urlLer = String.format("http://%s/consulta.php?apikey=%s&comando=%s", host, apiwebkey, URLEncoder.encode(comandoLer, "UTF-8"));
@@ -575,11 +629,6 @@ String comando = String.format(
         }
 
         String privateKeyHex = convertPrivateKeyToHex(responseLer);
-
-        //player.sendMessage(Component.text("? PrivateKeyHex 2: " + (privateKeyHex != null ? privateKeyHex : "NULO")));
-
-        // ✅ Depuração dos dados extraídos
-
 
         // 🔹 Verifica se o jogador já está cadastrado
         PreparedStatement checkPlayer = connection.prepareStatement("SELECT id FROM jogadores WHERE nome = ?");

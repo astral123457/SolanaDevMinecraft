@@ -11,21 +11,21 @@ commands:
     usage: /saldo
     aliases: [bank, saldoBanco]
   loan:
-    description: Solicita um empréstimo. pega emprestimo com 13 do L
+    description: Solicita um emprestimo.
     usage: /loan <quantidade>
-    aliases: [emprestimo, pegarloan, pedircredito, pegalulao, pegaladrao]
+    aliases: [emprestimo]
   paydebt:
     description: Paga parte ou toda a dívida.
     usage: /paydebt <quantidade>
-    aliases: [pagarconta, pagar, pagardivida]
+    aliases: [pagardivida]
   invest:
     description: Realiza um investimento.
     usage: /invest <quantidade>
-    aliases: [investir, aplicar]
+    aliases: [aplicar]
   solbalance:
     description: Verifica o saldo da carteira Solana.
     usage: /solbalance
-    aliases: [solsaldo, saldosolana]
+    aliases: [solsaldo]
   soltransfer:
     description: Transfere SOL para outro jogador.
     usage: /soltransfer <quantidade> <jogador_destino>
@@ -33,7 +33,7 @@ commands:
   buycurrency:
     description: Compra moedas do jogo usando Solana.
     usage: /buycurrency <quantidade_SOL>
-    aliases: [comprarmoedas, solcompra]
+    aliases: [compracomsolana]
   createwallet:
     description: Cria uma carteira Solana para o jogador.
     usage: /createwallet
