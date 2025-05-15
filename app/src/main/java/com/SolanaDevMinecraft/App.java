@@ -23,8 +23,14 @@ import java.util.Locale;
 import org.bukkit.entity.Player;
 import org.bukkit.Bukkit;
 
+import net.milkbowl.vault.economy.Economy;
+import org.bukkit.Bukkit;
+import org.bukkit.plugin.RegisteredServiceProvider;
 
-
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.plugin.java.JavaPlugin;
 
 
 
@@ -34,6 +40,9 @@ public class App extends JavaPlugin {
     private Solana solana;
     private Store store; // Instância da classe Store
     private FileConfiguration config; // Armazena o config.yml
+    private static Economy economy;
+
+
 
 
     @Override
@@ -75,6 +84,14 @@ public class App extends JavaPlugin {
         getLogger().info("Plugin desabilitado!");
         disconnectFromDatabase();
     }
+
+    @EventHandler
+    public void aoEntrarNoServidor(PlayerJoinEvent event) {
+        Player jogador = event.getPlayer();
+        checkBalance(jogador);
+    }
+
+
 
     private void connectToDatabase() {
         try {
@@ -611,17 +628,38 @@ private void processInvestments(Player player, String lang) {
 }
 
 
-public void ajustarSaldo(Player player, String tipo, double valor) {
-    if (tipo.equalsIgnoreCase("give")) {
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco give " + player.getName() + " " + valor);
-    } else if (tipo.equalsIgnoreCase("take")) {
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco take " + player.getName() + " " + valor);
-    }  else if (tipo.equalsIgnoreCase("set")) {
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco set " + player.getName() + " " + valor);
-    } else {
-        player.sendMessage("Comando inválido! Use 'give' ou 'take' ou set.");
+public static boolean setupEconomy() {
+        RegisteredServiceProvider<Economy> serviceProvider = Bukkit.getServer().getServicesManager().getRegistration(Economy.class);
+        if (serviceProvider != null) {
+            economy = serviceProvider.getProvider();
+        }
+        return economy != null;
     }
-}
+
+    public static void ajustarSaldo(Player player, String tipo, double valor) {
+       if (economy == null && !setupEconomy()) {
+        player.sendMessage("Sistema de economia não está configurado!");
+        return;
+    }
+
+        switch (tipo.toLowerCase()) {
+            case "give":
+                economy.depositPlayer(player, valor);
+                break;
+            case "take":
+                economy.withdrawPlayer(player, valor);
+                break;
+            case "set":
+                double saldoAtual = economy.getBalance(player);
+                economy.withdrawPlayer(player, saldoAtual);
+                economy.depositPlayer(player, valor);
+                break;
+            default:
+                player.sendMessage("Comando inválido! Use 'give', 'take' ou 'set'.");
+                break;
+        }
+    }
+
 
     
     private void createDatabaseAndTables() {

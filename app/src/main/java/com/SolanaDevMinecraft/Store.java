@@ -32,9 +32,17 @@ import java.sql.SQLException;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
+import net.milkbowl.vault.economy.Economy;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+import org.bukkit.plugin.RegisteredServiceProvider;
+
 public class Store {
     private final Connection connection;
     private final FileConfiguration config;
+    private static Economy economy;
+
+
 
     // 🔹 Construtor correto que inicializa 'config' e 'connection'
     public Store(FileConfiguration config, Connection connection) {
@@ -552,15 +560,38 @@ public void buyAxolotlBucket(Player player) {
 
 
 // 📌 Método para ajustar o saldo do jogador do sql do plugin EssentialsX (nao e necessario mas tenta mater os dados iguais do sql e do mysql)
-    public void ajustarSaldo(Player player, String tipo, double valor) {
-    if (tipo.equalsIgnoreCase("give")) {
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco give " + player.getName() + " " + valor);
-    } else if (tipo.equalsIgnoreCase("take")) {
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco take " + player.getName() + " " + valor);
-    } else {
-        player.sendMessage("Comando inválido! Use 'give' ou 'take'.");
+    public static boolean setupEconomy() {
+        RegisteredServiceProvider<Economy> serviceProvider = Bukkit.getServer().getServicesManager().getRegistration(Economy.class);
+        if (serviceProvider != null) {
+            economy = serviceProvider.getProvider();
+        }
+        return economy != null;
     }
-}
+
+    public static void ajustarSaldo(Player player, String tipo, double valor) {
+       if (economy == null && !setupEconomy()) {
+        player.sendMessage("Sistema de economia não está configurado!");
+        return;
+    }
+
+        switch (tipo.toLowerCase()) {
+            case "give":
+                economy.depositPlayer(player, valor);
+                break;
+            case "take":
+                economy.withdrawPlayer(player, valor);
+                break;
+            case "set":
+                double saldoAtual = economy.getBalance(player);
+                economy.withdrawPlayer(player, saldoAtual);
+                economy.depositPlayer(player, valor);
+
+                break;
+            default:
+                player.sendMessage("Comando inválido! Use 'give', 'take' ou 'set'.");
+                break;
+        }
+    }
 
 public void transferirtokengamer(Player player, String recipient, double amount) {
     try (PreparedStatement stmtJogador = connection.prepareStatement("UPDATE banco SET saldo = saldo - ? WHERE jogador = ?");

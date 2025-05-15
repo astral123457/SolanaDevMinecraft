@@ -7,6 +7,8 @@ repositories {
     mavenCentral()
     maven { url 'https://repo.papermc.io/repository/maven-public/' }
     maven { url 'https://jitpack.io' } // Adiciona o repositório JitPack
+    maven { url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
+
 }
 
 dependencies {
@@ -17,6 +19,8 @@ dependencies {
     //implementation 'org.mariadb.jdbc:mariadb-java-client:3.1.4' // Substitua pelo driver MariaDB
     implementation 'mysql:mysql-connector-java:8.0.33'
     implementation 'org.json:json:20210307'
+    compileOnly 'com.github.MilkBowl:VaultAPI:1.7'
+    compileOnly 'org.spigotmc:spigot-api:1.21-R0.1-SNAPSHOT'
 
 }
 

@@ -52,6 +52,11 @@ import java.util.Base64;
 import java.util.regex.*;
 import java.util.List;
 
+import net.milkbowl.vault.economy.Economy;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+import org.bukkit.plugin.RegisteredServiceProvider;
+
 
 
 class WalletInfo {
@@ -72,6 +77,9 @@ public class Solana {
 
     private final Connection connection;
     private final FileConfiguration config;
+    private static Economy economy;
+
+
     
     private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(Solana.class.getName());
 
@@ -718,17 +726,36 @@ public static String convertPrivateKeyToHex(String jsonResponse) {
 
     // 📌 Método para ajustar o saldo do jogador do sql do plugin EssentialsX (nao e necessario mas tenta mater os dados iguais do sql e do mysql)
 
-    public void ajustarSaldo(Player player, String tipo, double valor) {
-    if (tipo.equalsIgnoreCase("give")) {
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco give " + player.getName() + " " + valor);
-    } else if (tipo.equalsIgnoreCase("take")) {
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco take " + player.getName() + " " + valor);
-    }  else if (tipo.equalsIgnoreCase("set")) {
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco set " + player.getName() + " " + valor);
-    } else {
-        player.sendMessage("Comando inválido! Use 'give' ou 'take' ou set.");
+    public static boolean setupEconomy() {
+        RegisteredServiceProvider<Economy> serviceProvider = Bukkit.getServer().getServicesManager().getRegistration(Economy.class);
+        if (serviceProvider != null) {
+            economy = serviceProvider.getProvider();
+        }
+        return economy != null;
     }
-}
+
+    public static void ajustarSaldo(Player player, String tipo, double valor) {
+       if (economy == null && !setupEconomy()) {
+        player.sendMessage("Sistema de economia não está configurado!");
+        return;
+    }
+
+        switch (tipo.toLowerCase()) {
+            case "give":
+                economy.depositPlayer(player, valor);
+                break;
+            case "take":
+                economy.withdrawPlayer(player, valor);
+                break;
+            case "set":
+                double saldoAtual = economy.getBalance(player);
+                economy.withdrawPlayer(player, saldoAtual);
+                economy.depositPlayer(player, valor);
+                break;
+            default:
+                break;
+        }
+    }
 
     public void transferirMoeda(Player player, String destinatario, double valor) {
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco give " + destinatario + " " + valor);
