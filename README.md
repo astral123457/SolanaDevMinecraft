@@ -216,6 +216,8 @@ PHP
         www-data ALL=(ALL) NOPASSWD: /usr/bin/docker
 # See sudoers(5) for more information on "@include" directives:
 
+    sudo apt -y install apache2 curl subversion php8.2 php8.2-gd php8.2-zip libapache2-mod-php8.2 php8.2-curl php8.2-mysql php8.2-xmlrpc php8.2-mbstring php8.2-xmlrpc php8.2-bcmath
+
 Test 1 root@debian:/var/www/html# 
 
         nano shell.php
