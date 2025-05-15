@@ -172,13 +172,13 @@ because it is public, there is no need to identify yourself, just do the work of
     cd /etc/apache2
     nano apache2.conf
 
-________Apache2.conf_________remove Require all denied 
+# ________Apache2.conf_________remove Require all denied 
     <Directory />
         Options FollowSymLinks
         AllowOverride None
         Require all granted                           
     </Directory>
-________Apache2.conf_________ add Require all granted
+# ________Apache2.conf_________ add Require all granted
 
 
 
