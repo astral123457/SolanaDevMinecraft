@@ -229,19 +229,13 @@ PHP
     sudo a2enmod php8.2
     sudo systemctl restart apache2
 
-Test 1 root@debian:/var/www/html# 
+Test 1 root@debian:
 
-        nano shell.php
+    cd /var/www/html
 
-        <?php
-        $command = "sudo -u www-data docker run --rm -v /root/solana:/solana-token -v /root/solana/solana-data:/root/.config/so>$output = shell_exec($command);
-        echo "<pre>Comando executado: $command</pre>";
-        echo "<pre>Saída do comando:\n$output</pre>";
-        ?>
-or Test 2
+    nano shell.php
 
-         nano shell.php
-         
+     
 <?php
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -258,9 +252,7 @@ echo "<pre>Saída do comando:\n$output</pre>";
 
 
 rm shell.php (test)
-
-
-       
+      
 
 ![image](https://github.com/user-attachments/assets/454fedd8-840c-472e-a1d1-f19be016b9a6)
 test dock option 1
