@@ -145,7 +145,7 @@ nano Dockerfile
     
     solana address
     
-# https://faucet.solana.com/ to have SOL airdropped
+# https://faucet.solana.com/ to have SOL airdropped # INSS DEV SOLANA
 
     solana balance
 
@@ -187,7 +187,7 @@ SolanaDevMinecraft
 The Solana Dev token has no real value and is used only for fun and economic experimentation. It is not subject to regulations or financial laws,
 
 functioning solely as a fictional asset within a testing environment and playful interactions. Its purpose is to provide entertainment and learning about economic concepts without involving real financial transactions.
-
+# INSS DEV SOLANA
 this dev coin can be obtained every 8 hours, 2 drops of values from 1 to 5
 https://faucet.solana.com/
 
