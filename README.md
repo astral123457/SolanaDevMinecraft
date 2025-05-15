@@ -629,6 +629,10 @@ language:
 # Plugin Custom
 
           EssentialsX-2.21.0.jar (/back /sethome /tpa) Basic commads
+
+          Vault 1.7.3.jar
+          
+          ProtocolLib.jar
           
           SolanaDevMinecraftAstraL-1.33-all.jar
 
