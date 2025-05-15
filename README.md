@@ -631,6 +631,8 @@ language:
           EssentialsX-2.21.0.jar (/back /sethome /tpa) Basic commads
 
           Vault 1.7.3.jar
+
+          AuthMe-5.6.0-legacy.jar
           
           ProtocolLib.jar
           
