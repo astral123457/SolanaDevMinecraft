@@ -650,11 +650,11 @@ language:
 
           enchant icons 1.21.4 v1.3.zip
 
-# Recuperar carteira 
+# Recover wallet if optional needed
 
 solana-keygen recover --force
 
-vai pedir para digitar a frase secreta 
+will ask to type the secret phrase
 
 root@f702df0e10ba:/solana-token# solana-keygen recover --force
 [recover] seed phrase:
@@ -663,6 +663,6 @@ Recovered pubkey `"7PJBFH7sRPDjmQk7n2qQzaFSn4oxsMv8BFS43vKKb3S2"`. Continue? (y/
 y
 Wrote recovered keypair to /root/.config/solana/id.json
 
-ai depois tem que colocar no diretorio certo
+and then you have to place it in the correct directory
 
 mv /root/.config/solana/id.json /solana-token/wallets/007amauri_wallet.json
