@@ -15,12 +15,17 @@ debian-12.9.0-amd64-netinst.iso
 ![image](https://github.com/user-attachments/assets/3587d163-78cb-4ace-8600-18619774d4f2)
 
 
-Nome: Debina 12
-Geração: Geração 2
-Memória: 4024 MB
-Rede: Default Switch
-Disco Rígido: C:\ProgramData\Microsoft\Windows\Virtual Hard Disks\Debina 12.vhdx (VHDX, expansão dinâmica)
-Sistema Operacional: Será instalado de C:\Users\bzm36\Desktop\debian-12.9.0-amd64-netinst.iso
+Name: Debina 12 
+
+Generation: Generation 2 
+
+Memory: 4024 MB 
+
+Network: Default Switch 
+
+Hard Disk: C:ProgramDataMicrosoftWindowsVirtual Hard DisksDebina 12.vhdx (VHDX, dynamic expansion) 
+
+Operating System: Will be installed from C:Usersbzm36Desktopdebian-12.9.0-amd64-netinst.iso
 
 ![image](https://github.com/user-attachments/assets/001add6f-b860-497d-b527-f3d1a14e6ecf)
 
