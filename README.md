@@ -85,11 +85,11 @@ root@debian:~#
 
 root@debian:~#
 
-cd solana
+    cd solana
 
 root@debian:~/solana#
 
-nano Dockerfile
+    nano Dockerfile
 
 ------------------------DockerfileBegin-----------------------------
     # Use a lightweight base image
