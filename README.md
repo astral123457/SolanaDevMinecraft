@@ -144,7 +144,13 @@ um pai ensinando as finhas economia e banco digital Ti e tecnologias
 # 2
     solana-keygen grind --starts-with dad:1
 # 3
+
+
+ls 
+dad-your-token-acount.json
+OBS 
     solana config set --keypair dad-your-token-acount.json
+    
 # 4
     solana config set --url devnet
 # 5
