@@ -147,6 +147,8 @@ nano Dockerfile
     
 # https://faucet.solana.com/ to have SOL airdropped # INSS DEV SOLANA
 
+because it is public, there is no need to identify yourself, just do the work of putting your wallet in every 8 hours every day, they will know if your wallet has already been received
+
     solana balance
 
 # apache2 config
@@ -190,6 +192,8 @@ functioning solely as a fictional asset within a testing environment and playful
 # INSS DEV SOLANA
 this dev coin can be obtained every 8 hours, 2 drops of values from 1 to 5
 https://faucet.solana.com/
+
+because it is public, there is no need to identify yourself, just do the work of putting your wallet in every 8 hours every day, they will know if your wallet has already been received
 
 
 ![image](https://github.com/user-attachments/assets/1a40a6c9-a8fa-44f8-bf96-59b5109b015e)
