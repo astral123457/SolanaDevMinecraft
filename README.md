@@ -169,8 +169,10 @@ because it is public, there is no need to identify yourself, just do the work of
     solana balance
 
 # apache2 config
-    cd /etc/apache2
-    nano apache2.conf
+
+   exit
+   
+   nano /etc/apache2/apache2.conf
 
 # ________Apache2.conf_________remove Require all denied 
     <Directory />
