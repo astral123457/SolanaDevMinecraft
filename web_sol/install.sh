@@ -121,7 +121,16 @@ cd /var/www/html
 nano shell.php
 
 # Conteúdo do arquivo shell.php (incompleto na sua mensagem)
+
 echo "<?php"
 echo "ini_set('display_errors', 1);"
 echo "ini_set('display_startup_errors', 1);"
-echo "error_reporting(E_"
+echo "error_reporting(E_ALL);"
+
+echo "$command = "sudo -u www-data docker run --rm -v /root/solana:/solana-token -v /root/solana/solana-data:/root/.config/solana heysolana ls";"
+echo "$output = shell_exec($command);"
+
+echo "<pre>Comando executado: $command</pre>";"
+echo "<pre>Saída do comando:\n$output</pre>";"
+echo ?>"
+
