@@ -174,6 +174,8 @@ OBS
     solana config get
 #
     solana address
+#
+    mkdir wallets
     
 # https://faucet.solana.com/ to have SOL airdropped # INSS DEV SOLANA
 
