@@ -6,6 +6,9 @@ https://github.com/astral123457/SolanaDevMinecraft/blob/main/web_sol/install.sh
 
 if you want to set up a server and follow all my steps, it is optional but it can help to better understand everything
 
+Installation Open GAME PANEL
+https://github.com/astral123457/SolanaDevMinecraft/blob/main/web_sol/ogp_install_openpanelgamer.sh
+
 
 ![image](https://github.com/user-attachments/assets/d4876677-67bd-47a1-bcdd-952afe291502)
 
