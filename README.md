@@ -241,7 +241,11 @@ PHP
         www-data ALL=(ALL) NOPASSWD: /usr/bin/docker
 # See sudoers(5) for more information on "@include" directives:
 
-caso queira estalar um painel bonito completo php e mysql do minecraft 
+# if you want to set up a nice complete php and mysql panel for minecraft (I recommend it and it's just another command tutorial but you learn and configure everything yourself)
+
+https://github.com/astral123457/SolanaDevMinecraft/blob/main/web_sol/ogp.txt
+# then there are the configuration of the remote mysqlmaria access (I also recommend)
+
 ![image](https://github.com/user-attachments/assets/133f8767-edc6-4081-8921-1c6d1cdf2fad)
 
 
