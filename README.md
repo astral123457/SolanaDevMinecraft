@@ -1,12 +1,12 @@
 # SolanaDevMinecraft 1.19.x for 1.20.x for 1.21.x Paper, that is, it also works with modern server fabric and mods, has two Spigot or Paper.
 This tutorial teaches you how to create a server on your PC as well as how to configure the plugin and the PHP Solana API that I made using Docker.
 
-Installation Api WEB
+# Installation Api WEB
 https://github.com/astral123457/SolanaDevMinecraft/blob/main/web_sol/install.sh
 
 if you want to set up a server and follow all my steps, it is optional but it can help to better understand everything
 
-Installation Open GAME PANEL
+# Installation Open GAME PANEL
 https://github.com/astral123457/SolanaDevMinecraft/blob/main/web_sol/ogp_install_openpanelgamer.sh
 
 
