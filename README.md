@@ -241,6 +241,10 @@ PHP
         www-data ALL=(ALL) NOPASSWD: /usr/bin/docker
 # See sudoers(5) for more information on "@include" directives:
 
+caso queira estalar um painel bonito completo php e mysql do minecraft 
+![image](https://github.com/user-attachments/assets/133f8767-edc6-4081-8921-1c6d1cdf2fad)
+
+
     sudo apt -y install apache2 curl subversion php8.2 php8.2-gd php8.2-zip libapache2-mod-php8.2 php8.2-curl php8.2-mysql php8.2-xmlrpc php8.2-mbstring php8.2-xmlrpc php8.2-bcmath
 
 #
