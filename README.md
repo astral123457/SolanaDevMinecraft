@@ -23,6 +23,16 @@ This tutorial teaches you how to create a server on your PC as well as how to co
      sudo chmod 666 /var/run/docker.sock
 #
 
+     SQL
+     sudo mysql -u root -p -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' IDENTIFIED BY '0073007'; FLUSH PRIVILEGES;"
+     mysql -u root -p
+     SQL
+     SHOW DATABASES;
+     SQL
+     CREATE DATABASE banco;
+     SQL
+     exit
+
 Example URL:
 http://your_server/consulta.php?apikey=2f4164616e614e61&command=your_command_here
 
