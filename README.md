@@ -41,7 +41,9 @@ This tutorial teaches you how to create a server on your PC as well as how to co
      
 
 Example URL:
-http://your_server/consulta.php?apikey=b493d48364afe44d&command=your_command_here
+http://your_server/consulta.php?apikey=b493d48364afe44d&comando=your_command_here
+
+consulta.php?apikey=b493d48364afe44d&comando=ls
 # ls
 http://your_server/consulta.php?apikey=b493d48364afe44d&ls
 # create wallet command put your name in place TesteplayerName_wallet.json
