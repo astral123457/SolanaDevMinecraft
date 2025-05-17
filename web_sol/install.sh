@@ -18,7 +18,6 @@ sudo docker run hello-world
 # Comandos relacionados ao Solana
 mkdir solana
 cd solana
-nano Dockerfile
 
 # Conteúdo do Dockerfile
 cat <<EOF > Dockerfile
