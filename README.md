@@ -18,6 +18,10 @@ This tutorial teaches you how to create a server on your PC as well as how to co
 #
      ./install.sh
 #
+     sudo usermod -aG docker www-data
+#
+     sudo chmod 666 /var/run/docker.sock
+#
 
 Example URL:
 http://your_server/consulta.php?apikey=2f4164616e614e61&command=your_command_here
