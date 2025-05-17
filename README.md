@@ -8,25 +8,25 @@ This tutorial teaches you how to create a server on your PC as well as how to co
 
 - Save this script in a file, for example, installer.sh.- Give execution permission: chmod +x installer.sh.- Run: ./installer.sh.
 
-    #!/bin/bash
+      #!/bin/bash
 
-    set -e  # Para parar o script se houver erro
+      set -e  # Para parar o script se houver erro
 
-    export GITHUB_SOURCE="v1.1.1"
-    export SCRIPT_RELEASE="v1.1.1"
-    export GITHUB_BASE_URL="https://github.com/astral123457/SolanaDevMinecraft/blob/main/web_sol/"
+      export GITHUB_SOURCE="v1.1.1"
+      export SCRIPT_RELEASE="v1.1.1"
+      export GITHUB_BASE_URL="https://github.com/astral123457/SolanaDevMinecraft/blob/main/web_sol/"
 
-    # Baixando e executando a instalação da API Web
-    curl -s "${GITHUB_BASE_URL}install.sh" -o install.sh
-    chmod +x install.sh
-    ./install.sh
+      # Baixando e executando a instalação da API Web
+      curl -s "${GITHUB_BASE_URL}install.sh" -o install.sh
+      chmod +x install.sh
+      ./install.sh
 
-    # Baixando e executando a instalação do Open Game Panel
-    curl -s "${GITHUB_BASE_URL}ogp_install_openpanelgamer.sh" -o ogp_install_openpanelgamer.sh
-    chmod +x ogp_install_openpanelgamer.sh
-    ./ogp_install_openpanelgamer.sh
+      # Baixando e executando a instalação do Open Game Panel
+      curl -s "${GITHUB_BASE_URL}ogp_install_openpanelgamer.sh" -o ogp_install_openpanelgamer.sh
+      chmod +x ogp_install_openpanelgamer.sh
+      ./ogp_install_openpanelgamer.sh
 
-    echo "Instalação concluída!"
+      echo "Instalação concluída!"
 
 
 ![image](https://github.com/user-attachments/assets/d4876677-67bd-47a1-bcdd-952afe291502)
