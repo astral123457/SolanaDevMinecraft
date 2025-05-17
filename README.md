@@ -3,6 +3,8 @@ This tutorial teaches you how to create a server on your PC as well as how to co
 
 # Installation Api WEB
     su -
+#
+    apt install curl
 # 
      curl -s "https://raw.githubusercontent.com/astral123457/SolanaDevMinecraft/refs/heads/main/web_sol/ogp_install_openpanelgamer.sh" -o ogp_install_openpanelgamer.sh
 #
@@ -16,6 +18,14 @@ This tutorial teaches you how to create a server on your PC as well as how to co
 #
      ./install.sh
 #
+
+Example URL:
+http://your_server/consulta.php?apikey=2f4164616e614e61&command=your_command_here
+
+Security Enhancements (Recommended):
+
+Real API Key: Instead of deriving from "banana", generate a long, random API key (e.g. 32 or 64 random hexadecimal characters) and store it directly in the script or in a configuration file.
+PHP
 
 
 ![image](https://github.com/user-attachments/assets/d4876677-67bd-47a1-bcdd-952afe291502)
