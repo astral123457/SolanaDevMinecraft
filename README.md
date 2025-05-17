@@ -26,7 +26,7 @@ This tutorial teaches you how to create a server on your PC as well as how to co
      
 
 Example URL:
-http://your_server/consulta.php?apikey=2f4164616e614e61&command=your_command_here
+http://your_server/consulta.php?apikey=b493d48364afe44d&command=your_command_here
 
 Security Enhancements (Recommended):
 
