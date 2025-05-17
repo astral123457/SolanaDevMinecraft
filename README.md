@@ -29,14 +29,14 @@ This tutorial teaches you how to create a server on your PC as well as how to co
 
 # Allow members of group sudo to execute any command
  
-        %sudo   ALL=(ALL:ALL) ALL
+     %sudo   ALL=(ALL:ALL) ALL
 #
-        www-data ALL=(ALL) NOPASSWD: /usr/bin/docker
+     www-data ALL=(ALL) NOPASSWD: /usr/bin/docker
 #
 ![image](https://github.com/user-attachments/assets/73539364-0c14-4054-aa88-68e802fc0f54)
 
 
-        sudo systemctl restart apache2
+     sudo systemctl restart apache2
 #
      
 
