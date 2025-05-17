@@ -221,7 +221,7 @@ because it is public, there is no need to identify yourself, just do the work of
 ![image](https://github.com/user-attachments/assets/73539364-0c14-4054-aa88-68e802fc0f54)
 
 
-sudo systemctl restart apache2
+        sudo systemctl restart apache2
 #
     
 # SolanaDevMinecraft
