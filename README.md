@@ -195,7 +195,7 @@ because it is public, there is no need to identify yourself, just do the work of
 # apache2 config
 
    exit
-   
+#    
    nano /etc/apache2/apache2.conf
 
 # ________Apache2.conf_________remove Require all denied 
@@ -206,8 +206,23 @@ because it is public, there is no need to identify yourself, just do the work of
     </Directory>
 # ________Apache2.conf_________ add Require all granted
 
+#
+
+       sudo usermod -aG docker www-data
+#
+       sudo nano /etc/sudoers
+
+# Allow members of group sudo to execute any command
+ 
+        %sudo   ALL=(ALL:ALL) ALL
+#
+        www-data ALL=(ALL) NOPASSWD: /usr/bin/docker
+#
+
+sudo systemctl restart apache2
+#
     
-SolanaDevMinecraft
+# SolanaDevMinecraft
 
 The Solana Dev token has no real value and is used only for fun and economic experimentation. It is not subject to regulations or financial laws,
 
@@ -238,15 +253,8 @@ PHP
 
 ![image](https://github.com/user-attachments/assets/3808718f-a04c-48f1-b4cf-7cde0e76b7f7)
 
-       sudo usermod -aG docker www-data
 
-       sudo nano /etc/sudoers
-
- # Allow members of group sudo to execute any command
- 
-        %sudo   ALL=(ALL:ALL) ALL
-
-        www-data ALL=(ALL) NOPASSWD: /usr/bin/docker
+        
 # See sudoers(5) for more information on "@include" directives:
 
 # if you want to set up a nice complete php and mysql panel for minecraft (I recommend it and it's just another command tutorial but you learn and configure everything yourself)
