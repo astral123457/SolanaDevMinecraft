@@ -23,10 +23,31 @@ This tutorial teaches you how to create a server on your PC as well as how to co
      sudo chmod 666 /var/run/docker.sock
 # SQL
      sudo mysql -u root -p -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' IDENTIFIED BY '0073007'; CREATE DATABASE banco; FLUSH PRIVILEGES;"
+
+#
+       sudo nano /etc/sudoers
+
+# Allow members of group sudo to execute any command
+ 
+        %sudo   ALL=(ALL:ALL) ALL
+#
+        www-data ALL=(ALL) NOPASSWD: /usr/bin/docker
+#
+![image](https://github.com/user-attachments/assets/73539364-0c14-4054-aa88-68e802fc0f54)
+
+
+        sudo systemctl restart apache2
+#
      
 
 Example URL:
 http://your_server/consulta.php?apikey=b493d48364afe44d&command=your_command_here
+# ls
+http://your_server/consulta.php?apikey=b493d48364afe44d&ls
+# create wallet command put your name in place TesteplayerName_wallet.json
+http://your_server/consulta.php?apikey=b493d48364afe44d&comando=solana-keygen%20new%20--no-passphrase%20--outfile%20/solana-token/wallets/TesteplayerName_wallet.json%20--force
+
+curl -X GET "http://192.168.100.170/consulta.php?apikey=b493d48364afe44d&comando=solana-keygen%20new%20--no-passphrase%20--outfile%20/solana-token/wallets/TesteplayerName_wallet.json%20--force"
 
 Security Enhancements (Recommended):
 
