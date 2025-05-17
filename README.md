@@ -804,6 +804,7 @@ Para configurar a rede paga, que envolve transações na blockchain real, você 
      
 Isso conectará sua configuração à rede principal do Solana, onde as transações envolvem SOL reais e são registradas na blockchain oficial
 
+# onde compra Solana
 
 https://solanapay.com/
 
