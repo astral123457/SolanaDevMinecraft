@@ -115,19 +115,8 @@ try {
 ?>
 EOL
 
-echo "Instalando o Painel PHP do Open Game Panel..."
-wget -N "https://github.com/OpenGamePanel/Easy-Installers/raw/master/Linux/Debian Ubuntu/ogp-panel-latest.deb" -O "ogp-panel-latest.deb"
-sudo dpkg -i "ogp-panel-latest.deb"
-
-echo "Removendo o arquivo de instalação do Painel OGP..."
-cd /var/www/html/
-sudo rm -r install.php
-
-echo "Exibindo informações de configuração do MySQL para o Painel OGP..."
-sudo cat /root/ogp_panel_mysql_info
 
 echo "Alterando as permissões do diretório fastdl..."
 sudo chmod 777 /var/www/html/fastdl/
 
-echo "Finalizado! Siga as instruções adicionais sobre a libgcc_s.so.1 e configuração do MariaDB."
-echo "Lembre-se de acessar http://localhost/install.php para configurar o Painel OGP."
+echo "Finalizado!"
