@@ -787,3 +787,10 @@ Wrote recovered keypair to /root/.config/solana/id.json
 and then you have to place it in the correct directory
 
 mv /root/.config/solana/id.json /solana-token/wallets/007amauri_wallet.json
+
+if you want to buy Solana and link to the real wallet
+The official website of Solana Pay is solanapay.com. There you will find information on how to integrate low-cost decentralized payments using the Solana blockchain.
+Sem problemas! Se você quiser configurar uma página para doações com Solana Pay, pode começar criando uma carteira Solana e gerando um link de pagamento. No site Solana Pay, há documentação detalhada sobre como fazer isso.
+Se precisar de ajuda para dar os primeiros passos, posso te guiar! Quer começar criando uma carteira Solana? 🚀😊
+https://solanapay.com/
+
