@@ -26,15 +26,6 @@ sudo usermod -aG sudo amauri
 echo "Instalando dependência adicional para o Agente OGP..."
 sudo apt-get install -y libarchive-extract-perl
 
-echo "Baixando o instalador mais recente do Agente OGP..."
-wget -N "https://github.com/OpenGamePanel/Easy-Installers/raw/master/Linux/Debian Ubuntu/ogp-agent-latest.deb" -O "ogp-agent-latest.deb"
-
-echo "Instalando o Agente OGP..."
-sudo dpkg -i "ogp-agent-latest.deb"
-
-echo "Exibindo a senha padrão do usuário ogp_agent..."
-sudo cat /root/ogp_user_password
-
 echo "Instalando dependências adicionais (php-gettext, git, php-bcmath)..."
 sudo apt -y install php-php-gettext
 sudo apt -y install libc6-dbg gdb valgrind
@@ -48,10 +39,28 @@ sudo apt -y install php8.2-bcmath
 sudo apt -y install php-pear
 
 echo "Instalando o servidor MariaDB..."
-sudo apt install mariadb-server -y
 
-echo "Executando a configuração de segurança do MariaDB..."
-sudo mysql_secure_installation
+sudo apt update
+sudo apt install -y mariadb-server
+
+# Configuração automática do MySQL Secure Installation
+sudo mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED VIA mysql_native_password USING PASSWORD('0073007');"
+sudo mysql -e "FLUSH PRIVILEGES;"
+
+# Removendo banco de testes
+sudo mysql -e "DROP DATABASE IF EXISTS test;"
+
+# Atualizar pacotes e instalar curl caso não esteja instalado
+sudo apt update
+sudo apt install -y curl
+
+# Baixar o arquivo e movê-lo para o diretório correto
+curl -s "https://raw.githubusercontent.com/astral123457/SolanaDevMinecraft/refs/heads/main/web_sol/consulta.php" -o consulta.php
+sudo mv consulta.php /var/www/html/
+
+# Ajustar permissões
+sudo chown www-data:www-data /var/www/html/consulta.php
+sudo chmod 644 /var/www/html/consulta.php
 
 echo "Criando o diretório fastdl..."
 sudo mkdir /var/www/html/fastdl
