@@ -2,11 +2,18 @@
 This tutorial teaches you how to create a server on your PC as well as how to configure the plugin and the PHP Solana API that I made using Docker.
 
 # Installation Api WEB
+    su -
+    nano install.sh
 https://github.com/astral123457/SolanaDevMinecraft/blob/main/web_sol/install.sh
 
-if you want to set up a server and follow all my steps, it is optional but it can help to better understand everything
+    CTRL + S (salve)
+    CTRL + X (exite)
+
 
 # Installation Open GAME PANEL
+
+    nano ogp_install_openpanelgamer.sh
+    
 https://github.com/astral123457/SolanaDevMinecraft/blob/main/web_sol/ogp_install_openpanelgamer.sh
 
 
@@ -327,10 +334,26 @@ test dock option 2
 
 
 
-Api consulta.php:
+# Api consulta.php:
+        nano consulta.php
 
+https://github.com/astral123457/SolanaDevMinecraft/blob/main/consulta.php
+
+    CTRL + S (salve)
+    CTRL + X (exite)
 
 ![image](https://github.com/user-attachments/assets/ef577acc-a11e-440b-b63a-da61738b7098)
+
+
+# SQL
+    mysql -u root -p
+# SQL
+    SHOW DATABASES;
+# SQL
+    CREATE DATABASE banco;
+# SQL
+    exit
+#
 
 
          http://100.85.188.51/consulta.php?apikey=b493d48364afe44d&comando=ls
