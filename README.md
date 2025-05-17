@@ -792,5 +792,18 @@ if you want to buy Solana and link to the real wallet
 The official website of Solana Pay is solanapay.com. There you will find information on how to integrate low-cost decentralized payments using the Solana blockchain.
 Sem problemas! Se você quiser configurar uma página para doações com Solana Pay, pode começar criando uma carteira Solana e gerando um link de pagamento. No site Solana Pay, há documentação detalhada sobre como fazer isso.
 Se precisar de ajuda para dar os primeiros passos, posso te guiar! Quer começar criando uma carteira Solana? 🚀😊
+
+# O comando 
+
+     solana config set --url devnet
+
+configura o ambiente Solana para a rede de desenvolvimento gratuita (Devnet), onde você pode testar transações sem custos reais.
+Para configurar a rede paga, que envolve transações na blockchain real, você deve apontar para a Mainnet com o seguinte comando:
+
+     solana config set --url mainnet-beta
+     
+Isso conectará sua configuração à rede principal do Solana, onde as transações envolvem SOL reais e são registradas na blockchain oficial
+
+
 https://solanapay.com/
 
