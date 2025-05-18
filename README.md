@@ -808,3 +808,5 @@ Isso conectará sua configuração à rede principal do Solana, onde as transaç
 
 https://solanapay.com/
 
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/H2H411P12P)
+
