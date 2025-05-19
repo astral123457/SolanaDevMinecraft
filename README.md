@@ -748,8 +748,6 @@ language:
 
           ViaFabric-0.4.17+91-main.jar
 
-          ViaSponge-1.2.0.jar
-
           ViaVersion-5.3.2.jar
           
 # Plugin Custom
