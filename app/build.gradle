@@ -21,6 +21,7 @@ dependencies {
     implementation 'org.json:json:20210307'
     compileOnly 'com.github.MilkBowl:VaultAPI:1.7'
     compileOnly 'org.spigotmc:spigot-api:1.21-R0.1-SNAPSHOT'
+    implementation 'dev.folia:folia-api:1.20.1-R0.1-SNAPSHOT'
 
 }
 
@@ -37,7 +38,7 @@ tasks.withType(JavaCompile) {
 
 tasks.named('shadowJar') {
     archiveBaseName.set('SolanaDevMinecraftAstralPaperMC')
-    archiveVersion.set('1.33')
+    archiveVersion.set('2.5')
 }
 
 tasks.test {
