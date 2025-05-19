@@ -743,6 +743,14 @@ language:
           iCommon-Fabric-bundle1.jar (1.19 a 1.21.5)
 
           antixray-fabric-1.4.9+1.21.4.jar
+
+          ViaBackwards-5.3.2.jar
+
+          ViaFabric-0.4.17+91-main.jar
+
+          ViaSponge-1.2.0.jar
+
+          ViaVersion-5.3.2.jar
           
 # Plugin Custom
 
