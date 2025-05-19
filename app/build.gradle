@@ -36,7 +36,7 @@ tasks.withType(JavaCompile) {
 }
 
 tasks.named('shadowJar') {
-    archiveBaseName.set('SolanaDevMinecraftAstraL')
+    archiveBaseName.set('SolanaDevMinecraftAstralPaperMC')
     archiveVersion.set('1.33')
 }
 
