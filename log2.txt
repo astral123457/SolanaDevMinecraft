@@ -1,2 +1,4 @@
+Fabric Peper
+IDE VIsual Studo Code
 ./gradlew clean build --refresh-dependencies
 ./gradlew clean shadowJar
