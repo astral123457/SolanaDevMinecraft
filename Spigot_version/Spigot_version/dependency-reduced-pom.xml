@@ -2,8 +2,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>solanadevminecraft</groupId>
-  <artifactId>SolanaDevMinecraftAstralSpigotMC</artifactId>
-  <name>SolanaDevMinecraftAstralSpigotMC</name>
+  <artifactId>SolanaDevMinecraftAstral</artifactId>
+  <name>SolanaDevMinecraftAstral</name>
   <version>1.33</version>
   <build>
     <plugins>

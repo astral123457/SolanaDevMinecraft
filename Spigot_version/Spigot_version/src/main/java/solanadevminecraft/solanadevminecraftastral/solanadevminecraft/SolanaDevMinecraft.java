@@ -1,6 +1,5 @@
 package solanadevminecraft.solanadevminecraftastral.solanadevminecraft;
 
-import org.bukkit.Warning;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import org.bukkit.command.Command;
@@ -253,35 +252,6 @@ public class SolanaDevMinecraft extends JavaPlugin implements Listener {
             if (sender instanceof Player) {
                 Player player = (Player) sender;
                 store.buyEmerald(player);
-            }
-            return true;
-        } else if (command.getName().equalsIgnoreCase("refundSolana")) {
-            if (args.length < 1) {
-
-                sender.sendMessage(ChatColor.RED + "Uso correto: /refundSolana <signature>");
-                return false;
-            }
-            if (sender instanceof Player) {
-                Player player = (Player) sender;
-
-
-            String lang = store.getPlayerLanguage(player); // Obtém o idioma do jogador
-            if (lang.equals("pt-BR")) {
-                player.sendMessage(ChatColor.GOLD + "⚡ Aguarde! " +
-                        ChatColor.GREEN + "Pode levar 5 segundos..." +
-                        ChatColor.AQUA + "\n🌐 Conectando ao banco Solana...");
-            } else if (lang.equals("es-ES")) {
-                player.sendMessage(ChatColor.GOLD + "⚡ ¡Espere! " +
-                        ChatColor.GREEN + "Puede tardar 5 segundos..." +
-                        ChatColor.AQUA + "\n🌐 Conectando al banco Solana...");
-            } else { // Inglês como padrão
-                player.sendMessage(ChatColor.GOLD + "⚡ Please wait! " +
-                        ChatColor.GREEN + "This may take 5 seconds..." +
-                        ChatColor.AQUA + "\n🌐 Connecting to Solana bank...");
-            }
-
-            String transactionSignature = args[0]; // Obtém a assinatura da transação
-            solana.refundSolana(player, transactionSignature); // Chama a função de reembolso com a assinatura
             }
             return true;
         } else if (command.getName().equalsIgnoreCase("soltransfer")) {

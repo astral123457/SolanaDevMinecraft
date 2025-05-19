@@ -101,3 +101,7 @@ commands:
   transferirtokengamer:
     description: Transfere moeda do banco para o jogador.
     usage: /transferirtokengamer <quantidade>
+  refundSolana:
+    description: Devolucao para o jogador com juros da casa e transacoes baixo.
+    usage: /refundSolana <signature>
+
