@@ -1,1 +1,2 @@
-
+./gradlew clean build --refresh-dependencies
+./gradlew clean shadowJar
