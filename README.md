@@ -551,6 +551,8 @@ transfertokengamer:
 description: Transfers currency from the bank to the player.
 usage: /transfertokengamer <amount>
 
+/refundSolana <signature>
+
 
 ```
 
