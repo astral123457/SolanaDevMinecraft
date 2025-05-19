@@ -1,3 +1,5 @@
+Spigot_version
+IDE IntelliJ IDEA
 mvn clean
 mvn compile
 mvn package
