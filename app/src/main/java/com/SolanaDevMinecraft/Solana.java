@@ -182,7 +182,12 @@ private String executeHttpGet(String urlString) throws Exception {
 
         if (response != null && response.contains("\"output\":\"")) {
             String signature = response.split("\"output\":\"")[1].split("\"")[0].trim();
-            signature = response.replaceFirst("(?s).*Signature: ", "").replaceAll("\n", "").replaceAll("\"}", "").trim();
+
+            signature = response.replaceFirst("(?s).*Signature: ", "").trim();
+            signature = signature.replaceAll("\\n", ""); // Remove todas as quebras de linha
+            signature = signature.replaceAll("\"}", ""); // Remove o fechamento JSON
+            signature = signature.replace("\\n", "").replace("\\r", "");
+            signature = signature.trim(); // Garante que espaços extras sejam removidos
 
             // Registra a transação no banco de dados
            try (PreparedStatement stmt = this.connection.prepareStatement(
@@ -469,6 +474,7 @@ String comando = String.format(
             signature = response.replaceFirst("(?s).*Signature: ", "").trim();
             signature = signature.replaceAll("\\n", ""); // Remove todas as quebras de linha
             signature = signature.replaceAll("\"}", ""); // Remove o fechamento JSON
+            signature = signature.replace("\\n", "").replace("\\r", "");
             signature = signature.trim(); // Garante que espaços extras sejam removidos
 
             // 🔹 Atualiza saldo do jogador no banco de dados
@@ -807,17 +813,46 @@ public static String convertPrivateKeyToHex(String jsonResponse) {
     }
 
     public void refundSolana(Player player, String signature) {
+        String lang = getPlayerLanguage(player);
     try {
         // 🔹 Verificar se já houve devolução para essa assinatura
-        PreparedStatement stmt = connection.prepareStatement(
-            "SELECT COUNT(*) FROM livro_caixa WHERE assinatura = ? AND tipo_transacao = 'reembolso'"
-        );
+        PreparedStatement stmt = connection.prepareStatement("SELECT COUNT(*) FROM livro_caixa WHERE assinatura = ? AND tipo_transacao = 'reembolso'");
         stmt.setString(1, signature);
         ResultSet rs = stmt.executeQuery();
-
-        if (rs.next() && rs.getInt(1) > 0) {
-            player.sendMessage(ChatColor.RED + "❌ Esse reembolso já foi processado anteriormente!");
+        if (rs != null && rs.next() && rs.getInt(1) > 0) {
+            if (lang.equals("pt-BR")) {
+                player.sendMessage(ChatColor.RED + "❌ Esse reembolso já foi processado anteriormente!");
+            } else if (lang.equals("es-ES")) {
+                player.sendMessage(ChatColor.RED + "❌ Este reembolso ya ha sido procesado anteriormente!");
+            } else {
+                player.sendMessage(ChatColor.RED + "❌ This refund has already been processed before!");
+            }
             return;
+        } else {
+            System.out.println("Nenhum resultado encontrado!");
+            }
+
+
+        
+        // 🔹 Verificar se a transação original foi do tipo "compra"
+        
+        stmt = connection.prepareStatement("SELECT tipo_transacao FROM livro_caixa WHERE assinatura = ?");
+        stmt.setString(1, signature);
+        rs = stmt.executeQuery();
+        
+        if (rs.next()) {
+            
+            String tipoTransacao = rs.getString("tipo_transacao");
+            if (!tipoTransacao.equals("compra")) {
+                if (lang.equals("pt-BR")) {
+                    player.sendMessage(ChatColor.RED + "❌ Apenas compras podem ser reembolsadas!");
+                } else if (lang.equals("es-ES")) {
+                    player.sendMessage(ChatColor.RED + "❌ ¡Solo las compras pueden ser reembolsadas!");
+                } else {
+                    player.sendMessage(ChatColor.RED + "❌ Only purchases can be refunded!");
+                }
+                return;
+            }
         }
 
         // 🔹 Buscar transação original
@@ -828,7 +863,13 @@ public static String convertPrivateKeyToHex(String jsonResponse) {
         rs = stmt.executeQuery();
 
         if (!rs.next()) {
-            player.sendMessage(ChatColor.RED + "❌ Transação não encontrada!");
+            if (lang.equals("pt-BR")) {
+                player.sendMessage(ChatColor.RED + "❌ Transação não encontrada!");
+            } else if (lang.equals("es-ES")) {
+                player.sendMessage(ChatColor.RED + "❌ ¡Transacción no encontrada!");
+            } else {
+                player.sendMessage(ChatColor.RED + "❌ Transaction not found!");
+            }
             return;
         }
 
@@ -838,7 +879,13 @@ public static String convertPrivateKeyToHex(String jsonResponse) {
         // 🔹 Verificar se o valor da transação é menor que o mínimo
         double minSolAmount = 0.05; // Mínimo de 0.05 SOL
         if (originalAmount < minSolAmount) {
-            player.sendMessage(ChatColor.RED + "❌ O valor da devolução é muito baixo! O mínimo permitido é " + minSolAmount + " SOL.");
+            if (lang.equals("pt-BR")) {
+                player.sendMessage(ChatColor.RED + "❌ O valor da devolução é muito baixo! O mínimo permitido é " + minSolAmount + " SOL.");
+            } else if (lang.equals("es-ES")) {
+                player.sendMessage(ChatColor.RED + "❌ ¡El monto del reembolso es demasiado bajo! El mínimo permitido es " + minSolAmount + " SOL.");
+            } else {
+                player.sendMessage(ChatColor.RED + "❌ The refund amount is too low! The minimum allowed is " + minSolAmount + " SOL.");
+            }
             return;
         }
 
@@ -850,7 +897,13 @@ public static String convertPrivateKeyToHex(String jsonResponse) {
         rs = stmt.executeQuery();
 
         if (!rs.next()) {
-            player.sendMessage(ChatColor.RED + "❌ Saldo do jogador não encontrado no banco!");
+            if (lang.equals("pt-BR")) {
+                player.sendMessage(ChatColor.RED + "❌ Saldo do jogador não encontrado no banco!");
+            } else if (lang.equals("es-ES")) {
+                player.sendMessage(ChatColor.RED + "❌ ¡Saldo del jugador no encontrado en el banco!");
+            } else {
+                player.sendMessage(ChatColor.RED + "❌ Player balance not found in the bank!");
+            }
             return;
         }
 
@@ -864,7 +917,13 @@ public static String convertPrivateKeyToHex(String jsonResponse) {
         rs = stmt.executeQuery();
 
         if (!rs.next()) {
-            player.sendMessage(ChatColor.RED + "❌ Carteira do jogador não encontrada!");
+            if (lang.equals("pt-BR")) {
+                player.sendMessage(ChatColor.RED + "❌ Carteira do jogador não encontrada!");
+            } else if (lang.equals("es-ES")) {
+                player.sendMessage(ChatColor.RED + "❌ ¡Billetera del jugador no encontrada!");
+            } else {
+                player.sendMessage(ChatColor.RED + "❌ Player wallet not found!");
+            }
             return;
         }
 
@@ -921,15 +980,36 @@ public static String convertPrivateKeyToHex(String jsonResponse) {
             stmt.executeUpdate();
 
             // 🔹 Aviso sobre o reembolso e taxa
-            player.sendMessage(ChatColor.YELLOW + "🔹 Ao solicitar um reembolso, há uma taxa de juros de " + (interestRate * 100) + "% aplicada.");
+            if (lang.equals("pt-BR")) {
+                player.sendMessage(ChatColor.YELLOW + "🔹 Ao solicitar um reembolso, há uma taxa de juros de " + (interestRate * 100) + "% aplicada.");
             player.sendMessage(ChatColor.RED + "📉 Isso significa que você receberá " + refundAmount + " SOL em vez do valor total.");
             player.sendMessage(ChatColor.GOLD + "💰 Essa taxa garante a estabilidade do sistema e evita prejuízos à casa.");
+            } else if (lang.equals("es-ES")) {
+                player.sendMessage(ChatColor.YELLOW + "🔹 Has solicitado un reembolso de " + originalAmount + " SOL.");
+                player.sendMessage(ChatColor.RED + "📉 Esto significa que recibirás " + refundAmount + " SOL en lugar del monto total.");
+                player.sendMessage(ChatColor.GOLD + "💰 Esta tarifa garantiza la estabilidad del sistema y evita pérdidas para la casa.");
+            } else {
+                player.sendMessage(ChatColor.YELLOW + "🔹 You requested a refund of " + originalAmount + " SOL.");
+                player.sendMessage(ChatColor.RED + "📉 This means you will receive " + refundAmount + " SOL instead of the full amount.");
+                player.sendMessage(ChatColor.GOLD + "💰 This fee ensures the stability of the system and prevents losses to the house.");
+            }
+            
 
             // 🔹 Mensagem no chat do jogo mostrando saldo atualizado
             double novoSaldo = saldoAtual - moedasParaRemover;
-            player.sendMessage(ChatColor.GREEN + "✅ Sua devolução foi concluída com sucesso!");
+            if (lang.equals("pt-BR")) {
+                player.sendMessage(ChatColor.GREEN + "✅ Sua devolução foi concluída com sucesso!");
             player.sendMessage(ChatColor.GOLD + "💰 Valor recebido: " + refundAmount + " SOL");
             player.sendMessage(ChatColor.AQUA + "💳 Seu novo saldo: " + novoSaldo + " moedas.");
+            } else if (lang.equals("es-ES")) {
+                player.sendMessage(ChatColor.GREEN + "✅ ¡Tu reembolso se ha procesado con éxito!");
+            player.sendMessage(ChatColor.GOLD + "💰 Monto recibido: " + refundAmount + " SOL");
+            player.sendMessage(ChatColor.AQUA + "💳 Tu nuevo saldo: " + novoSaldo + " monedas.");
+            } else {
+                player.sendMessage(ChatColor.AQUA + "💳 Your new balance: " + novoSaldo + " coins.");
+            player.sendMessage(ChatColor.GREEN + "✅ Your refund has been successfully processed!");
+            player.sendMessage(ChatColor.GOLD + "💰 Amount received: " + refundAmount + " SOL");
+            }
 
         } else {
             player.sendMessage(ChatColor.RED + "❌ Falha na devolução: " + response);
