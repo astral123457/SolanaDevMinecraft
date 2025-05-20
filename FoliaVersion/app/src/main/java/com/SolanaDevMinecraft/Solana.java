@@ -781,14 +781,6 @@ public static String convertPrivateKeyToHex(String jsonResponse) {
 
     // 📌 Método para ajustar o saldo do jogador do sql do plugin EssentialsX (nao e necessario mas tenta mater os dados iguais do sql e do mysql)
 
-    public static boolean setupEconomy() {
-        RegisteredServiceProvider<Economy> serviceProvider = Bukkit.getServer().getServicesManager().getRegistration(Economy.class);
-        if (serviceProvider != null) {
-            economy = serviceProvider.getProvider();
-        }
-        return economy != null;
-    }
-
     public void ajustarSaldo(Player player, String tipo, double valor) {
         if (tipo.equalsIgnoreCase("give")) {
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco give " + player.getName() + " " + valor);

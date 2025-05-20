@@ -157,15 +157,21 @@ public boolean onCommand(CommandSender sender, Command command, String label, St
 
     
     if (command.getName().equalsIgnoreCase("saldo")) {
-        if (sender instanceof Player) {
-            Player player = (Player) sender;
-            String lang = store.getPlayerLanguage(player); // Obtém o idioma do jogador
+    if (sender instanceof Player) {
+        Player player = (Player) sender;
+        try {
+            String lang = store.getPlayerLanguage(player);
             checkBalance(player);
-        } else {
-            sender.sendMessage("Este comando só pode ser usado por jogadores.");
+        } catch (Exception e) {
+            sender.sendMessage("Ocorreu um erro ao executar o comando saldo.");
+            e.printStackTrace(); // Exibe detalhes do erro no console
         }
-        return true;
-    } else if (command.getName().equalsIgnoreCase("loan")) {
+    } else {
+        sender.sendMessage("Este comando só pode ser usado por jogadores.");
+    }
+    return true;
+}
+ else if (command.getName().equalsIgnoreCase("loan")) {
         if (sender instanceof Player) {
             Player player = (Player) sender;
             if (args.length == 1) {
@@ -685,15 +691,27 @@ public static boolean setupEconomy() {
         return economy != null;
     }
 
-    public void ajustarSaldo(Player player, String tipo, double valor) {
-        if (tipo.equalsIgnoreCase("give")) {
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco give " + player.getName() + " " + valor);
-        } else if (tipo.equalsIgnoreCase("take")) {
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco take " + player.getName() + " " + valor);
-        }  else if (tipo.equalsIgnoreCase("set")) {
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco set " + player.getName() + " " + valor);
-        } else {
-            player.sendMessage("Comando inválido! Use 'give' ou 'take' ou set.");
+    public static void ajustarSaldo(Player player, String tipo, double valor) {
+       if (economy == null && !setupEconomy()) {
+        player.sendMessage("Sistema de economia não está configurado!");
+        return;
+    }
+
+        switch (tipo.toLowerCase()) {
+            case "give":
+                economy.depositPlayer(player, valor);
+                break;
+            case "take":
+                economy.withdrawPlayer(player, valor);
+                break;
+            case "set":
+                double saldoAtual = economy.getBalance(player);
+                economy.withdrawPlayer(player, saldoAtual);
+                economy.depositPlayer(player, valor);
+                break;
+            default:
+                player.sendMessage("Comando inválido! Use 'give', 'take' ou 'set'.");
+                break;
         }
     }
 
