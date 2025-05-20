@@ -37,7 +37,7 @@ tasks.withType(JavaCompile) {
 }
 
 tasks.named('shadowJar') {
-    archiveBaseName.set('SolanaDevMinecraftAstralPaperMC')
+    archiveBaseName.set('SolanaDevMinecraftAstralFolia')
     archiveVersion.set('2.6.0')
     archiveClassifier.set('')
     destinationDirectory.set(file("$buildDir/libs"))
