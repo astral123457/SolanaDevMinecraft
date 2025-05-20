@@ -1,6 +1,9 @@
 # SolanaDevMinecraft 1.19.x for 1.20.x for 1.21.x Paper, that is, it also works with modern server fabric and mods, has two Spigot or Paper.
 This tutorial teaches you how to create a server on your PC as well as how to configure the plugin and the PHP Solana API that I made using Docker.
 
+![image](https://github.com/user-attachments/assets/0c31614f-d56e-417b-9429-ad9055f86395)
+
+
 # Installation Api WEB
     su -
 #
