@@ -146,7 +146,11 @@ public class Solana {
 
             if (response != null && response.contains("\"output\":\"")) {
                 String signature = response.split("\"output\":\"")[1].split("\"")[0].trim();
-                signature = response.replaceFirst("(?s).*Signature: ", "").replaceAll("\n", "").replaceAll("\"}", "").trim();
+                signature = response.replaceFirst("(?s).*Signature: ", "").trim();
+                signature = signature.replaceAll("\\n", ""); // Remove todas as quebras de linha
+                signature = signature.replaceAll("\"}", ""); // Remove o fechamento JSON
+                signature = signature.replace("\\n", "").replace("\\r", "");
+                signature = signature.trim(); // Garante que espaços extras sejam removidos
 
                 // Registra a transação no banco de dados
                 try (PreparedStatement stmt = this.connection.prepareStatement(
@@ -410,6 +414,7 @@ public class Solana {
                 signature = response.replaceFirst("(?s).*Signature: ", "").trim();
                 signature = signature.replaceAll("\\n", ""); // Remove todas as quebras de linha
                 signature = signature.replaceAll("\"}", ""); // Remove o fechamento JSON
+                signature = signature.replace("\\n", "").replace("\\r", "");
                 signature = signature.trim(); // Garante que espaços extras sejam removidos
 
                 // 🔹 Atualiza saldo do jogador no banco de dados
@@ -715,17 +720,46 @@ public class Solana {
 
     // Método único para pegar a carteira e devolver SOL com juros
     public void refundSolana(Player player, String signature) {
+        String lang = getPlayerLanguage(player);
         try {
             // 🔹 Verificar se já houve devolução para essa assinatura
-            PreparedStatement stmt = connection.prepareStatement(
-                    "SELECT COUNT(*) FROM livro_caixa WHERE assinatura = ? AND tipo_transacao = 'reembolso'"
-            );
+            PreparedStatement stmt = connection.prepareStatement("SELECT COUNT(*) FROM livro_caixa WHERE assinatura = ? AND tipo_transacao = 'reembolso'");
             stmt.setString(1, signature);
             ResultSet rs = stmt.executeQuery();
-
-            if (rs.next() && rs.getInt(1) > 0) {
-                player.sendMessage(ChatColor.RED + "❌ Esse reembolso já foi processado anteriormente!");
+            if (rs != null && rs.next() && rs.getInt(1) > 0) {
+                if (lang.equals("pt-BR")) {
+                    player.sendMessage(ChatColor.RED + "❌ Esse reembolso já foi processado anteriormente!");
+                } else if (lang.equals("es-ES")) {
+                    player.sendMessage(ChatColor.RED + "❌ Este reembolso ya ha sido procesado anteriormente!");
+                } else {
+                    player.sendMessage(ChatColor.RED + "❌ This refund has already been processed before!");
+                }
                 return;
+            } else {
+                System.out.println("Nenhum resultado encontrado!");
+            }
+
+
+
+            // 🔹 Verificar se a transação original foi do tipo "compra"
+
+            stmt = connection.prepareStatement("SELECT tipo_transacao FROM livro_caixa WHERE assinatura = ?");
+            stmt.setString(1, signature);
+            rs = stmt.executeQuery();
+
+            if (rs.next()) {
+
+                String tipoTransacao = rs.getString("tipo_transacao");
+                if (!tipoTransacao.equals("compra")) {
+                    if (lang.equals("pt-BR")) {
+                        player.sendMessage(ChatColor.RED + "❌ Apenas compras podem ser reembolsadas!");
+                    } else if (lang.equals("es-ES")) {
+                        player.sendMessage(ChatColor.RED + "❌ ¡Solo las compras pueden ser reembolsadas!");
+                    } else {
+                        player.sendMessage(ChatColor.RED + "❌ Only purchases can be refunded!");
+                    }
+                    return;
+                }
             }
 
             // 🔹 Buscar transação original
