@@ -53,17 +53,14 @@ import org.bukkit.BanEntry;
 import org.bukkit.BanList;
 import java.util.Map;
 import java.util.HashMap;
-import org.bukkit.entity.Player;
 import org.bukkit.Location;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
 import org.bukkit.Location;
-import java.util.HashMap;
-import java.util.Map;
-
-
+import java.time.Duration;
+import org.bukkit.World;
 
 
 
@@ -87,6 +84,14 @@ public class App extends JavaPlugin implements Listener {
     private static final String PLUGIN_NAME = "SolanaDevMinecraft";
     private static final String LOG_FILE_NAME = "SolanaDevMinecraft.log";
     private static final String LOG_FILE_PATH = "plugins/SolanaDevMinecraft/" + LOG_FILE_NAME;
+
+    private Connection getDatabaseConnection() throws SQLException {
+    String url = config.getString("database.url");
+    String user = config.getString("database.user");
+    String password = config.getString("database.password");
+
+    return DriverManager.getConnection(url, user, password);
+}
 
     @Override
     public void onEnable() {
@@ -131,11 +136,61 @@ for (Player player : Bukkit.getOnlinePlayers()) {
         disconnectFromDatabase();
     }
 
-    @EventHandler
-    public void aoEntrarNoServidor(PlayerJoinEvent event) {
-        Player jogador = event.getPlayer();
-        checkBalance(jogador);
-    }
+
+
+
+
+@EventHandler
+@Deprecated
+public void aoEntrarNoServidor(PlayerJoinEvent event) {
+    Player jogador = event.getPlayer();
+
+    // Mensagem de boas-vindas no meio da tela
+    jogador.sendTitle(
+        ChatColor.GREEN + "Bem-vindo!",
+        ChatColor.WHITE + jogador.getName(),
+        10, 70, 20 // Tempo: fade in, duração, fade out
+    );
+
+    // Efeito sonoro de boas-vindas
+    jogador.playSound(jogador.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
+
+    // Mensagem no chat
+    jogador.sendMessage(ChatColor.GREEN + "🎉 Bem-vindo ao servidor, " + jogador.getName() + "!");
+
+    // Carregar baús trancados do banco de forma assíncrona
+    CompletableFuture.runAsync(() -> {
+        try (Connection conn = getDatabaseConnection();
+             PreparedStatement stmt = conn.prepareStatement("SELECT location, password FROM locked_chests")) {
+
+            ResultSet rs = stmt.executeQuery();
+            int count = 0;
+
+           while (rs.next()) {
+            String location = rs.getString("location"); // Pegando a localização salva no banco
+            String password = rs.getString("password");
+
+            // Convertendo corretamente a string para um objeto Location
+            Location chestLocation = getLocationFromString(location);
+
+            if (chestLocation != null && !lockedChests.containsKey(chestLocation)) {
+                lockedChests.put(chestLocation, password);
+                count++;
+            }
+}
+
+
+
+            jogador.sendMessage(ChatColor.YELLOW + "🔒 " + count + " baú(s) trancado(s) restaurado(s)!");
+            getLogger().info("✅ Restaurados " + count + " baús trancados para " + jogador.getName());
+
+        } catch (SQLException e) {
+            getLogger().info("❌ Erro ao carregar baús trancados: " + e.getMessage());
+        }
+    });
+}
+
+
 
     @EventHandler
 public void onPlayerTeleport(PlayerTeleportEvent event) {
@@ -144,8 +199,26 @@ public void onPlayerTeleport(PlayerTeleportEvent event) {
 
 @EventHandler
 public void onPlayerDeath(PlayerDeathEvent event) {
-    lastLocations.put(event.getEntity(), event.getEntity().getLocation());
+    Player player = event.getEntity();
+    
+    if (player == null) {
+        getLogger().warning("❌ O evento de morte ocorreu, mas o jogador é nulo!");
+        return;
+    }
+
+    Location deathLocation = player.getLocation();
+    if (deathLocation == null) {
+        getLogger().warning("❌ A localização do jogador no momento da morte é nula!");
+        return;
+    }
+
+    lastLocations.put(player, deathLocation);
+    getLogger().info("🛠️ Localização da morte armazenada para: " + player.getName() +
+                     " | X: " + deathLocation.getX() + " Y: " + deathLocation.getY() +
+                     " Z: " + deathLocation.getZ());
 }
+
+
 
 
 
@@ -520,21 +593,36 @@ public boolean onCommand(CommandSender sender, Command command, String label, St
         }
         return true;
     } if (command.getName().equalsIgnoreCase("eco")) {
-        if (args.length < 3) {
-            System.out.println("❌ Uso incorreto! Formato: /eco [give/take/set] [jogador] [valor]");
-            return true;
-        }
+    if (args.length < 2) {
+        sender.sendMessage("❌ Uso incorreto! Formato: /eco [give/take/set/balance] [jogador] [valor]");
+        return true;
+    }
 
-        String action = args[0].toLowerCase();
-        String playerName = args[1];
-        double amount;
+    String action = args[0].toLowerCase();
+    String playerName = args[1];
+    
+    // Verifica se o comando é para mostrar o saldo
+    Player player = Bukkit.getPlayerExact(playerName);
+if (player != null) {
+    checkBalance(player);
+} else {
+    sender.sendMessage("❌ Jogador não encontrado!");
+}
 
-        
-            System.out.println("🥽 :" + action + " " + playerName + " " + args[2]);
-       
-            return true;
-       
-    } if (!sender.hasPermission("eco.admin")) {
+
+    // Comandos give/take/set exigem um terceiro argumento
+    if (args.length < 3) {
+        sender.sendMessage("❌ Uso incorreto! Formato: /eco [give/take/set] [jogador] [valor]");
+        return true;
+    }
+
+    double amount = Double.parseDouble(args[2]);
+    
+    sender.sendMessage("🥽 :" + action + " " + playerName + " " + amount);
+    return true;
+}
+
+ if (!sender.hasPermission("eco.admin")) {
         sender.sendMessage("❌ Você não tem permissão para executar este comando.");
         return true;
     } else if (command.getName().equalsIgnoreCase("ban")) {
@@ -567,23 +655,40 @@ public boolean onCommand(CommandSender sender, Command command, String label, St
         sender.sendMessage("✅ O jogador " + playerName + " foi desbanido!");
         return true;
     } else if (command.getName().equalsIgnoreCase("back")) {
-        if (!(sender instanceof Player)) {
-            sender.sendMessage("❌ Apenas jogadores podem usar este comando.");
-            return true;
+    CompletableFuture.runAsync(() -> {
+        try {
+            if (!(sender instanceof Player)) {
+                sender.sendMessage("❌ Apenas jogadores podem usar este comando.");
+                return;
+            }
+
+            Player player = (Player) sender;
+            
+            // Debug para verificar se o jogador está registrado
+            getLogger().info("🔍 Comando /back executado por: " + player.getName());
+
+            if (!lastLocations.containsKey(player) || lastLocations.get(player) == null) {
+                player.sendMessage("❌ Nenhuma posição anterior encontrada.");
+                getLogger().warning("⚠️ Tentativa de /back sem localização armazenada para " + player.getName());
+                return;
+            }
+
+            Location backLocation = lastLocations.remove(player);
+
+            // Debug para verificar a localização antes do teleporte
+            getLogger().info("🚀 Teleportando " + player.getName() + " para última posição: " +
+                    "X: " + backLocation.getX() + ", Y: " + backLocation.getY() + ", Z: " + backLocation.getZ());
+
+            player.teleportAsync(backLocation);
+            player.sendMessage("🚀 Você voltou para sua última posição!");
+
+        } catch (Exception e) {
+            getLogger().severe("❌ Erro ao executar o comando /back: " + e.getMessage());
+            e.printStackTrace();
         }
-
-        Player player = (Player) sender;
-        if (!lastLocations.containsKey(player)) {
-            player.sendMessage("❌ Nenhuma posição anterior encontrada.");
-            return true;
-        }
-
-        Location backLocation = lastLocations.remove(player);
-        player.teleport(backLocation);
-        player.sendMessage("🚀 Você voltou para sua última posição!");
-
-        return true;
-    } else if (command.getName().equalsIgnoreCase("tpa")) {
+    });
+    return true;
+} else if (command.getName().equalsIgnoreCase("tpa")) {
         if (!(sender instanceof Player)) {
             sender.sendMessage("❌ Apenas jogadores podem usar este comando.");
             return true;
@@ -617,7 +722,7 @@ public boolean onCommand(CommandSender sender, Command command, String label, St
         }
 
         Player requester = tpaRequests.remove(target);
-        requester.teleport(target.getLocation());
+        requester.teleportAsync(target.getLocation());
         requester.sendMessage("✅ Teleporte aceito! Você foi movido até " + target.getName() + ".");
         target.sendMessage("✅ Teleporte realizado com sucesso.");
 
@@ -655,81 +760,151 @@ public boolean onCommand(CommandSender sender, Command command, String label, St
             sender.sendMessage("❌ Este comando só pode ser usado por um jogador!");
             return true;
         }
-        Player p = (Player) sender; // Faz o cast para Player
 
-        if (!homes.containsKey(p)) {
-            sender.sendMessage("❌ Você ainda não definiu sua casa! Use `/sethome` primeiro.");
-            return true;
+       CompletableFuture.runAsync(() -> {
+    try {
+        if (!(sender instanceof Player)) return;
+        Player player = (Player) sender;
+
+        getLogger().info("🔍 Comando /home executado por: " + player.getName());
+
+        if (!homes.containsKey(player)) {
+            player.sendMessage("❌ Você não tem uma casa registrada!");
+            getLogger().warning("⚠️ " + player.getName() + " tentou ir para /home sem casa registrada.");
+            return;
         }
-        Location homeLocation = homes.get(p);
 
-        Bukkit.getScheduler().runTaskLater(this.plugin, () -> {
-            p.teleport(homeLocation);
-            sender.sendMessage("🏠 Você foi teleportado para sua casa!");
-        }, 20L); // Executa após 20 ticks (~1 segundo)
+        Location homeLocation = homes.get(player);
+        getLogger().info("🚀 Teleportando " + player.getName() + " para sua casa: " +
+                "X: " + homeLocation.getX() + ", Y: " + homeLocation.getY() + ", Z: " + homeLocation.getZ());
+
+        player.teleportAsync(homeLocation)
+            .thenRun(() -> player.sendMessage("🏡 Bem-vindo de volta para casa!"))
+            .exceptionally(e -> {
+                getLogger().severe("❌ Erro ao teleportar " + player.getName() + ": " + e.getMessage());
+                e.printStackTrace();
+                return null;
+            });
+
+    } catch (Exception e) {
+        getLogger().severe("❌ Exceção ao executar /home: " + e.getMessage());
+        e.printStackTrace();
+    }
+});
 
         return true;
     } else if (command.getName().equalsIgnoreCase("lockchest")) {
-        if (!(sender instanceof Player)) {
-            sender.sendMessage("❌ Este comando só pode ser usado por um jogador!");
-            return true;
-        }
-        Player p = (Player) sender; // Faz o cast para Player
-
-        if (args.length < 1) {
-            sender.sendMessage("❌ Uso incorreto! Formato: /lockchest [senha]");
-            return true;
-        }
-
-        Block block = p.getTargetBlockExact(5);
-        if (block == null || !(block.getState() instanceof Chest)) {
-            sender.sendMessage("❌ Você precisa olhar para um baú!");
-            return true;
-        }
-
-        String password = args[0];
-        lockedChests.put(block.getLocation(), password);
-        sender.sendMessage("🔒 Baú trancado com senha! Use `/unlockchest [senha]` para abrir.");
+    if (!(sender instanceof Player)) {
+        sender.sendMessage("❌ Este comando só pode ser usado por um jogador!");
         return true;
     }
 
+    Player p = (Player) sender;
+    getLogger().info("🔍 Comando /lockchest executado por: " + p.getName());
+
+    if (args.length < 1) {
+        sender.sendMessage("❌ Uso incorreto! Formato: /lockchest [senha]");
+        return true;
+    }
+
+    Block block = p.getTargetBlockExact(5);
+    if (block == null || !(block.getState() instanceof Chest)) {
+        sender.sendMessage("❌ Você precisa olhar para um baú!");
+        return true;
+    }
+
+    String password = args[0];
+    Location chestLocation = block.getLocation();
+    String locationString = getLocationString(chestLocation); // 🔄 Formato atualizado da localização
+
+    // 🛠 Execução assíncrona otimizada para Folia
+    CompletableFuture.runAsync(() -> {
+    try (Connection conn = getDatabaseConnection();
+         PreparedStatement stmt = conn.prepareStatement("INSERT INTO locked_chests (location, password) VALUES (?, ?)")) {
+
+        stmt.setString(1, locationString);
+        stmt.setString(2, password);
+        stmt.executeUpdate();
+
+        // 🔒 Armazenando na memória para acesso rápido sem redeclarar `chestLocation`
+        lockedChests.put(chestLocation, password);
+
+        getLogger().info("🔒 Baú trancado no banco e memória: " + locationString);
+    } catch (SQLException e) {
+        getLogger().info("❌ Erro ao salvar baú no banco: " + e.getMessage());
+    }
+});
+
+    p.sendMessage("🔒 Baú trancado com senha! Use `/unlockchest [senha]` para abrir.");
+    return true;
+}
+
     // 🔹 Correção do comando /unlockchest
     else if (command.getName().equalsIgnoreCase("unlockchest")) {
-        if (!(sender instanceof Player)) {
-            sender.sendMessage("❌ Este comando só pode ser usado por um jogador!");
-            return true;
-        }
-        Player p = (Player) sender; // Faz o cast para Player
-
-        if (args.length < 1) {
-            sender.sendMessage("❌ Uso incorreto! Formato: /unlockchest [senha]");
-            return true;
-        }
-
-        Block block = p.getTargetBlockExact(5);
-        if (block == null || !(block.getState() instanceof Chest)) {
-            sender.sendMessage("❌ Você precisa olhar para um baú!");
-            return true;
-        }
-
-        Location chestLocation = block.getLocation();
-        if (!lockedChests.containsKey(chestLocation)) {
-            sender.sendMessage("❌ Este baú não está trancado.");
-            return true;
-        }
-
-        String enteredPassword = args[0];
-        String correctPassword = lockedChests.get(chestLocation);
-
-        if (!enteredPassword.equals(correctPassword)) {
-            sender.sendMessage("❌ Senha incorreta! Tente novamente.");
-            return true;
-        }
-
-        lockedChests.remove(chestLocation);
-        sender.sendMessage("✅ Baú destrancado com sucesso!");
+    if (!(sender instanceof Player)) {
+        sender.sendMessage("❌ Este comando só pode ser usado por um jogador!");
         return true;
-    } else if (command.getName().equalsIgnoreCase("unban-ip")) {
+    }
+
+    Player p = (Player) sender;
+    getLogger().info("🔍 Comando /unlockchest executado por: " + p.getName());
+
+    if (args.length < 1) {
+        sender.sendMessage("❌ Uso incorreto! Formato: /unlockchest [senha]");
+        return true;
+    }
+
+    Block block = p.getTargetBlockExact(5);
+    if (block == null || !(block.getState() instanceof Chest)) {
+        sender.sendMessage("❌ Você precisa olhar para um baú!");
+        return true;
+    }
+
+    Location chestLocation = block.getLocation();
+    String enteredPassword = args[0];
+    String locationString = getLocationString(chestLocation); // 🔄 Formato atualizado da localização
+
+    // 🛠 Execução assíncrona para evitar travamento da main thread
+    CompletableFuture.runAsync(() -> {
+        try (Connection conn = getDatabaseConnection();
+             PreparedStatement stmt = conn.prepareStatement("SELECT password FROM locked_chests WHERE location = ?")) {
+
+            stmt.setString(1, locationString);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                String correctPassword = rs.getString("password");
+
+                if (enteredPassword.equals(correctPassword)) {
+                    sender.sendMessage("✅ Baú destrancado com sucesso!");
+                    getLogger().info("🔓 Baú destrancado em " + locationString + " por " + p.getName());
+
+                    // 🗑 Removendo do banco e da memória
+                    Location chestLocation2 = getLocationFromString(locationString);
+
+                    // 🔄 Remover da memória primeiro
+                    lockedChests.remove(chestLocation2);
+
+                    // 🗑 Converter corretamente antes de chamar `removeChest`
+                    removeChest(chestLocation2);
+                } else {
+                    sender.sendMessage("❌ Senha incorreta! Tente novamente.");
+                    getLogger().warning("⚠️ Tentativa de desbloqueio falha para " + p.getName());
+                }
+            } else {
+                sender.sendMessage("❌ Este baú não está trancado.");
+            }
+        } catch (SQLException e) {
+            getLogger().info("❌ Erro ao verificar senha do baú: " + e.getMessage());
+        }
+    });
+
+    return true;
+}
+
+
+
+ else if (command.getName().equalsIgnoreCase("unban-ip")) {
         if (args.length < 1) {
             sender.sendMessage("❌ Uso incorreto! Formato: /unban-ip [endereço IP]");
             return true;
@@ -783,6 +958,43 @@ public boolean onCommand(CommandSender sender, Command command, String label, St
     return false;
 }
 
+// ❌ Remover baú trancado do banco de dados após destrancar
+
+private void removeChest(Location loc) {
+    String locationString = getLocationString(loc);
+
+    CompletableFuture.runAsync(() -> {
+        try (Connection conn = getDatabaseConnection();
+             PreparedStatement stmt = conn.prepareStatement("DELETE FROM locked_chests WHERE location = ?")) {
+
+            stmt.setString(1, locationString);
+            stmt.executeUpdate();
+
+            // 🗑 Removendo da memória
+            lockedChests.remove(locationString);
+            
+            getLogger().info("🗑 Baú removido do banco e da memória: " + locationString);
+        } catch (SQLException e) {
+            getLogger().info("❌ Erro ao remover baú: " + e.getMessage());
+        }
+    });
+}
+
+
+
+// 🗝 Método atualizado para converter Location em string completa compatível com Folia/Cardboard
+private String getLocationString(Location loc) {
+    return "Location{" +
+           "world=" + loc.getWorld().getName() + "," +
+           "x=" + loc.getX() + "," +
+           "y=" + loc.getY() + "," +
+           "z=" + loc.getZ() + "," +
+           "pitch=" + loc.getPitch() + "," +
+           "yaw=" + loc.getYaw() +
+           "}";
+}
+
+
 private void giveLoan(Player player, double amount) {
     try {
         PreparedStatement statement = connection.prepareStatement(
@@ -803,6 +1015,20 @@ private void giveLoan(Player player, double amount) {
         getLogger().severe("Erro ao processar emprestimo: " + e.getMessage());
     }
 }
+
+private Location getLocationFromString(String locString) {
+    String[] data = locString.replace("Location{", "").replace("}", "").split(",");
+    World world = Bukkit.getWorld(data[0].split("=")[1]);
+    double x = Double.parseDouble(data[1].split("=")[1]);
+    double y = Double.parseDouble(data[2].split("=")[1]);
+    double z = Double.parseDouble(data[3].split("=")[1]);
+    float pitch = Float.parseFloat(data[4].split("=")[1]);
+    float yaw = Float.parseFloat(data[5].split("=")[1]);
+
+    return new Location(world, x, y, z, yaw, pitch);
+}
+
+
 
 private void payDebt(Player player, double amount) {
     try {
@@ -900,13 +1126,13 @@ private void processInvestments(Player player, String lang) {
 }
 
     private void checkBalance(Player player) {
-    System.out.println("🔄 Iniciando verificação de saldo para " + player.getName());
+    getLogger().info("🔄 Iniciando verificação de saldo para " + player.getName());
 
     CompletableFuture.runAsync(() -> {
         try {
             // 🔍 Buscar saldo na Solana
             double balance = solana.getSolBalance(player.getName());
-            System.out.println("✅ Saldo obtido: " + balance + " SOL");
+            getLogger().info("✅ Saldo obtido: " + balance + " SOL");
             player.sendMessage(
     Component.text("💰 ").color(TextColor.color(0xFFFF00)) // Ícone de dinheiro (Amarelo)
     .append(Component.text(balance + " ").color(TextColor.color(0xFFFF00))) // Saldo (Roxo)
@@ -922,7 +1148,7 @@ player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f,
             // ✅ Exibir saldo com ícones e efeitos
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 if (player.isOnline()) {
-                    System.out.println("📢 Enviando mensagem de saldo para " + player.getName());
+                    getLogger().info("📢 Enviando mensagem de saldo para " + player.getName());
                     
                     String lang = store.getPlayerLanguage(player);
                     Component message;
@@ -947,17 +1173,17 @@ player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f,
 
                     // 🎵 Toca um som de dinheiro
                     
-                    System.out.println("🎵 Som de dinheiro tocado para " + player.getName());
+                    getLogger().info("🎵 Som de dinheiro tocado para " + player.getName());
 
                     // ✨ Cria um efeito de partículas douradas
                     player.getWorld().spawnParticle(Particle.FIREWORKS_SPARK, 
                             player.getLocation().add(0, 1, 0), 20, 0.5, 0.5, 0.5, 0.05);
-                    System.out.println("✨ Efeito de partículas criado para " + player.getName());
+                    getLogger().info("✨ Efeito de partículas criado para " + player.getName());
                 }
             }, 0L);
 
         } catch (Exception e) {
-            System.out.println("❌ Erro ao verificar saldo para " + player.getName() + ": " + e.getMessage());
+            getLogger().info("❌ Erro ao verificar saldo para " + player.getName() + ": " + e.getMessage());
 
             // ❌ Mensagem de erro com ícone e cor
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
@@ -982,7 +1208,7 @@ player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f,
         }
     });
 
-    System.out.println("✅ Verificação de saldo concluída para " + player.getName());
+    getLogger().info("✅ Verificação de saldo concluída para " + player.getName());
 }
 
 
@@ -1076,6 +1302,15 @@ public void ajustarSaldo(Player player, String tipo, double valor) {
                 + "moeda VARCHAR(10) NOT NULL, "
                 + "assinatura VARCHAR(255) NOT NULL, "
                 + "data_hora DATETIME DEFAULT CURRENT_TIMESTAMP"
+                + ");");
+
+            statement.execute("CREATE TABLE IF NOT EXISTS locked_chests ("
+                + "id INT AUTO_INCREMENT PRIMARY KEY, "
+                + "x DOUBLE NOT NULL, "
+                + "y DOUBLE NOT NULL, "
+                + "z DOUBLE NOT NULL, "
+                + "world VARCHAR(64) NOT NULL, "
+                + "password VARCHAR(255) NOT NULL"
                 + ");");
 
             getLogger().info("✅ Banco de dados e tabelas criados/verificados!");
