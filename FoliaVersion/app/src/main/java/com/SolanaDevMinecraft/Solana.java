@@ -56,7 +56,12 @@ import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
-
+import org.bukkit.plugin.java.JavaPlugin;
+import java.util.UUID;
+import java.util.Objects;
+import org.bukkit.Sound;
+import org.bukkit.Particle;
+import java.util.concurrent.CompletableFuture;
 
 
 class WalletInfo {
@@ -74,20 +79,49 @@ class WalletInfo {
 
 
 public class Solana {
-
     private final Connection connection;
     private final FileConfiguration config;
     private static Economy economy;
+    private JavaPlugin plugin;
 
+    
 
     
     private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(Solana.class.getName());
 
     // 🔹 Construtor correto
-    public Solana(FileConfiguration config, Connection connection) {
-        this.config = config; // Inicializa corretamente
+    public Solana(JavaPlugin plugin, FileConfiguration config, Connection connection) {
+        this.plugin = plugin;
+        this.config = config;
         this.connection = connection;
     }
+
+
+
+    public double getSolBalance(String playerName) {
+    double balance = 0.0; // Valor padrão caso não seja encontrado
+
+    try {
+        // 🔍 Buscar o saldo diretamente pelo nome do jogador
+        PreparedStatement balanceStatement = connection.prepareStatement(
+            "SELECT saldo FROM banco WHERE jogador = ?"
+        );
+        balanceStatement.setString(1, playerName);
+        ResultSet balanceResultSet = balanceStatement.executeQuery();
+
+        if (balanceResultSet.next()) {
+            balance = balanceResultSet.getDouble("saldo"); // Retorna saldo encontrado
+        }
+
+        // 🖨️ Exibir saldo no console
+        System.out.println("Saldo obtido para " + playerName + ": " + balance);
+
+    } catch (SQLException e) {
+        e.printStackTrace(); // Mostra erro no console
+    }
+    
+    return balance;
+}
 
 @SuppressWarnings("deprecation")
 public String getPlayerLanguage(Player player) {
@@ -192,7 +226,7 @@ private String executeHttpGet(String urlString) throws Exception {
             // Registra a transação no banco de dados
            try (PreparedStatement stmt = this.connection.prepareStatement(
                 "INSERT INTO livro_caixa (jogador, tipo_transacao, valor, moeda, assinatura) VALUES (?, ?, ?, ?, ?)"
-            )) {    
+            )) {
 
                 stmt.setString(1, sender.getName());
                 stmt.setString(2, "transferência");
@@ -226,21 +260,42 @@ private void sendTransactionMessage(Player sender, String recipient, double amou
 
 
     // 📌 Método para registrar transações no banco de dados
-    public void registerTransaction(String player, String transactionType, double amount, String currency, String signature) {
-        try {
-            PreparedStatement statement = connection.prepareStatement(
-                "INSERT INTO livro_caixa (jogador, tipo_transacao, valor, moeda, assinatura) VALUES (?, ?, ?, ?, ?)"
-            );
+   public void registerTransaction(String player, String transactionType, double amount, String currency, String signature) {
+    // Log inicial para debug
+    LOGGER.info("DEBUG (registerTransaction): Tentando registrar transação para " + player +
+            ", tipo: " + transactionType + ", valor: " + amount + ", moeda: " + currency);
+
+    // Verificação da conexão
+    if (this.connection == null) {
+        LOGGER.severe("ERROR (registerTransaction): Conexão com o banco de dados é NULA! Não é possível registrar transação.");
+        return;
+    }
+
+    // Executar a inserção no banco de dados de forma assíncrona
+    CompletableFuture.runAsync(() -> {
+        try (PreparedStatement statement = connection.prepareStatement(
+                "INSERT INTO livro_caixa (jogador, tipo_transacao, valor, moeda, assinatura, data) VALUES (?, ?, ?, ?, ?, NOW())"
+        )) {
             statement.setString(1, player);
             statement.setString(2, transactionType);
             statement.setDouble(3, amount);
             statement.setString(4, currency);
             statement.setString(5, signature);
             statement.executeUpdate();
+
+            LOGGER.info("DEBUG (registerTransaction - Async): Transação registrada com sucesso para " + player + ".");
+
+        } catch (SQLException e) {
+            LOGGER.severe("ERROR (registerTransaction - SQL): Erro SQL ao registrar transação para " + player);
+            e.printStackTrace();
         } catch (Exception e) {
+            LOGGER.severe("ERROR (registerTransaction - Geral): Erro inesperado ao registrar transação para " + player);
             e.printStackTrace();
         }
-    }
+    });
+
+    LOGGER.info("DEBUG (registerTransaction): Tarefa de registro agendada assincronamente.");
+}
 
     // 📌 Método auxiliar para executar comandos no sistema
     private String executeCommand(String command) throws Exception {
@@ -404,133 +459,122 @@ String lang = getPlayerLanguage(player);
 
     // 📌 Método para comprar moedas do jogo usando Solana com base em uma taxa fixa
 public void buyGameCurrency(Player player, double solAmount) {
-    int conversionRate = config.getInt("store.value_of_in_game_currency", 1000); // Obtém corretamente o valor numérico // 1 SOL = 1000 moedas do jogo
-    //int conversionRate = 1000; // 1 SOL = 1000 moedas do jogo
-    int gameCurrencyAmount = (int) (solAmount * conversionRate);
-    String lang = getPlayerLanguage(player);
+    CompletableFuture.runAsync(() -> {
+        try {
+            int conversionRate = config.getInt("store.value_of_in_game_currency", 1000); // 1 SOL = 1000 moedas do jogo
+            int gameCurrencyAmount = (int) (solAmount * conversionRate);
+            String lang = getPlayerLanguage(player);
 
-    String playerWallet = getWalletFromDatabase(player.getName());
-    if (playerWallet == null) {
-        
-        
-        if (lang.equals("pt-BR")) {
-            player.sendMessage("❌ Você ainda não possui uma carteira registrada.");
-            player.sendMessage(Component.text("💳 Crie uma carteira usando /createwallet.")
-                .color(TextColor.color(0xFF0000))); // Vermelho
-        } else if (lang.equals("es-ES")) {
-            player.sendMessage("❌ Aún no tienes una billetera registrada.");
-            player.sendMessage(Component.text("💳 Crea una billetera usando /createwallet.")
-                .color(TextColor.color(0xFF0000))); // Vermelho
-            } else {
-            player.sendMessage("❌ You do not yet have a registered wallet.");
-            player.sendMessage(Component.text("💳 Create a wallet using /createwallet.")
-                .color(TextColor.color(0xFF0000))); // Vermelho
-        }
-        return;
-    }
-
-    try {
-        // 🔹 Verifica saldo da carteira do jogador antes da compra
-        double solBalance = getSolanaBalance(playerWallet);
-        if (solBalance < solAmount) {
-            if (lang.equals("pt-BR")) {
-                player.sendMessage("💰 Saldo insuficiente de SOL. Saldo atual: " + solBalance);
-            } else if (lang.equals("es-ES")) {
-                player.sendMessage("💰 Saldo insuficiente de SOL. Saldo actual: " + solBalance);
-                }
-            else {
-                player.sendMessage("💰 Insufficient SOL balance. Current balance: " + solBalance);
-            }
-            return;
-        }
-
-        // 🔹 Executa transferência para a carteira da loja/banco
-        String host = config.getString("docker.host");
-        String apiwebkey = config.getString("docker.api_web_key");
-        String bank = config.getString("docker.wallet_bank_store_admin");
-
-
-        DecimalFormat df = new DecimalFormat("0.##"); // Remove zeros desnecessários
-        String formattedAmount = String.format("%.2f", solAmount).replace(",", ".");
-
-String comando = String.format(
-    "solana transfer %s %s --keypair /solana-token/wallets/%s_wallet.json --allow-unfunded-recipient",
-    bank,  
-    formattedAmount,  // Agora está como String e não será tratado como double
-    player.getName().replace(" ", "_").toLowerCase()
-);
-
-
-        String url = String.format("http://%s/consulta.php?apikey=%s&comando=%s", host, apiwebkey, URLEncoder.encode(comando, "UTF-8"));
-
-        String response = executeHttpGet(url);
-
-        // Adicionando log de depuração
-        LOGGER.info("[DEBUG SOLANA BUY RESPONSE]: " + response);
-
-        // 🔹 Processa resposta da API
-        if (response.contains("\"status\":\"success\"")) {
-            String signature = response.split("\"output\":\"")[1].split("\"")[0].trim();
-            signature = response.replaceFirst("(?s).*Signature: ", "").trim();
-            signature = signature.replaceAll("\\n", ""); // Remove todas as quebras de linha
-            signature = signature.replaceAll("\"}", ""); // Remove o fechamento JSON
-            signature = signature.replace("\\n", "").replace("\\r", "");
-            signature = signature.trim(); // Garante que espaços extras sejam removidos
-
-            // 🔹 Atualiza saldo do jogador no banco de dados
-            try (PreparedStatement updateStatement = this.connection.prepareStatement(
-                "UPDATE banco SET saldo = saldo + ? WHERE jogador = ?"
-            )) {
-                updateStatement.setInt(1, gameCurrencyAmount);
-                updateStatement.setString(2, player.getName());
-                int rowsUpdated = updateStatement.executeUpdate();
-
-                if (rowsUpdated > 0) {
-                    // 🔹 Registra a transação no livro caixa
-                    registerTransaction(player.getName(), "compra", solAmount, "SOL", signature);
-                    ajustarSaldo(player, "give", gameCurrencyAmount);
-                    if (lang.equals("pt-BR")) {
-                        player.sendMessage(Component.text("✅ Compra realizada com sucesso! ")
-                        .color(TextColor.color(0x00FF00)) // Verde
-                        .append(Component.text("Você recebeu " + gameCurrencyAmount + " moedas.")
-                        .color(TextColor.color(0xFFD700))));
-                        
-                        player.sendMessage(Component.text("💸 Transação registrada com assinatura: ")
-                        .color(TextColor.color(0x00FFFF)) // Azul Claro
-                        .append(Component.text(signature).color(TextColor.color(0xFFFF00))));
-                    } else if (lang.equals("es-ES")) {
-                        player.sendMessage(Component.text("✅ Compra realizada con éxito! ")
-                        .color(TextColor.color(0x00FF00)) // Verde
-                        .append(Component.text("Recibiste " + gameCurrencyAmount + " monedas.")
-                        .color(TextColor.color(0xFFD700))));
-
-                        player.sendMessage(Component.text("💸 Transacción registrada con firma: ")
-                        .color(TextColor.color(0x00FFFF)) // Azul Claro
-                        .append(Component.text(signature).color(TextColor.color(0xFFFF00))));
-
-                        } else {
-                        player.sendMessage(Component.text("✅ Purchase completed successfully! ")
-                        .color(TextColor.color(0x00FF00))
-                        .append(Component.text("You received " + gameCurrencyAmount + " coins.")
-                        .color(TextColor.color(0xFFD700))));
-                        
-                        player.sendMessage(Component.text("💸 Transaction registered with signature: ")
-                        .color(TextColor.color(0x00FFFF))
-                        .append(Component.text(signature).color(TextColor.color(0xFFFF00))));
-                    }
-
-
+            // 🔹 Verifica se o jogador tem uma carteira registrada
+            String playerWallet = getWalletFromDatabase(player.getName());
+            if (playerWallet == null) {
+                if (lang.equals("pt-BR")) {
+                    player.sendMessage("❌ Você ainda não possui uma carteira registrada.");
+                    player.sendMessage(Component.text("💳 Crie uma carteira usando /createwallet.")
+                            .color(TextColor.color(0xFF0000))); // Vermelho
+                } else if (lang.equals("es-ES")) {
+                    player.sendMessage("❌ Aún no tienes una billetera registrada.");
+                    player.sendMessage(Component.text("💳 Crea una billetera usando /createwallet.")
+                            .color(TextColor.color(0xFF0000))); // Vermelho
                 } else {
-                    player.sendMessage("⚠ Erro ao atualizar seu saldo no banco.");
+                    player.sendMessage("❌ You do not yet have a registered wallet.");
+                    player.sendMessage(Component.text("💳 Create a wallet using /createwallet.")
+                            .color(TextColor.color(0xFF0000))); // Vermelho
                 }
+                return;
             }
-        } else {
-            throw new Exception("❌ Erro ao transferir SOL: " + response);
+
+            // 🔹 Verifica saldo da carteira antes da compra
+            double solBalance = getSolanaBalance(playerWallet);
+            if (solBalance < solAmount) {
+                if (lang.equals("pt-BR")) {
+                    player.sendMessage("💰 Saldo insuficiente de SOL. Saldo atual: " + solBalance);
+                } else if (lang.equals("es-ES")) {
+                    player.sendMessage("💰 Saldo insuficiente de SOL. Saldo actual: " + solBalance);
+                } else {
+                    player.sendMessage("💰 Insufficient SOL balance. Current balance: " + solBalance);
+                }
+                return;
+            }
+
+            // 🔹 Configuração da transferência
+            String host = config.getString("docker.host");
+            String apiwebkey = config.getString("docker.api_web_key");
+            String bank = config.getString("docker.wallet_bank_store_admin");
+
+            // 🔹 Formatando valores corretamente
+            DecimalFormat df = new DecimalFormat("0.##");
+            String formattedAmount = String.format("%.2f", solAmount).replace(",", ".");
+
+            // 🔹 Montando o comando de transferência
+            String comando = String.format(
+                    "solana transfer %s %s --keypair /solana-token/wallets/%s_wallet.json --allow-unfunded-recipient",
+                    bank, formattedAmount, player.getName().replace(" ", "_").toLowerCase()
+            );
+
+            // 🔹 Executando requisição HTTP para transação
+            String url = String.format("http://%s/consulta.php?apikey=%s&comando=%s",
+                    host, apiwebkey, URLEncoder.encode(comando, "UTF-8"));
+            String response = executeHttpGet(url);
+
+            LOGGER.info("[DEBUG SOLANA BUY RESPONSE]: " + response);
+
+            // 🔹 Processando resposta da API
+            if (response.contains("\"status\":\"success\"")) {
+                String signature = response.split("\"output\":\"")[1].split("\"")[0].trim();
+                signature = signature.replaceFirst("(?s).*Signature: ", "").trim();
+                signature = signature.replaceAll("\\n", "").replaceAll("\"}", "").replace("\\n", "").replace("\\r", "").trim();
+
+                // 🔹 Atualizando saldo do jogador no banco de dados
+                try (PreparedStatement updateStatement = this.connection.prepareStatement(
+                        "UPDATE banco SET saldo = saldo + ? WHERE jogador = ?"
+                )) {
+                    updateStatement.setInt(1, gameCurrencyAmount);
+                    updateStatement.setString(2, player.getName());
+                    int rowsUpdated = updateStatement.executeUpdate();
+
+                    if (rowsUpdated > 0) {
+                        // 🔹 Registra a transação no livro caixa
+                        registerTransaction(player.getName(), "compra", solAmount, "SOL", signature);
+                        ajustarSaldo(player, "give", gameCurrencyAmount);
+
+                        if (lang.equals("pt-BR")) {
+                            player.sendMessage(Component.text("✅ Compra realizada com sucesso! ")
+                                    .color(TextColor.color(0x00FF00)) // Verde
+                                    .append(Component.text("Você recebeu " + gameCurrencyAmount + " moedas.")
+                                            .color(TextColor.color(0xFFD700))));
+                            player.sendMessage(Component.text("💸 Transação registrada com assinatura: ")
+                                    .color(TextColor.color(0x00FFFF)) // Azul Claro
+                                    .append(Component.text(signature).color(TextColor.color(0xFFFF00))));
+                        } else if (lang.equals("es-ES")) {
+                            player.sendMessage(Component.text("✅ Compra realizada con éxito! ")
+                                    .color(TextColor.color(0x00FF00)) // Verde
+                                    .append(Component.text("Recibiste " + gameCurrencyAmount + " monedas.")
+                                            .color(TextColor.color(0xFFD700))));
+                            player.sendMessage(Component.text("💸 Transacción registrada con firma: ")
+                                    .color(TextColor.color(0x00FFFF)) // Azul Claro
+                                    .append(Component.text(signature).color(TextColor.color(0xFFFF00))));
+                        } else {
+                            player.sendMessage(Component.text("✅ Purchase completed successfully! ")
+                                    .color(TextColor.color(0x00FF00))
+                                    .append(Component.text("You received " + gameCurrencyAmount + " coins.")
+                                            .color(TextColor.color(0xFFD700))));
+                            player.sendMessage(Component.text("💸 Transaction registered with signature: ")
+                                    .color(TextColor.color(0x00FFFF))
+                                    .append(Component.text(signature).color(TextColor.color(0xFFFF00))));
+                        }
+                    } else {
+                        player.sendMessage("⚠ Erro ao atualizar seu saldo no banco.");
+                    }
+                }
+            } else {
+                throw new Exception("❌ Erro ao transferir SOL: " + response);
+            }
+        } catch (Exception e) {
+            player.sendMessage("⚠ Erro ao processar a compra: " + e.getMessage());
+            e.printStackTrace();
         }
-    } catch (Exception e) {
-        player.sendMessage("⚠ Erro ao processar a compra: " + e.getMessage());
-        e.printStackTrace();
-    }
+    });
 }
 
 public boolean hasWallet(Player player) {
@@ -782,16 +826,57 @@ public static String convertPrivateKeyToHex(String jsonResponse) {
     // 📌 Método para ajustar o saldo do jogador do sql do plugin EssentialsX (nao e necessario mas tenta mater os dados iguais do sql e do mysql)
 
     public void ajustarSaldo(Player player, String tipo, double valor) {
-        if (tipo.equalsIgnoreCase("give")) {
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco give " + player.getName() + " " + valor);
-        } else if (tipo.equalsIgnoreCase("take")) {
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco take " + player.getName() + " " + valor);
-        }  else if (tipo.equalsIgnoreCase("set")) {
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco set " + player.getName() + " " + valor);
-        } else {
-            player.sendMessage("Comando inválido! Use 'give' ou 'take' ou set.");
-        }
+    System.out.println("DEBUG (ajustarSaldo): Iniciado para " + player.getName() + ", tipo: " + tipo + ", quantia: " + valor);
+
+    // *** NOVA LINHA DE DEBUG: Verificar se 'plugin' é nulo ***
+    if (this.plugin == null) {
+        System.err.println("ERROR (ajustarSaldo): Instância do plugin é NULA! Não é possível agendar a tarefa.");
+player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.5f);
+ player.getWorld().spawnParticle(Particle.FIREWORKS_SPARK,
+                            player.getLocation().add(0, 1, 0), 20, 0.5, 0.5, 0.5, 0.05);
+        // Saia do método para evitar um NullPointerException
+        return;
     }
+    System.out.println("DEBUG (ajustarSaldo): Instância do plugin está OK.");
+
+    final String playerName = player.getName(); // Captura o nome do jogador
+
+    try {
+        // Bloco try-catch para capturar exceções do próprio runTaskLater
+        Bukkit.getScheduler().runTaskLater(this.plugin, () -> { // Use 'this.plugin' para clareza
+            try {
+                System.out.println("DEBUG (ajustarSaldo - Main Thread): Executando comando eco para " + playerName + "...");
+                if (tipo.equalsIgnoreCase("give")) {
+                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco give " + playerName + " " + valor);
+                    System.out.println("DEBUG (ajustarSaldo - Main Thread): Executado 'eco give " + playerName + " " + valor + "'");
+                } else if (tipo.equalsIgnoreCase("take")) {
+                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco take " + playerName + " " + valor);
+                    System.out.println("DEBUG (ajustarSaldo - Main Thread): Executado 'eco take " + playerName + " " + valor + "'");
+                } else if (tipo.equalsIgnoreCase("set")) {
+                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco set " + playerName + " " + valor);
+                    System.out.println("DEBUG (ajustarSaldo - Main Thread): Executado 'eco set " + playerName + " " + valor + "'");
+                } else {
+                    Player onlinePlayer = Bukkit.getPlayer(playerName);
+                    if (onlinePlayer != null && onlinePlayer.isOnline()) {
+                        onlinePlayer.sendMessage("Comando inválido! Use 'give' ou 'take' ou set.");
+                    }
+                    System.out.println("DEBUG (ajustarSaldo - Main Thread): Tipo de ajuste inválido para " + playerName + ": " + tipo);
+                }
+                System.out.println("DEBUG (ajustarSaldo - Main Thread): Comando eco despachado com sucesso.");
+            } catch (Exception e) {
+                System.err.println("ERROR (ajustarSaldo - Main Thread - Inner): Erro ao despachar comando eco para " + playerName);
+                e.printStackTrace(); // Imprime o stack trace completo da exceção interna!
+            }
+        }, 0L); // 0L significa executar na próxima tick disponível
+
+        System.out.println("DEBUG (ajustarSaldo): Chamada para agendador da thread principal finalizada.");
+
+    } catch (Exception e) {
+        // Este catch pegará exceções se o próprio agendamento falhar (muito raro, mas possível)
+        System.err.println("ERROR (ajustarSaldo - Outer): Exceção ao agendar tarefa com Bukkit.getScheduler()!");
+        e.printStackTrace(); // Imprime o stack trace completo da exceção de agendamento!
+    }
+}
 
     public void refundSolana(Player player, String signature) {
         String lang = getPlayerLanguage(player);

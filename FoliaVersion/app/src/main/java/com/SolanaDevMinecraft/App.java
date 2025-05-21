@@ -41,6 +41,13 @@ import java.util.logging.LogRecord;
 import java.util.logging.Filter;
 import java.util.logging.LogManager;
 import java.util.logging.LogRecord;
+import io.papermc.paper.threadedregions.scheduler.RegionScheduler;
+import java.util.concurrent.CompletableFuture;
+import org.bukkit.Sound;
+import org.bukkit.Particle;
+import java.util.Arrays;
+import org.bukkit.OfflinePlayer;
+import org.bukkit.BanList;
 
 
 
@@ -51,12 +58,15 @@ public class App extends JavaPlugin implements Listener {
     private Store store; // Instância da classe Store
     private FileConfiguration config; // Armazena o config.yml
     private static Economy economy;
-
-
-
+    private static App plugin;
+    private static final Logger logger = Logger.getLogger("SolanaDevMinecraft");
+    private static final String PLUGIN_NAME = "SolanaDevMinecraft";
+    private static final String LOG_FILE_NAME = "SolanaDevMinecraft.log";
+    private static final String LOG_FILE_PATH = "plugins/SolanaDevMinecraft/" + LOG_FILE_NAME;
 
     @Override
     public void onEnable() {
+        plugin = this; // 🔥 Inicializa a instância do plugin
         getServer().getPluginManager().registerEvents(this, this);
         // Salva o config.yml na pasta do plugin, caso ainda não exista
         saveDefaultConfig();
@@ -65,8 +75,9 @@ public class App extends JavaPlugin implements Listener {
         
         connectToDatabase();
         
-        solana = new Solana(config, connection); // Passa config.yml e conexão para Solana
-        store = new Store(config, connection); // Passa config.yml e conexão para Store
+        solana = new Solana(this, config, connection); // Passa config.yml e conexão para Solana
+        store = new Store(getConfig(), connection);
+// Passa config.yml e conexão para Store
 
         // 🔹 Cria banco e tabelas automaticamente
         createDatabaseAndTables();
@@ -157,18 +168,16 @@ public boolean onCommand(CommandSender sender, Command command, String label, St
 
     
     if (command.getName().equalsIgnoreCase("saldo")) {
-    if (sender instanceof Player) {
-        Player player = (Player) sender;
-        try {
-            String lang = store.getPlayerLanguage(player);
-            checkBalance(player);
-        } catch (Exception e) {
-            sender.sendMessage("Ocorreu um erro ao executar o comando saldo.");
-            e.printStackTrace(); // Exibe detalhes do erro no console
-        }
-    } else {
+    if (!(sender instanceof Player)) {
         sender.sendMessage("Este comando só pode ser usado por jogadores.");
+        return true;
     }
+
+    Player player = (Player) sender;
+    String lang = store.getPlayerLanguage(player);
+
+    checkBalance(player); // Executa a verificação de saldo
+
     return true;
 }
  else if (command.getName().equalsIgnoreCase("loan")) {
@@ -360,7 +369,7 @@ public boolean onCommand(CommandSender sender, Command command, String label, St
         } else {
             sender.sendMessage("Este comando so pode ser usado por jogadores.");
         }
-        return true;   
+        return true;
     
     } else if (command.getName().equalsIgnoreCase("buySpinningWand")) {
         if (sender instanceof Player) {
@@ -470,6 +479,53 @@ public boolean onCommand(CommandSender sender, Command command, String label, St
             Player player = (Player) sender;
             store.buyNetheriteBlock(player);
         }
+        return true;
+    } if (command.getName().equalsIgnoreCase("eco")) {
+        if (args.length < 3) {
+            System.out.println("❌ Uso incorreto! Formato: /eco [give/take/set] [jogador] [valor]");
+            return true;
+        }
+
+        String action = args[0].toLowerCase();
+        String playerName = args[1];
+        double amount;
+
+        
+            System.out.println("🥽 :" + action + " " + playerName + " " + args[2]);
+       
+            return true;
+       
+    } if (!sender.hasPermission("eco.admin")) {
+        sender.sendMessage("❌ Você não tem permissão para executar este comando.");
+        return true;
+    } else if (command.getName().equalsIgnoreCase("ban")) {
+        if (args.length < 2) {
+            sender.sendMessage("❌ Uso incorreto! Formato: /ban [jogador] [motivo]");
+            return true;
+        }
+
+        String playerName = args[0];
+        String motivo = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
+        
+        OfflinePlayer target = Bukkit.getOfflinePlayer(playerName);
+
+        if (target != null) {
+            target.banPlayer(motivo);
+            sender.sendMessage("✅ O jogador " + playerName + " foi banido! Motivo: " + motivo);
+            Bukkit.getServer().broadcast(Component.text(playerName + " foi banido do servidor! Motivo: " + motivo));
+        } else {
+            sender.sendMessage("❌ Jogador não encontrado.");
+        }
+        return true;
+    } else if (command.getName().equalsIgnoreCase("unban")) {
+        if (args.length < 1) {
+            sender.sendMessage("❌ Uso incorreto! Formato: /unban [jogador]");
+            return true;
+        }
+
+        String playerName = args[0];
+        Bukkit.getBanList(BanList.Type.NAME).pardon(playerName);
+        sender.sendMessage("✅ O jogador " + playerName + " foi desbanido!");
         return true;
     } else if (command.getName().equalsIgnoreCase("invest")) {
         if (sender instanceof Player) {
@@ -609,111 +665,142 @@ private void processInvestments(Player player, String lang) {
 }
 
     private void checkBalance(Player player) {
-    try {
-        // 🔍 Verifica o saldo do jogador na tabela 'banco'
-        PreparedStatement checkStatement = connection.prepareStatement(
-            "SELECT saldo FROM banco WHERE jogador = ?"
-        );
-        checkStatement.setString(1, player.getName());
-        ResultSet resultSet = checkStatement.executeQuery();
+    System.out.println("🔄 Iniciando verificação de saldo para " + player.getName());
 
-        if (resultSet.next()) {
-            double saldoBanco = resultSet.getDouble("saldo");
-
-
-            // Depois, atualiza o saldo no banco de dados
-            PreparedStatement updateStatement = connection.prepareStatement(
-                "UPDATE banco SET saldo = ? WHERE jogador = ?"
-            );
-            updateStatement.setDouble(1, saldoBanco);
-            updateStatement.setString(2, player.getName());
-            updateStatement.executeUpdate();
+    CompletableFuture.runAsync(() -> {
+        try {
+            // 🔍 Buscar saldo na Solana
+            double balance = solana.getSolBalance(player.getName());
+            System.out.println("✅ Saldo obtido: " + balance + " SOL");
+            player.sendMessage(
+    Component.text("💰 ").color(TextColor.color(0xFFFF00)) // Ícone de dinheiro (Amarelo)
+    .append(Component.text(balance + " ").color(TextColor.color(0xFFFF00))) // Saldo (Roxo)
+    .append(Component.text("PAN").color(TextColor.color(0xFFFFFF))) // Branco
+    .append(Component.text("DA").color(TextColor.color(0x800080))) // Verde
+    .append(Component.text("COIN").color(TextColor.color(0x00FF00))) // Vermelho
+);
+player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.5f);
+ player.getWorld().spawnParticle(Particle.FIREWORKS_SPARK,
+                            player.getLocation().add(0, 1, 0), 20, 0.5, 0.5, 0.5, 0.05);
 
 
-            // Agora, define o saldo igual ao do banco
-            ajustarSaldo(player, "set", saldoBanco);
+            // ✅ Exibir saldo com ícones e efeitos
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (player.isOnline()) {
+                    System.out.println("📢 Enviando mensagem de saldo para " + player.getName());
+                    
+                    String lang = store.getPlayerLanguage(player);
+                    Component message;
 
+                    if (lang.equals("pt-BR")) {
+                        message = Component.text("💰 Seu saldo atual de SOL é: ")
+                                .color(TextColor.color(0x800080))
+                                .append(Component.text(" " + String.format("%.4f SOL", balance))
+                                .color(TextColor.color(0xFFFF00)));
+                    } else if (lang.equals("es-ES")) {
+                        message = Component.text("💰 Tu saldo actual de SOL es: ")
+                                .color(TextColor.color(0x800080))
+                                .append(Component.text(" " + String.format("%.4f SOL", balance))
+                                .color(TextColor.color(0xFFFF00)));
+                    } else {
+                        message = Component.text("💰 Your current SOL balance is: ")
+                                .color(TextColor.color(0x800080))
+                                .append(Component.text(" " + String.format("%.4f SOL", balance))
+                                .color(TextColor.color(0xFFFF00)));
+                    }
+                    player.sendMessage(message);
 
-            // Exibe mensagem personalizada com o saldo atualizado
-            String lang = store.getPlayerLanguage(player);
-            Component message;
-            if (lang.equals("pt-BR")) {
-                message = Component.text("💰 Seu saldo bancário foi atualizado: \n")
-                        .color(TextColor.color(0x800080))
-                        .append(Component.text(" $" + saldoBanco).color(TextColor.color(0xFFFF00)));
-            } else if (lang.equals("es-ES")) {
-                message = Component.text("💰 Su saldo bancario ha sido actualizado: \n")
-                        .color(TextColor.color(0x800080))
-                        .append(Component.text(" $" + saldoBanco).color(TextColor.color(0xFFFF00)));
-            } else {
-                message = Component.text("💰 Your bank balance has been updated: \n")
-                        .color(TextColor.color(0x800080))
-                        .append(Component.text(" $" + saldoBanco).color(TextColor.color(0xFFFF00)));
-            }
-            player.sendMessage(message);
-        } else {
-            // Se o jogador não estiver registrado, adicionamos ele com saldo inicial de 500 moedas
-            PreparedStatement insertStatement = connection.prepareStatement(
-                "INSERT INTO banco (jogador, saldo) VALUES (?, 500)"
-            );
-            insertStatement.setString(1, player.getName());
-            insertStatement.executeUpdate();
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco give " + player.getName() + " 500");
+                    // 🎵 Toca um som de dinheiro
+                    
+                    System.out.println("🎵 Som de dinheiro tocado para " + player.getName());
 
-            String lang = store.getPlayerLanguage(player);
-            Component message;
-            if (lang.equals("pt-BR")) {
-                message = Component.text("✅ Você foi cadastrado no banco! Seu saldo inicial é de 500 moedas.")
-                        .color(TextColor.color(0x00FF00));
-            } else if (lang.equals("es-ES")) {
-                message = Component.text("✅ ¡Te has registrado en el banco! Tu saldo inicial es de 500 monedas.")
-                        .color(TextColor.color(0x00FF00));
-            } else {
-                message = Component.text("✅ You have been registered in the bank! Your initial balance is 500 coins.")
-                        .color(TextColor.color(0x00FF00));
-            }
-            player.sendMessage(message);
+                    // ✨ Cria um efeito de partículas douradas
+                    player.getWorld().spawnParticle(Particle.FIREWORKS_SPARK, 
+                            player.getLocation().add(0, 1, 0), 20, 0.5, 0.5, 0.5, 0.05);
+                    System.out.println("✨ Efeito de partículas criado para " + player.getName());
+                }
+            }, 0L);
+
+        } catch (Exception e) {
+            System.out.println("❌ Erro ao verificar saldo para " + player.getName() + ": " + e.getMessage());
+
+            // ❌ Mensagem de erro com ícone e cor
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (player.isOnline()) {
+                    String lang = store.getPlayerLanguage(player);
+                    Component errorMessage;
+
+                    if (lang.equals("pt-BR")) {
+                        errorMessage = Component.text("❌ Ocorreu um erro ao verificar seu saldo. Tente novamente mais tarde.")
+                                .color(TextColor.color(0xFF0000));
+                    } else if (lang.equals("es-ES")) {
+                        errorMessage = Component.text("❌ Ocurrió un error al verificar tu saldo. Inténtalo de nuevo más tarde.")
+                                .color(TextColor.color(0xFF0000));
+                    } else {
+                        errorMessage = Component.text("❌ An error occurred while checking your balance. Please try again later.")
+                                .color(TextColor.color(0xFF0000));
+                    }
+                    player.sendMessage(errorMessage);
+                }
+            }, 0L);
+            e.printStackTrace();
         }
+    });
 
-    } catch (SQLException e) {
-        player.sendMessage(Component.text("❌ Erro ao acessar o banco de dados.")
-            .color(TextColor.color(0xFF0000)));
-        getLogger().severe("Erro ao consultar saldo: " + e.getMessage());
-    }
+    System.out.println("✅ Verificação de saldo concluída para " + player.getName());
 }
 
 
-public static boolean setupEconomy() {
-        RegisteredServiceProvider<Economy> serviceProvider = Bukkit.getServer().getServicesManager().getRegistration(Economy.class);
-        if (serviceProvider != null) {
-            economy = serviceProvider.getProvider();
-        }
-        return economy != null;
-    }
+public void ajustarSaldo(Player player, String tipo, double valor) {
+    System.out.println("DEBUG (ajustarSaldo): Iniciado para " + player.getName() + ", tipo: " + tipo + ", quantia: " + valor);
 
-    public static void ajustarSaldo(Player player, String tipo, double valor) {
-       if (economy == null && !setupEconomy()) {
-        player.sendMessage("Sistema de economia não está configurado!");
+    // *** NOVA LINHA DE DEBUG: Verificar se 'plugin' é nulo ***
+    if (this.plugin == null) {
+        System.err.println("ERROR (ajustarSaldo): Instância do plugin é NULA! Não é possível agendar a tarefa.");
+        
+        // Saia do método para evitar um NullPointerException
         return;
     }
+    System.out.println("DEBUG (ajustarSaldo): Instância do plugin está OK.");
 
-        switch (tipo.toLowerCase()) {
-            case "give":
-                economy.depositPlayer(player, valor);
-                break;
-            case "take":
-                economy.withdrawPlayer(player, valor);
-                break;
-            case "set":
-                double saldoAtual = economy.getBalance(player);
-                economy.withdrawPlayer(player, saldoAtual);
-                economy.depositPlayer(player, valor);
-                break;
-            default:
-                player.sendMessage("Comando inválido! Use 'give', 'take' ou 'set'.");
-                break;
-        }
+    final String playerName = player.getName(); // Captura o nome do jogador
+
+    try {
+        // Bloco try-catch para capturar exceções do próprio runTaskLater
+        Bukkit.getScheduler().runTaskLater(this.plugin, () -> { // Use 'this.plugin' para clareza
+            try {
+                System.out.println("DEBUG (ajustarSaldo - Main Thread): Executando comando eco para " + playerName + "...");
+                if (tipo.equalsIgnoreCase("give")) {
+                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco give " + playerName + " " + valor);
+                    System.out.println("DEBUG (ajustarSaldo - Main Thread): Executado 'eco give " + playerName + " " + valor + "'");
+                } else if (tipo.equalsIgnoreCase("take")) {
+                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco take " + playerName + " " + valor);
+                    System.out.println("DEBUG (ajustarSaldo - Main Thread): Executado 'eco take " + playerName + " " + valor + "'");
+                } else if (tipo.equalsIgnoreCase("set")) {
+                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco set " + playerName + " " + valor);
+                    System.out.println("DEBUG (ajustarSaldo - Main Thread): Executado 'eco set " + playerName + " " + valor + "'");
+                } else {
+                    Player onlinePlayer = Bukkit.getPlayer(playerName);
+                    if (onlinePlayer != null && onlinePlayer.isOnline()) {
+                        onlinePlayer.sendMessage("Comando inválido! Use 'give' ou 'take' ou set.");
+                    }
+                    System.out.println("DEBUG (ajustarSaldo - Main Thread): Tipo de ajuste inválido para " + playerName + ": " + tipo);
+                }
+                System.out.println("DEBUG (ajustarSaldo - Main Thread): Comando eco despachado com sucesso.");
+            } catch (Exception e) {
+                System.err.println("ERROR (ajustarSaldo - Main Thread - Inner): Erro ao despachar comando eco para " + playerName);
+                e.printStackTrace(); // Imprime o stack trace completo da exceção interna!
+            }
+        }, 0L); // 0L significa executar na próxima tick disponível
+
+        System.out.println("DEBUG (ajustarSaldo): Chamada para agendador da thread principal finalizada.");
+
+    } catch (Exception e) {
+        // Este catch pegará exceções se o próprio agendamento falhar (muito raro, mas possível)
+        System.err.println("ERROR (ajustarSaldo - Outer): Exceção ao agendar tarefa com Bukkit.getScheduler()!");
+        e.printStackTrace(); // Imprime o stack trace completo da exceção de agendamento!
     }
+}
 
 
     

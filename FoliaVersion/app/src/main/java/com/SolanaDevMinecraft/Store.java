@@ -36,17 +36,22 @@ import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
+import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.Sound;
+import org.bukkit.Particle;
 
 public class Store {
     private final Connection connection;
     private final FileConfiguration config;
     private static Economy economy;
+    private JavaPlugin plugin;
 
 
 
     // 🔹 Construtor correto que inicializa 'config' e 'connection'
     public Store(FileConfiguration config, Connection connection) {
         this.config = config;
+        this.plugin = plugin;
         this.connection = connection;
     }
 
@@ -96,26 +101,32 @@ public class Store {
 
     // 📌 Compra de Maçã Encantada
     public void buyEnchantedApple(Player player) {
-        int price = config.getInt("store.price.apple"); // 🔹 Obtém preço 
-        String lang = getPlayerLanguage(player);
-        player.sendMessage("🍳. Lang= " + lang);
-        //int price = 500;
-        if (processPurchase(player, price)) {
-            player.getInventory().addItem(new ItemStack(Material.ENCHANTED_GOLDEN_APPLE, 1));
+    System.out.println("DEBUG (buyEnchantedApple): Iniciado para " + player.getName()); // <-- Use System.out.println
+    int price = config.getInt("store.price.apple");
+    System.out.println("DEBUG (buyEnchantedApple): Preço da maçã lido: " + price); // <-- Use System.out.println
+    String lang = getPlayerLanguage(player); // Se getPlayerLanguage está em outra classe, o log interno dela precisa ser ajustado
+    player.sendMessage("🍳. Lang= " + lang); // Esta mensagem aparece?
 
-        // Ajusta o saldo do jogador após a compra
+    System.out.println("DEBUG (buyEnchantedApple): Chamando processPurchase..."); // <-- Use System.out.println
+    if (processPurchase(player, price)) {
+        System.out.println("DEBUG (buyEnchantedApple): Compra processada com sucesso. Adicionando item..."); // <-- Use System.out.println
+        player.getInventory().addItem(new ItemStack(Material.ENCHANTED_GOLDEN_APPLE, 1));
+        System.out.println("DEBUG (buyEnchantedApple): Item adicionado. Ajustando saldo..."); // <-- Use System.out.println
         ajustarSaldo(player, "take", price);
-
-            
-           player.sendMessage(
-            lang.equals("pt-BR") ? 
-           Component.text("🍎 Você comprou uma Maçã Encantada por $" + price + "!", NamedTextColor.GOLD) :
-           lang.equals("es-ES") ? 
-           Component.text("🍎 ¡Has comprado una Manzana Encantada por $" + price + "!", NamedTextColor.GOLD) :
-           Component.text("🍎 You bought an Enchanted Apple for $" + price + "!", NamedTextColor.GOLD)
-           );
-        }
+        System.out.println("DEBUG (buyEnchantedApple): Saldo ajustado. Enviando mensagem final..."); // <-- Use System.out.println
+        player.sendMessage(
+            lang.equals("pt-BR") ?
+            Component.text("🍎 Você comprou uma Maçã Encantada por $" + price + "!", NamedTextColor.GOLD) :
+            lang.equals("es-ES") ?
+            Component.text("🍎 ¡Has comprado una Manzana Encantada por $" + price + "!", NamedTextColor.GOLD) :
+            Component.text("🍎 You bought an Enchanted Apple for $" + price + "!", NamedTextColor.GOLD)
+        );
+        System.out.println("DEBUG (buyEnchantedApple): Mensagem final enviada."); // <-- Use System.out.println
+    } else {
+        System.out.println("DEBUG (buyEnchantedApple): processPurchase retornou false. Mensagem de compra não enviada."); // <-- Use System.out.println
     }
+    System.out.println("DEBUG (buyEnchantedApple): Finalizado."); // <-- Use System.out.println
+}
 
     // 📌 Compra de Esmeralda
     public void buyEmerald(Player player) {
@@ -560,17 +571,59 @@ public void buyAxolotlBucket(Player player) {
 
 
 // 📌 Método para ajustar o saldo do jogador do sql do plugin EssentialsX (nao e necessario mas tenta mater os dados iguais do sql e do mysql)
+//fallback
     public void ajustarSaldo(Player player, String tipo, double valor) {
-        if (tipo.equalsIgnoreCase("give")) {
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco give " + player.getName() + " " + valor);
-        } else if (tipo.equalsIgnoreCase("take")) {
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco take " + player.getName() + " " + valor);
-        }  else if (tipo.equalsIgnoreCase("set")) {
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco set " + player.getName() + " " + valor);
-        } else {
-            player.sendMessage("Comando inválido! Use 'give' ou 'take' ou set.");
-        }
+    System.out.println("DEBUG (ajustarSaldo): Iniciado para " + player.getName() + ", tipo: " + tipo + ", quantia: " + valor);
+
+    // *** NOVA LINHA DE DEBUG: Verificar se 'plugin' é nulo ***
+    if (this.plugin == null) {
+        System.err.println("ERROR (ajustarSaldo): Instância do plugin é NULA! Não é possível agendar a tarefa.");
+        player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.5f);
+ player.getWorld().spawnParticle(Particle.FIREWORKS_SPARK,
+                            player.getLocation().add(0, 1, 0), 20, 0.5, 0.5, 0.5, 0.05);
+        // Saia do método para evitar um NullPointerException
+        return;
     }
+    System.out.println("DEBUG (ajustarSaldo): Instância do plugin está OK.");
+
+    final String playerName = player.getName(); // Captura o nome do jogador
+
+    try {
+        // Bloco try-catch para capturar exceções do próprio runTaskLater
+        Bukkit.getScheduler().runTaskLater(this.plugin, () -> { // Use 'this.plugin' para clareza
+            try {
+                System.out.println("DEBUG (ajustarSaldo - Main Thread): Executando comando eco para " + playerName + "...");
+                if (tipo.equalsIgnoreCase("give")) {
+                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco give " + playerName + " " + valor);
+                    System.out.println("DEBUG (ajustarSaldo - Main Thread): Executado 'eco give " + playerName + " " + valor + "'");
+                } else if (tipo.equalsIgnoreCase("take")) {
+                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco take " + playerName + " " + valor);
+                    System.out.println("DEBUG (ajustarSaldo - Main Thread): Executado 'eco take " + playerName + " " + valor + "'");
+                } else if (tipo.equalsIgnoreCase("set")) {
+                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco set " + playerName + " " + valor);
+                    System.out.println("DEBUG (ajustarSaldo - Main Thread): Executado 'eco set " + playerName + " " + valor + "'");
+                } else {
+                    Player onlinePlayer = Bukkit.getPlayer(playerName);
+                    if (onlinePlayer != null && onlinePlayer.isOnline()) {
+                        onlinePlayer.sendMessage("Comando inválido! Use 'give' ou 'take' ou set.");
+                    }
+                    System.out.println("DEBUG (ajustarSaldo - Main Thread): Tipo de ajuste inválido para " + playerName + ": " + tipo);
+                }
+                System.out.println("DEBUG (ajustarSaldo - Main Thread): Comando eco despachado com sucesso.");
+            } catch (Exception e) {
+                System.err.println("ERROR (ajustarSaldo - Main Thread - Inner): Erro ao despachar comando eco para " + playerName);
+                e.printStackTrace(); // Imprime o stack trace completo da exceção interna!
+            }
+        }, 0L); // 0L significa executar na próxima tick disponível
+
+        System.out.println("DEBUG (ajustarSaldo): Chamada para agendador da thread principal finalizada.");
+
+    } catch (Exception e) {
+        // Este catch pegará exceções se o próprio agendamento falhar (muito raro, mas possível)
+        System.err.println("ERROR (ajustarSaldo - Outer): Exceção ao agendar tarefa com Bukkit.getScheduler()!");
+        e.printStackTrace(); // Imprime o stack trace completo da exceção de agendamento!
+    }
+}
 
 public void transferirtokengamer(Player player, String recipient, double amount) {
     try (PreparedStatement stmtJogador = connection.prepareStatement("UPDATE banco SET saldo = saldo - ? WHERE jogador = ?");

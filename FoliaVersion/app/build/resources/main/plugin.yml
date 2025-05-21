@@ -9,8 +9,9 @@ folia-compatible: true
 folia-supported: true
 commands:
   saldo:
-    description: Verifica o saldo bancário.
+    description: Mostra o saldo do jogador
     usage: /saldo
+    permission: saldo.use
   loan:
     description: Solicita um emprestimo.
     usage: /loan <quantidade>
@@ -105,6 +106,20 @@ commands:
   refundsolana:
     description: Solicita reembolso de SOL.
     usage: /refundsolana <signature>
+  eco:
+    description: Gerencia o saldo do jogador (give, take, set, balance)
+    usage: /eco [give/take/set/balance] [jogador] [valor]
+    permission: eco.admin
+  ban:
+    description: Bane um jogador do servidor.
+    usage: /ban [jogador] [motivo]
+    permission: eco.admin
+  unban:
+    description: Desbane um jogador do servidor.
+    usage: /unban [jogador]
+    permission: eco.admin
+
+
   
   
   
