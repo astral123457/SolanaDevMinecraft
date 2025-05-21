@@ -109,6 +109,35 @@ label {
         1px 1px 0 white; /* Cria um efeito de borda ao redor da fonte */
 }
 
+.container {
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #4CAF50, #2196F3);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        p {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+        a {
+            text-decoration: none;
+            background-color: #FF9800;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 1.2rem;
+            transition: 0.3s;
+        }
+        a:hover {
+            background-color: #E65100;
+        }
+
+
     </style>
 	<link rel="icon" href="https://faucet.solana.com/favicon.ico" type="image/x-icon" sizes="32x32">
 </head>
@@ -208,6 +237,13 @@ label {
             <p>Nenhuma carteira encontrada para o jogador selecionado.</p>
         <?php endif; ?>
     </div>
+	<div class="container">
+        <h1>INSS DEV SOLANA</h1>
+        <p>This dev coin can be obtained every 8 hours, with 2 drops of values from 1 to 5.</p>
+        <a href="https://faucet.solana.com/" target="_blank">Get Coins</a>
+    </div>
+
+
 </body>
 </html>
 
