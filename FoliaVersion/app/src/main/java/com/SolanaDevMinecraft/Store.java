@@ -39,6 +39,7 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.Sound;
 import org.bukkit.Particle;
+import java.util.concurrent.CompletableFuture;
 
 public class Store {
     private final Connection connection;
@@ -433,12 +434,13 @@ public void buySimpleBook(Player player) {
 }
 
 public void buySimpleMap(Player player) {
-    int price = config.getInt("store.price.buySimpleMap", 100); // 🔹 Obtém preço do config.yml, com fallback de 100
-    if (!processPurchase(player, price)) return; // 🔹 Interrompe se a compra falhar
-    // Ajusta o saldo do jogador após a compra
-        ajustarSaldo(player, "take", price);
+    int price = config.getInt("store.price.buySimpleMap", 100); // 🔹 Obtém preço do config.yml, fallback de 100
 
-        // Lista de comandos ajustados
+    // Processa a compra e ajusta saldo
+    if (!processPurchase(player, price)) return;
+    ajustarSaldo(player, "take", price);
+
+    // Lista de comandos ajustados
     List<String> commands = Arrays.asList(
         "minecraft:enchant " + player.getName() + " mending 1",
         "minecraft:enchant " + player.getName() + " efficiency 5",
@@ -453,30 +455,31 @@ public void buySimpleMap(Player player) {
         "minecraft:enchant " + player.getName() + " thorns 3",
         "minecraft:give " + player.getName() + " filled_map 1"
     );
-    // 🔹 Executa o comando para dar um mapa ao jogador
 
-    for (String command : commands) {
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
-    }
-
-    
+    // 🔹 Executa comandos no console de forma segura
+    Bukkit.getScheduler().runTaskLater(this.plugin, () -> {
+        for (String command : commands) {
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+        }
+    }, 20L); // Executa após 20 ticks (~1 segundo)
 
     // 🔹 Mensagem para o jogador
     String lang = getPlayerLanguage(player);
-    player.sendMessage(
-        Component.text("🗺️ ").append(
-            lang.equals("pt-BR") ? Component.text("Você comprou um mapa simples por $" + price + "!", NamedTextColor.GRAY) :
-            lang.equals("es-ES") ? Component.text("¡Has comprado un mapa simple por $" + price + "!", NamedTextColor.GRAY) :
-            Component.text("You bought a simple map for $" + price + "!", NamedTextColor.GRAY)
-        )
-    );
+    String message = lang.equals("pt-BR") ?
+        "🗺️ Você comprou um mapa simples por $" + price + "!" :
+        lang.equals("es-ES") ?
+        "🗺️ ¡Has comprado un mapa simple por $" + price + "!" :
+        "🗺️ You bought a simple map for $" + price + "!";
+
+    player.sendMessage(Component.text(message).color(NamedTextColor.GRAY));
 }
 
 public void buySimpleCompass(Player player) {
     int price = config.getInt("store.price.buySimpleCompass", 150);
+
+    // Processa a compra e ajusta saldo
     if (!processPurchase(player, price)) return;
-    // Ajusta o saldo do jogador após a compra
-        ajustarSaldo(player, "take", price);
+    ajustarSaldo(player, "take", price);
 
     // Lista de comandos ajustados
     List<String> commands = Arrays.asList(
@@ -489,15 +492,18 @@ public void buySimpleCompass(Player player) {
         "minecraft:give " + player.getName() + " recovery_compass 1"
     );
 
-    for (String command : commands) {
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
-    }
+    // Executa os comandos de forma agendada para evitar conflitos no Folia
+    Bukkit.getScheduler().runTaskLater(this.plugin, () -> {
+        for (String command : commands) {
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+        }
+    }, 20L); // Executa após 20 ticks (~1 segundo)
 
     // Mensagem para o jogador
     String lang = getPlayerLanguage(player);
-    String message = lang.equals("pt-BR") ? 
+    String message = lang.equals("pt-BR") ?
         "🧭 Você comprou uma bússola simples por $" + price + "!" :
-        lang.equals("es-ES") ? 
+        lang.equals("es-ES") ?
         "🧭 ¡Has comprado una brújula simple por $" + price + "!" :
         "🧭 You bought a simple compass for $" + price + "!";
 

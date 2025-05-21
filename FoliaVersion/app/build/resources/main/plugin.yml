@@ -12,14 +12,6 @@ commands:
     description: Mostra o saldo do jogador
     usage: /saldo
     permission: saldo.use
-  loan:
-    description: Solicita um emprestimo.
-    usage: /loan <quantidade>
-    aliases: [emprestimo]
-  paydebt:
-    description: Paga parte ou toda a dívida.
-    usage: /paydebt <quantidade>
-    aliases: [pagardivida]
   invest:
     description: Realiza um investimento.
     usage: /invest <quantidade>
@@ -118,6 +110,40 @@ commands:
     description: Desbane um jogador do servidor.
     usage: /unban [jogador]
     permission: eco.admin
+  unban-ip:
+    description: Desbane um endereço IP do servidor.
+    usage: /unban-ip [endereço IP]
+    permission: eco.admin
+  list-bans:
+    description: Lista jogadores e IPs banidos do servidor.
+    usage: /list-bans
+    permission: eco.admin
+  tpa:
+    description: Solicita teleporte para outro jogador.
+    usage: /tpa [jogador]
+    permission: tpa.use
+  back:
+    description: Retorna à última posição antes do teleporte ou morte.
+    usage: /back
+    permission: back.use
+  sethome:
+    description: Define a casa do jogador.
+    usage: /sethome
+    permission: home.use
+  home:
+    description: Teleporta o jogador para sua casa.
+    usage: /home
+    permission: home.use
+  lockchest:
+    description: Tranca um baú com senha.
+    usage: /lockchest [senha]
+    permission: chest.lock
+  unlockchest:
+    description: Destranca um baú usando uma senha.
+    usage: /unlockchest [senha]
+    permission: chest.lock
+
+
 
 
   

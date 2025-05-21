@@ -48,10 +48,34 @@ import org.bukkit.Particle;
 import java.util.Arrays;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.BanList;
+import java.util.Set;
+import org.bukkit.BanEntry;
+import org.bukkit.BanList;
+import java.util.Map;
+import java.util.HashMap;
+import org.bukkit.entity.Player;
+import org.bukkit.Location;
+import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.block.Block;
+import org.bukkit.block.Chest;
+import org.bukkit.Location;
+import java.util.HashMap;
+import java.util.Map;
+
+
 
 
 
 public class App extends JavaPlugin implements Listener {
+
+    private final Map<Player, Player> tpaRequests = new HashMap<>();
+    private final Map<Player, Location> lastLocations = new HashMap<>();
+    private final Map<Player, Location> homes = new HashMap<>();
+    private final Map<Location, String> lockedChests = new HashMap<>();
+    
+
+
 
     private Connection connection;
     private Solana solana;
@@ -96,6 +120,11 @@ for (Player player : Bukkit.getOnlinePlayers()) {
         
 }
 
+
+
+
+
+
     @Override
     public void onDisable() {
         getLogger().info("Plugin desabilitado!");
@@ -107,6 +136,16 @@ for (Player player : Bukkit.getOnlinePlayers()) {
         Player jogador = event.getPlayer();
         checkBalance(jogador);
     }
+
+    @EventHandler
+public void onPlayerTeleport(PlayerTeleportEvent event) {
+    lastLocations.put(event.getPlayer(), event.getFrom());
+}
+
+@EventHandler
+public void onPlayerDeath(PlayerDeathEvent event) {
+    lastLocations.put(event.getEntity(), event.getEntity().getLocation());
+}
 
 
 
@@ -526,6 +565,202 @@ public boolean onCommand(CommandSender sender, Command command, String label, St
         String playerName = args[0];
         Bukkit.getBanList(BanList.Type.NAME).pardon(playerName);
         sender.sendMessage("✅ O jogador " + playerName + " foi desbanido!");
+        return true;
+    } else if (command.getName().equalsIgnoreCase("back")) {
+        if (!(sender instanceof Player)) {
+            sender.sendMessage("❌ Apenas jogadores podem usar este comando.");
+            return true;
+        }
+
+        Player player = (Player) sender;
+        if (!lastLocations.containsKey(player)) {
+            player.sendMessage("❌ Nenhuma posição anterior encontrada.");
+            return true;
+        }
+
+        Location backLocation = lastLocations.remove(player);
+        player.teleport(backLocation);
+        player.sendMessage("🚀 Você voltou para sua última posição!");
+
+        return true;
+    } else if (command.getName().equalsIgnoreCase("tpa")) {
+        if (!(sender instanceof Player)) {
+            sender.sendMessage("❌ Apenas jogadores podem usar este comando.");
+            return true;
+        }
+
+        Player player = (Player) sender;
+
+        if (args.length < 1) {
+            player.sendMessage("❌ Uso incorreto! Formato: /tpa [jogador]");
+            return true;
+        }
+
+        Player target = Bukkit.getPlayer(args[0]);
+        if (target == null || !target.isOnline()) {
+            player.sendMessage("❌ Jogador não encontrado ou offline.");
+            return true;
+        }
+
+        tpaRequests.put(target, player);
+        player.sendMessage("✉️ Pedido de teleporte enviado para " + target.getName() + ".");
+        target.sendMessage("📩 " + player.getName() + " deseja se teleportar até você! Use `/tpaccept` para aceitar ou `/tpdeny` para negar.");
+
+        return true;
+    } else if (command.getName().equalsIgnoreCase("tpaccept")) {
+        if (!(sender instanceof Player)) return true;
+        Player target = (Player) sender;
+
+        if (!tpaRequests.containsKey(target)) {
+            target.sendMessage("❌ Nenhum pedido de teleporte pendente.");
+            return true;
+        }
+
+        Player requester = tpaRequests.remove(target);
+        requester.teleport(target.getLocation());
+        requester.sendMessage("✅ Teleporte aceito! Você foi movido até " + target.getName() + ".");
+        target.sendMessage("✅ Teleporte realizado com sucesso.");
+
+        return true;
+    } else if (command.getName().equalsIgnoreCase("tpdeny")) {
+        if (!(sender instanceof Player)) return true;
+        Player target = (Player) sender;
+
+        if (!tpaRequests.containsKey(target)) {
+            target.sendMessage("❌ Nenhum pedido de teleporte pendente.");
+            return true;
+        }
+
+        Player requester = tpaRequests.remove(target);
+        requester.sendMessage("❌ Pedido de teleporte recusado por " + target.getName() + ".");
+        target.sendMessage("❌ Você recusou o pedido de teleporte.");
+
+        return true;
+    } // 🔹 Correção do comando /sethome
+    else if (command.getName().equalsIgnoreCase("sethome")) {
+        if (!(sender instanceof Player)) {
+            sender.sendMessage("❌ Este comando só pode ser usado por um jogador!");
+            return true;
+        }
+        Player p = (Player) sender; // Faz o cast para Player
+
+        homes.put(p, p.getLocation());
+        sender.sendMessage("🏡 Sua casa foi definida! Use `/home` para voltar.");
+        return true;
+    }
+
+    // 🔹 Correção do comando /home
+    else if (command.getName().equalsIgnoreCase("home")) {
+        if (!(sender instanceof Player)) {
+            sender.sendMessage("❌ Este comando só pode ser usado por um jogador!");
+            return true;
+        }
+        Player p = (Player) sender; // Faz o cast para Player
+
+        if (!homes.containsKey(p)) {
+            sender.sendMessage("❌ Você ainda não definiu sua casa! Use `/sethome` primeiro.");
+            return true;
+        }
+        Location homeLocation = homes.get(p);
+
+        Bukkit.getScheduler().runTaskLater(this.plugin, () -> {
+            p.teleport(homeLocation);
+            sender.sendMessage("🏠 Você foi teleportado para sua casa!");
+        }, 20L); // Executa após 20 ticks (~1 segundo)
+
+        return true;
+    } else if (command.getName().equalsIgnoreCase("lockchest")) {
+        if (!(sender instanceof Player)) {
+            sender.sendMessage("❌ Este comando só pode ser usado por um jogador!");
+            return true;
+        }
+        Player p = (Player) sender; // Faz o cast para Player
+
+        if (args.length < 1) {
+            sender.sendMessage("❌ Uso incorreto! Formato: /lockchest [senha]");
+            return true;
+        }
+
+        Block block = p.getTargetBlockExact(5);
+        if (block == null || !(block.getState() instanceof Chest)) {
+            sender.sendMessage("❌ Você precisa olhar para um baú!");
+            return true;
+        }
+
+        String password = args[0];
+        lockedChests.put(block.getLocation(), password);
+        sender.sendMessage("🔒 Baú trancado com senha! Use `/unlockchest [senha]` para abrir.");
+        return true;
+    }
+
+    // 🔹 Correção do comando /unlockchest
+    else if (command.getName().equalsIgnoreCase("unlockchest")) {
+        if (!(sender instanceof Player)) {
+            sender.sendMessage("❌ Este comando só pode ser usado por um jogador!");
+            return true;
+        }
+        Player p = (Player) sender; // Faz o cast para Player
+
+        if (args.length < 1) {
+            sender.sendMessage("❌ Uso incorreto! Formato: /unlockchest [senha]");
+            return true;
+        }
+
+        Block block = p.getTargetBlockExact(5);
+        if (block == null || !(block.getState() instanceof Chest)) {
+            sender.sendMessage("❌ Você precisa olhar para um baú!");
+            return true;
+        }
+
+        Location chestLocation = block.getLocation();
+        if (!lockedChests.containsKey(chestLocation)) {
+            sender.sendMessage("❌ Este baú não está trancado.");
+            return true;
+        }
+
+        String enteredPassword = args[0];
+        String correctPassword = lockedChests.get(chestLocation);
+
+        if (!enteredPassword.equals(correctPassword)) {
+            sender.sendMessage("❌ Senha incorreta! Tente novamente.");
+            return true;
+        }
+
+        lockedChests.remove(chestLocation);
+        sender.sendMessage("✅ Baú destrancado com sucesso!");
+        return true;
+    } else if (command.getName().equalsIgnoreCase("unban-ip")) {
+        if (args.length < 1) {
+            sender.sendMessage("❌ Uso incorreto! Formato: /unban-ip [endereço IP]");
+            return true;
+        }
+
+        String ipAddress = args[0];
+
+        // 🔹 Desbanir o IP do sistema de bans do Bukkit
+        Bukkit.getBanList(BanList.Type.IP).pardon(ipAddress);
+
+        sender.sendMessage("✅ O IP " + ipAddress + " foi desbanido com sucesso!");
+        return true;
+    } else if (command.getName().equalsIgnoreCase("list-bans")) {
+        Set<BanEntry> bannedPlayers = Bukkit.getBanList(BanList.Type.NAME).getBanEntries();
+        Set<BanEntry> bannedIps = Bukkit.getBanList(BanList.Type.IP).getBanEntries();
+
+        if (bannedPlayers.isEmpty() && bannedIps.isEmpty()) {
+            sender.sendMessage("✅ Nenhum jogador ou IP banido no momento.");
+            return true;
+        }
+
+        sender.sendMessage("🚨 Lista de jogadores banidos:");
+        for (BanEntry ban : bannedPlayers) {
+            sender.sendMessage("🔴 " + ban.getTarget() + " | Motivo: " + ban.getReason());
+        }
+
+        sender.sendMessage("🚨 Lista de IPs banidos:");
+        for (BanEntry ban : bannedIps) {
+            sender.sendMessage("🔴 " + ban.getTarget() + " | Motivo: " + ban.getReason());
+        }
+
         return true;
     } else if (command.getName().equalsIgnoreCase("invest")) {
         if (sender instanceof Player) {
