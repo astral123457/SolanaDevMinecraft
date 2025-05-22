@@ -518,7 +518,7 @@ public void buySimpleFishingRod(Player player) {
 
     // 🔹 Executa o comando para dar uma vara de pesca encantada ao jogador
     String command = String.format(
-        "give %s minecraft:fishing_rod 1", 
+        "give %s minecraft:fishing_rod 1",
         player.getName()
     );
     Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command); // 🔹 Executa o comando como console

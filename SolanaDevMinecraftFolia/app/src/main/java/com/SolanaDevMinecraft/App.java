@@ -63,6 +63,14 @@ import org.bukkit.event.player.PlayerBedEnterEvent;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.time.Duration;
 import org.bukkit.World;
+import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.event.inventory.InventoryOpenEvent;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.player.PlayerInteractEvent;
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
+
 
 
 
@@ -73,6 +81,9 @@ public class App extends JavaPlugin implements Listener {
     private final Map<Player, Location> homes = new HashMap<>();
     private final Map<Player, Map<String, Location>> casas = new HashMap<>();
     private final Map<Location, String> lockedChests = new HashMap<>();
+    private final Map<Player, String> playerLanguages = new HashMap<>();
+    private final Map<Player, String> playerNames = new HashMap<>();
+    private final Map<Player, String> playerWallets = new HashMap<>();
     
 
 
@@ -142,64 +153,134 @@ for (Player player : Bukkit.getOnlinePlayers()) {
 
 
 
-
 @EventHandler
 @Deprecated
 public void aoEntrarNoServidor(PlayerJoinEvent event) {
     Player jogador = event.getPlayer();
 
-    // Recupera a casa do jogador ao entrar no servidor
+    // 🔄 Carrega a casa do jogador
     carregarCasa(jogador, "default");
 
-
-    // Mensagem de boas-vindas no meio da tela
-    jogador.sendTitle(
-        ChatColor.GREEN + "Bem-vindo!",
-        ChatColor.WHITE + jogador.getName(),
-        10, 70, 20 // Tempo: fade in, duração, fade out
-    );
-
-    // Efeito sonoro de boas-vindas
+    // 🎉 Mensagem de boas-vindas
+    jogador.sendTitle(ChatColor.GREEN + "Bem-vindo!", ChatColor.WHITE + jogador.getName(), 10, 70, 20);
     jogador.playSound(jogador.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
-
-    // Mensagem no chat
     jogador.sendMessage(ChatColor.GREEN + "🎉 Bem-vindo ao servidor, " + jogador.getName() + "!");
+
     // Contador seguro para uso em lambda
     AtomicInteger count = new AtomicInteger(0);
 
-
-
-    // Carregar baús trancados do banco de forma assíncrona
+    // 🔄 Carregar baús trancados do banco de forma assíncrona
     CompletableFuture.runAsync(() -> {
-        try (Connection conn = getDatabaseConnection();
-             PreparedStatement stmt = conn.prepareStatement("SELECT location, password FROM locked_chests")) {
-
-            ResultSet rs = stmt.executeQuery();
-            //int count = 0;
-
-           while (rs.next()) {
-            String location = rs.getString("location"); // Pegando a localização salva no banco
-            String password = rs.getString("password");
-
-            // Convertendo corretamente a string para um objeto Location
-            Location chestLocation = getLocationFromString(location);
-
-            if (chestLocation != null && !lockedChests.containsKey(chestLocation)) {
-                lockedChests.put(chestLocation, password);
-                count.incrementAndGet();
+        try (Connection conn = getDatabaseConnection()) {
+            if (conn == null) {
+                getLogger().severe("❌ Erro: Conexão com banco de dados não encontrada!");
+                return;
             }
-}
 
+            try (PreparedStatement stmt = conn.prepareStatement("SELECT world, x, y, z, password FROM locked_chests");
+                 ResultSet rs = stmt.executeQuery()) {
 
+                while (rs.next()) {
+                    String worldName = rs.getString("world");
+                    double x = rs.getDouble("x");
+                    double y = rs.getDouble("y");
+                    double z = rs.getDouble("z");
+                    String password = rs.getString("password");
 
-            jogador.sendMessage(ChatColor.YELLOW + "🔒 " + count + " baú(s) trancado(s) restaurado(s)!");
-            getLogger().info("✅ Restaurados " + count + " baús trancados para " + jogador.getName());
+                    World world = Bukkit.getWorld(worldName);
+                    if (world == null) continue; // Evita erro caso o mundo não seja encontrado
+
+                    Location chestLocation = new Location(world, x, y, z);
+                    lockedChests.put(chestLocation, password);
+                    count.incrementAndGet();
+                }
+            }
+
+            jogador.sendMessage(ChatColor.YELLOW + "🔒 " + count.get() + " baú(s) trancado(s) restaurado(s)!");
+            getLogger().info("✅ Restaurados " + count.get() + " baús trancados para " + jogador.getName());
 
         } catch (SQLException e) {
-            getLogger().info("❌ Erro ao carregar baús trancados: " + e.getMessage());
+            getLogger().severe("❌ Erro ao carregar baús trancados: " + e.getMessage());
         }
     });
 }
+
+@EventHandler
+public void aoAbrirBau(InventoryOpenEvent event) {
+    if (!(event.getPlayer() instanceof Player)) return;
+
+    Player jogador = (Player) event.getPlayer();
+    Location chestLocation = event.getInventory().getLocation();
+
+    if (chestLocation != null && lockedChests.containsKey(chestLocation)) {
+        event.setCancelled(true); // Impede a abertura do baú
+        jogador.playSound(jogador.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
+        jogador.sendMessage(ChatColor.RED + "❌ Este baú está trancado! Use sua etiqueta de senha para desbloquear.");
+    }
+}
+
+@EventHandler
+public void aoQuebrarBau(BlockBreakEvent event) {
+    Block block = event.getBlock();
+
+    if (!(block.getState() instanceof Chest)) return; // Ignora blocos que não são baús
+
+    Location chestLocation = block.getLocation();
+
+    if (lockedChests.containsKey(chestLocation)) {
+        event.setCancelled(true); // 🔒 Impede a destruição do baú
+        Player jogador = event.getPlayer();
+        jogador.playSound(jogador.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
+        jogador.sendMessage(ChatColor.RED + "❌ Este baú está trancado! Você não pode quebrá-lo.");
+    }
+}
+
+@EventHandler
+public void aoClicarNoBau(PlayerInteractEvent event) {
+    if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+
+    Player jogador = event.getPlayer();
+    Block block = event.getClickedBlock();
+    if (block == null || !(block.getState() instanceof Chest)) return;
+
+    Location chestLocation = block.getLocation();
+
+    // 🔒 Verifica se o baú está trancado
+    if (!lockedChests.containsKey(chestLocation)) return;
+
+    // 🔍 Verifica se o jogador está segurando uma etiqueta de senha
+    ItemStack itemNaMao = jogador.getInventory().getItemInMainHand();
+    if (itemNaMao.getType() != Material.PAPER) {
+        jogador.sendMessage(ChatColor.RED + "❌ Você precisa segurar uma etiqueta de senha para destrancar este baú!");
+        return;
+    }
+
+    // 🔑 Obtém a senha da etiqueta pelo nome do item (`getDisplayName()`)
+    String senhaEtiqueta = itemNaMao.getItemMeta().getDisplayName().replace("Senha: ", "").trim();
+    String senhaCorreta = lockedChests.get(chestLocation);
+
+    if (senhaEtiqueta.equals(senhaCorreta)) {
+        jogador.sendMessage(ChatColor.GREEN + "✅ Baú destrancado! Ele será trancado novamente em 10 segundos.");
+        getLogger().info("🔓 Baú destrancado temporariamente por " + jogador.getName());
+        lockedChests.remove(chestLocation); // Remove a proteção temporariamente
+
+        // ⏳ Tranca o baú automaticamente após 10 segundos usando `RegionScheduler` do Folia
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+    lockedChests.put(chestLocation, senhaCorreta);
+    jogador.sendMessage(ChatColor.RED + "🔒 O baú foi trancado novamente!");
+    getLogger().info("🔒 Baú trancado automaticamente.");
+}, 200L);
+
+
+    } else {
+        jogador.sendMessage(ChatColor.RED + "❌ Senha incorreta! Tente novamente.");
+        getLogger().warning("⚠️ Tentativa de desbloqueio falha por " + jogador.getName());
+    }
+}
+
+
+
+
 
 
 @EventHandler
@@ -881,9 +962,9 @@ else if (command.getName().equalsIgnoreCase("homereset")) {
     return true;
 }
 
-     else if (command.getName().equalsIgnoreCase("lockchest")) {
+    else if (command.getName().equalsIgnoreCase("lockchest")) {
     if (!(sender instanceof Player)) {
-        sender.sendMessage("❌ Este comando só pode ser usado por um jogador!");
+        sender.sendMessage(ChatColor.RED + "❌ Este comando só pode ser usado por um jogador!");
         return true;
     }
 
@@ -891,39 +972,81 @@ else if (command.getName().equalsIgnoreCase("homereset")) {
     getLogger().info("🔍 Comando /lockchest executado por: " + p.getName());
 
     if (args.length < 1) {
-        sender.sendMessage("❌ Uso incorreto! Formato: /lockchest [senha]");
+        sender.sendMessage(ChatColor.RED + "❌ Uso incorreto! Formato: /lockchest [senha]");
         return true;
     }
 
-    Block block = p.getTargetBlockExact(5);
-    if (block == null || !(block.getState() instanceof Chest)) {
-        sender.sendMessage("❌ Você precisa olhar para um baú!");
+    Block block;
+    try {
+        block = p.getTargetBlockExact(5);
+        if (block == null || !(block.getState() instanceof Chest)) {
+            sender.sendMessage(ChatColor.RED + "❌ Você precisa olhar para um baú!");
+            return true;
+        }
+    } catch (Exception e) {
+        getLogger().severe("❌ Erro ao identificar o bloco: " + e.getMessage());
+        e.printStackTrace();
+        sender.sendMessage(ChatColor.RED + "❌ Ocorreu um erro ao verificar o baú.");
         return true;
     }
 
     String password = args[0];
     Location chestLocation = block.getLocation();
-    String locationString = getLocationString(chestLocation); // 🔄 Formato atualizado da localização
 
-    // 🛠 Execução assíncrona otimizada para Folia
+    // 🛠 Execução assíncrona para evitar travamento do servidor
     CompletableFuture.runAsync(() -> {
-    try (Connection conn = getDatabaseConnection();
-         PreparedStatement stmt = conn.prepareStatement("INSERT INTO locked_chests (location, password) VALUES (?, ?)")) {
+        try (Connection conn = getDatabaseConnection()) {
+            if (conn == null) {
+                getLogger().severe("❌ Erro: Conexão com banco de dados não encontrada!");
+                sender.sendMessage(ChatColor.RED + "❌ Erro interno! Não foi possível conectar ao banco de dados.");
+                return;
+            }
 
-        stmt.setString(1, locationString);
-        stmt.setString(2, password);
-        stmt.executeUpdate();
+            // 🔍 Verificar se o baú já está trancado
+            try (PreparedStatement checkStmt = conn.prepareStatement(
+                "SELECT COUNT(*) FROM locked_chests WHERE world = ? AND x = ? AND y = ? AND z = ?"
+            )) {
+                checkStmt.setString(1, chestLocation.getWorld().getName());
+                checkStmt.setDouble(2, chestLocation.getX());
+                checkStmt.setDouble(3, chestLocation.getY());
+                checkStmt.setDouble(4, chestLocation.getZ());
 
-        // 🔒 Armazenando na memória para acesso rápido sem redeclarar `chestLocation`
-        lockedChests.put(chestLocation, password);
+                ResultSet rs = checkStmt.executeQuery();
+                if (rs.next() && rs.getInt(1) > 0) {
+                    sender.sendMessage(ChatColor.RED + "❌ Este baú já está trancado!");
+                    getLogger().warning("⚠️ Tentativa de trancar um baú já trancado: " + chestLocation);
+                    return;
+                }
+            }
 
-        getLogger().info("🔒 Baú trancado no banco e memória: " + locationString);
-    } catch (SQLException e) {
-        getLogger().info("❌ Erro ao salvar baú no banco: " + e.getMessage());
-    }
-});
+            // 🔒 Inserção no banco de dados com prevenção de duplicação
+            try (PreparedStatement stmt = conn.prepareStatement(
+                "INSERT INTO locked_chests (world, x, y, z, password) VALUES (?, ?, ?, ?, ?) "
+                + "ON DUPLICATE KEY UPDATE password = VALUES(password)"
+            )) {
+                stmt.setString(1, chestLocation.getWorld().getName());
+                stmt.setDouble(2, chestLocation.getX());
+                stmt.setDouble(3, chestLocation.getY());
+                stmt.setDouble(4, chestLocation.getZ());
+                stmt.setString(5, password);
 
-    p.sendMessage("🔒 Baú trancado com senha! Use `/unlockchest [senha]` para abrir.");
+                int rowsInserted = stmt.executeUpdate();
+                if (rowsInserted > 0) {
+                    lockedChests.put(chestLocation, password);
+                    getLogger().info("🔒 Baú trancado no banco e memória: " + chestLocation);
+                    sender.sendMessage(ChatColor.GREEN + "🔒 Baú trancado com sucesso!");
+                } else {
+                    sender.sendMessage(ChatColor.RED + "❌ Falha ao trancar o baú!");
+                    getLogger().warning("⚠️ Nenhuma linha foi inserida ao trancar o baú.");
+                }
+            }
+        } catch (SQLException e) {
+            getLogger().severe("❌ Erro ao salvar baú no banco: " + e.getMessage());
+            e.printStackTrace();
+            sender.sendMessage(ChatColor.RED + "❌ Erro ao registrar a tranca do baú!");
+        }
+    });
+
     return true;
 }
 
@@ -935,13 +1058,6 @@ else if (command.getName().equalsIgnoreCase("homereset")) {
     }
 
     Player p = (Player) sender;
-    getLogger().info("🔍 Comando /unlockchest executado por: " + p.getName());
-
-    if (args.length < 1) {
-        sender.sendMessage("❌ Uso incorreto! Formato: /unlockchest [senha]");
-        return true;
-    }
-
     Block block = p.getTargetBlockExact(5);
     if (block == null || !(block.getState() instanceof Chest)) {
         sender.sendMessage("❌ Você precisa olhar para um baú!");
@@ -949,46 +1065,64 @@ else if (command.getName().equalsIgnoreCase("homereset")) {
     }
 
     Location chestLocation = block.getLocation();
-    String enteredPassword = args[0];
-    String locationString = getLocationString(chestLocation); // 🔄 Formato atualizado da localização
 
-    // 🛠 Execução assíncrona para evitar travamento da main thread
+    if (args.length < 1) {
+        sender.sendMessage("❌ Uso incorreto! Formato: /unlockchest [senha]");
+        return true;
+    }
+
+    String enteredPassword = args[0];
+
+    // 🔄 Verificar senha antes de destrancar
     CompletableFuture.runAsync(() -> {
         try (Connection conn = getDatabaseConnection();
-             PreparedStatement stmt = conn.prepareStatement("SELECT password FROM locked_chests WHERE location = ?")) {
+             PreparedStatement stmt = conn.prepareStatement(
+                 "SELECT password FROM locked_chests WHERE world = ? AND x = ? AND y = ? AND z = ?"
+             )) {
 
-            stmt.setString(1, locationString);
+            stmt.setString(1, chestLocation.getWorld().getName());
+            stmt.setDouble(2, chestLocation.getX());
+            stmt.setDouble(3, chestLocation.getY());
+            stmt.setDouble(4, chestLocation.getZ());
+
             ResultSet rs = stmt.executeQuery();
 
             if (rs.next()) {
                 String correctPassword = rs.getString("password");
 
                 if (enteredPassword.equals(correctPassword)) {
-                    sender.sendMessage("✅ Baú destrancado com sucesso!");
-                    getLogger().info("🔓 Baú destrancado em " + locationString + " por " + p.getName());
+                    try (PreparedStatement deleteStmt = conn.prepareStatement(
+                        "DELETE FROM locked_chests WHERE world = ? AND x = ? AND y = ? AND z = ?"
+                    )) {
+                        deleteStmt.setString(1, chestLocation.getWorld().getName());
+                        deleteStmt.setDouble(2, chestLocation.getX());
+                        deleteStmt.setDouble(3, chestLocation.getY());
+                        deleteStmt.setDouble(4, chestLocation.getZ());
+                        deleteStmt.executeUpdate();
+                    }
 
-                    // 🗑 Removendo do banco e da memória
-                    Location chestLocation2 = getLocationFromString(locationString);
+                    lockedChests.remove(chestLocation);
+                    p.sendMessage(ChatColor.GREEN + "✅ Baú destrancado com sucesso!");
+                    getLogger().info("🔓 Baú destrancado em " + chestLocation + " por " + p.getName());
 
-                    // 🔄 Remover da memória primeiro
-                    lockedChests.remove(chestLocation2);
-
-                    // 🗑 Converter corretamente antes de chamar `removeChest`
-                    removeChest(chestLocation2);
                 } else {
-                    sender.sendMessage("❌ Senha incorreta! Tente novamente.");
-                    getLogger().warning("⚠️ Tentativa de desbloqueio falha para " + p.getName());
+                    p.sendMessage(ChatColor.RED + "❌ Senha incorreta! Tente novamente.");
+                    p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
+                    getLogger().warning("⚠️ Tentativa de destrancar baú com senha incorreta por: " + p.getName());
                 }
             } else {
-                sender.sendMessage("❌ Este baú não está trancado.");
+                p.sendMessage(ChatColor.RED + "❌ Este baú não está trancado.");
             }
+
         } catch (SQLException e) {
-            getLogger().info("❌ Erro ao verificar senha do baú: " + e.getMessage());
+            getLogger().severe("❌ Erro ao verificar senha do baú: " + e.getMessage());
+            e.printStackTrace();
         }
     });
 
     return true;
 }
+   
 
 
 
@@ -1046,43 +1180,6 @@ else if (command.getName().equalsIgnoreCase("homereset")) {
     return false;
 }
 
-// ❌ Remover baú trancado do banco de dados após destrancar
-
-private void removeChest(Location loc) {
-    String locationString = getLocationString(loc);
-
-    CompletableFuture.runAsync(() -> {
-        try (Connection conn = getDatabaseConnection();
-             PreparedStatement stmt = conn.prepareStatement("DELETE FROM locked_chests WHERE location = ?")) {
-
-            stmt.setString(1, locationString);
-            stmt.executeUpdate();
-
-            // 🗑 Removendo da memória
-            lockedChests.remove(locationString);
-            
-            getLogger().info("🗑 Baú removido do banco e da memória: " + locationString);
-        } catch (SQLException e) {
-            getLogger().info("❌ Erro ao remover baú: " + e.getMessage());
-        }
-    });
-}
-
-
-
-// 🗝 Método atualizado para converter Location em string completa compatível com Folia/Cardboard
-private String getLocationString(Location loc) {
-    return "Location{" +
-           "world=" + loc.getWorld().getName() + "," +
-           "x=" + loc.getX() + "," +
-           "y=" + loc.getY() + "," +
-           "z=" + loc.getZ() + "," +
-           "pitch=" + loc.getPitch() + "," +
-           "yaw=" + loc.getYaw() +
-           "}";
-}
-
-
 private void giveLoan(Player player, double amount) {
     try {
         PreparedStatement statement = connection.prepareStatement(
@@ -1105,15 +1202,34 @@ private void giveLoan(Player player, double amount) {
 }
 
 private Location getLocationFromString(String locString) {
-    String[] data = locString.replace("Location{", "").replace("}", "").split(",");
-    World world = Bukkit.getWorld(data[0].split("=")[1]);
-    double x = Double.parseDouble(data[1].split("=")[1]);
-    double y = Double.parseDouble(data[2].split("=")[1]);
-    double z = Double.parseDouble(data[3].split("=")[1]);
-    float pitch = Float.parseFloat(data[4].split("=")[1]);
-    float yaw = Float.parseFloat(data[5].split("=")[1]);
+    try {
+        if (locString == null || !locString.startsWith("Location{") || !locString.endsWith("}")) {
+            return null; // Retorna null se a string não estiver no formato esperado
+        }
 
-    return new Location(world, x, y, z, yaw, pitch);
+        String[] data = locString.replace("Location{", "").replace("}", "").split(",");
+        if (data.length < 6) {
+            return null; // Retorna null se a string não tiver todas as informações necessárias
+        }
+
+        World world = Bukkit.getWorld(data[0].split("=")[1]);
+        if (world == null) {
+            return null; // Retorna null se o mundo não existir
+        }
+
+        double x = Double.parseDouble(data[1].split("=")[1]);
+        double y = Double.parseDouble(data[2].split("=")[1]);
+        double z = Double.parseDouble(data[3].split("=")[1]);
+        float pitch = Float.parseFloat(data[4].split("=")[1]);
+        float yaw = Float.parseFloat(data[5].split("=")[1]);
+
+        return new Location(world, x, y, z, yaw, pitch);
+
+    } catch (Exception e) {
+        getLogger().severe("❌ Erro ao converter string para localização: " + e.getMessage());
+        e.printStackTrace();
+        return null;
+    }
 }
 
 public void carregarCasa(Player jogador, String nome) {
@@ -1448,7 +1564,8 @@ public void ajustarSaldo(Player player, String tipo, double valor) {
                 + "y DOUBLE NOT NULL, "
                 + "z DOUBLE NOT NULL, "
                 + "world VARCHAR(64) NOT NULL, "
-                + "password VARCHAR(255) NOT NULL"
+                + "password VARCHAR(255) NOT NULL, "
+                + "UNIQUE(world, x, y, z)" // 🔄 Evita registros duplicados de baús na mesma localização
                 + ");");
 
             statement.execute("CREATE TABLE IF NOT EXISTS homes ("
