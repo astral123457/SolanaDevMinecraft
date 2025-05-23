@@ -50,7 +50,6 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.BanList;
 import java.util.Set;
 import org.bukkit.BanEntry;
-import org.bukkit.BanList;
 import java.util.Map;
 import java.util.HashMap;
 import org.bukkit.Location;
@@ -70,6 +69,7 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
+
 
 
 
@@ -114,7 +114,9 @@ public class App extends JavaPlugin implements Listener {
         // Salva o config.yml na pasta do plugin, caso ainda não exista
         saveDefaultConfig();
         config = getConfig(); // Inicializa config.yml corretamente
-        getLogger().info("Plugin habilitado!");
+        getLogger().info("SolanaDevMinecraftAstralFoliaMC iniciado!");
+
+
         
         connectToDatabase();
         
@@ -134,8 +136,6 @@ for (Player player : Bukkit.getOnlinePlayers()) {
     processInvestments(player, player.locale().toString());
 }
 
-
-
         
 }
 
@@ -146,7 +146,8 @@ for (Player player : Bukkit.getOnlinePlayers()) {
 
     @Override
     public void onDisable() {
-        getLogger().info("Plugin desabilitado!");
+        getLogger().info("SolanaDevMinecraftAstralFoliaMC desligado!");
+
         disconnectFromDatabase();
     }
 
@@ -1296,7 +1297,7 @@ private void payDebt(Player player, double amount) {
 
         if (rowsUpdated > 0) {
             // Agora, define o saldo igual ao do banco
-            ajustarSaldo(player, "take", amount);
+            //ajustarSaldo(player, "take", amount);
             player.sendMessage("Pagamento de $" + amount + " realizado com sucesso.");
         } else {
             player.sendMessage("Você ainda não está registrado no banco.");
@@ -1319,7 +1320,7 @@ private void invest(Player player, double amount) {
 
         if (rowsUpdated > 0) {
             // Agora, define o saldo igual ao do banco
-            ajustarSaldo(player, "take", amount);
+            //ajustarSaldo(player, "take", amount);
             player.sendMessage("Investimento de $" + amount + " realizado com sucesso.");
         } else {
             player.sendMessage("Você ainda não está registrado no banco.");
@@ -1356,7 +1357,7 @@ private void processInvestments(Player player, String lang) {
             double saldoAtualizado = saldoAtual + (investimento * 1.25);
 
             // Agora, define o saldo igual ao do banco
-            ajustarSaldo(player, "set", saldoAtualizado);
+            //ajustarSaldo(player, "set", saldoAtualizado);
 
             // Atualizando saldo e zerando investimento
             PreparedStatement updateStmt = connection.prepareStatement(

@@ -536,7 +536,7 @@ public void buyGameCurrency(Player player, double solAmount) {
                     if (rowsUpdated > 0) {
                         // 🔹 Registra a transação no livro caixa
                         registerTransaction(player.getName(), "compra", solAmount, "SOL", signature);
-                        ajustarSaldo(player, "give", gameCurrencyAmount);
+                        //ajustarSaldo(player, "give", gameCurrencyAmount);
 
                         if (lang.equals("pt-BR")) {
                             player.sendMessage(Component.text("✅ Compra realizada com sucesso! ")

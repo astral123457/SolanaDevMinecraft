@@ -113,7 +113,7 @@ public class Store {
         System.out.println("DEBUG (buyEnchantedApple): Compra processada com sucesso. Adicionando item..."); // <-- Use System.out.println
         player.getInventory().addItem(new ItemStack(Material.ENCHANTED_GOLDEN_APPLE, 1));
         System.out.println("DEBUG (buyEnchantedApple): Item adicionado. Ajustando saldo..."); // <-- Use System.out.println
-        ajustarSaldo(player, "take", price);
+        //ajustarSaldo(player, "take", price);
         System.out.println("DEBUG (buyEnchantedApple): Saldo ajustado. Enviando mensagem final..."); // <-- Use System.out.println
         player.sendMessage(
             lang.equals("pt-BR") ?
@@ -136,7 +136,7 @@ public class Store {
         if (processPurchase(player, price)) {
             player.getInventory().addItem(new ItemStack(Material.EMERALD, 1));
             // Ajusta o saldo do jogador após a compra
-        ajustarSaldo(player, "take", price);
+        //ajustarSaldo(player, "take", price);
 
             String lang = getPlayerLanguage(player);
             player.sendMessage(
@@ -157,7 +157,7 @@ public class Store {
         if (processPurchase(player, price)) {
             player.getInventory().addItem(new ItemStack(Material.GOLD_BLOCK, 1));
             // Ajusta o saldo do jogador após a compra
-        ajustarSaldo(player, "take", price);
+        //ajustarSaldo(player, "take", price);
 
             String lang = getPlayerLanguage(player);
             player.sendMessage(
@@ -178,7 +178,7 @@ public class Store {
         if (processPurchase(player, price)) {
             player.getInventory().addItem(new ItemStack(Material.DIAMOND_BLOCK, 1));
             // Ajusta o saldo do jogador após a compra
-        ajustarSaldo(player, "take", price);
+        //ajustarSaldo(player, "take", price);
 
             String lang = getPlayerLanguage(player);
             player.sendMessage(
@@ -200,7 +200,7 @@ public class Store {
         if (processPurchase(player, price)) {
             player.getInventory().addItem(new ItemStack(Material.EMERALD_BLOCK, 1));
             // Ajusta o saldo do jogador após a compra
-        ajustarSaldo(player, "take", price);
+        //ajustarSaldo(player, "take", price);
 
             String lang = getPlayerLanguage(player);
             player.sendMessage(
@@ -222,7 +222,7 @@ public class Store {
             player.getInventory().addItem(new ItemStack(Material.ANCIENT_DEBRIS, 10));
             player.getInventory().addItem(new ItemStack(Material.NETHERITE_UPGRADE_SMITHING_TEMPLATE, 1));
             // Ajusta o saldo do jogador após a compra
-        ajustarSaldo(player, "take", price);
+        //ajustarSaldo(player, "take", price);
 
             String lang = getPlayerLanguage(player);
             player.sendMessage(
@@ -242,7 +242,7 @@ public class Store {
         if (processPurchase(player, price)) {
             player.getInventory().addItem(new ItemStack(Material.IRON_BLOCK, 1));
             // Ajusta o saldo do jogador após a compra
-        ajustarSaldo(player, "take", price);
+        //ajustarSaldo(player, "take", price);
 
             String lang = getPlayerLanguage(player);
             player.sendMessage(
@@ -262,7 +262,7 @@ public class Store {
         if (processPurchase(player, price)) {
             player.getInventory().addItem(new ItemStack(Material.LAPIS_BLOCK, 1));
             // Ajusta o saldo do jogador após a compra
-        ajustarSaldo(player, "take", price);
+        //ajustarSaldo(player, "take", price);
 
             String lang = getPlayerLanguage(player);
             player.sendMessage(
@@ -282,7 +282,7 @@ public class Store {
         if (processPurchase(player, price)) {
             player.getInventory().addItem(new ItemStack(Material.REDSTONE_BLOCK, 1));
             // Ajusta o saldo do jogador após a compra
-        ajustarSaldo(player, "take", price);
+        //ajustarSaldo(player, "take", price);
 
             String lang = getPlayerLanguage(player);
             player.sendMessage(
@@ -302,7 +302,7 @@ public class Store {
         if (processPurchase(player, price)) {
             player.getInventory().addItem(new ItemStack(Material.QUARTZ_BLOCK, 1));
             // Ajusta o saldo do jogador após a compra
-        ajustarSaldo(player, "take", price);
+        //ajustarSaldo(player, "take", price);
 
             String lang = getPlayerLanguage(player);
             player.sendMessage(
@@ -322,7 +322,7 @@ public class Store {
         if (processPurchase(player, price)) {
             player.getInventory().addItem(new ItemStack(Material.CLAY, 1));
             // Ajusta o saldo do jogador após a compra
-        ajustarSaldo(player, "take", price);
+        //ajustarSaldo(player, "take", price);
 
             String lang = getPlayerLanguage(player);
             player.sendMessage(
@@ -342,7 +342,7 @@ public class Store {
         if (processPurchase(player, price)) {
             player.getInventory().addItem(new ItemStack(Material.SAND, 1));
             // Ajusta o saldo do jogador após a compra
-        ajustarSaldo(player, "take", price);
+        //ajustarSaldo(player, "take", price);
 
             String lang = getPlayerLanguage(player);
             player.sendMessage(
@@ -364,7 +364,7 @@ public void buyAllTools(Player player) {
             Material.DIAMOND_HOE, Material.DIAMOND_SWORD
         );
         // Ajusta o saldo do jogador após a compra
-        ajustarSaldo(player, "take", totalPrice);
+        //ajustarSaldo(player, "take", totalPrice);
 
         for (Material tool : tools) {
             ItemStack toolItem = new ItemStack(tool, 1);
@@ -394,7 +394,7 @@ public void buyAllFood(Player player) {
         );
 
         // Ajusta o saldo do jogador após a compra
-        ajustarSaldo(player, "take", totalPrice);
+        //ajustarSaldo(player, "take", totalPrice);
 
         for (Material food : foodItems) {
             ItemStack foodItem = new ItemStack(food, 5); // Adiciona 5 unidades de cada comida ao inventário
@@ -416,7 +416,7 @@ public void buySimpleBook(Player player) {
     if (!processPurchase(player, price)) return; // 🔹 Interrompe se a compra falhar
 
     // Ajusta o saldo do jogador após a compra
-        ajustarSaldo(player, "take", price);
+        //ajustarSaldo(player, "take", price);
 
     // 🔹 Executa o comando para dar um livro ao jogador
     String command = String.format("give %s minecraft:book 1", player.getName());
@@ -438,7 +438,7 @@ public void buySimpleMap(Player player) {
 
     // Processa a compra e ajusta saldo
     if (!processPurchase(player, price)) return;
-    ajustarSaldo(player, "take", price);
+    //ajustarSaldo(player, "take", price);
 
     // Lista de comandos ajustados
     List<String> commands = Arrays.asList(
@@ -479,7 +479,7 @@ public void buySimpleCompass(Player player) {
 
     // Processa a compra e ajusta saldo
     if (!processPurchase(player, price)) return;
-    ajustarSaldo(player, "take", price);
+    //ajustarSaldo(player, "take", price);
 
     // Lista de comandos ajustados
     List<String> commands = Arrays.asList(
@@ -514,7 +514,7 @@ public void buySimpleFishingRod(Player player) {
     int price = config.getInt("store.price.buySimpleFishingRod", 200); // 🔹 Obtém preço do config.yml, com fallback de 200
     if (!processPurchase(player, price)) return; // 🔹 Interrompe se a compra falhar
     // Ajusta o saldo do jogador após a compra
-        ajustarSaldo(player, "take", price);
+        //ajustarSaldo(player, "take", price);
 
     // 🔹 Executa o comando para dar uma vara de pesca encantada ao jogador
     String command = String.format(
@@ -538,7 +538,7 @@ public void buySpinningWand(Player player) {
     int price = config.getInt("store.price.buySpinningWand", 800); // 🔹 Obtém do config.yml, com fallback de 800
     if (!processPurchase(player, price)) return; // 🔹 Interrompe se a compra falhar
     // Ajusta o saldo do jogador após a compra
-        ajustarSaldo(player, "take", price);
+        //ajustarSaldo(player, "take", price);
 
     // 🔹 Executa o comando para dar um Debug Stick ao jogador
     String command = String.format("give %s minecraft:debug_stick 1", player.getName());
@@ -558,7 +558,7 @@ public void buyAxolotlBucket(Player player) {
     int price = config.getInt("store.price.axolotl_bucket", 500); // 🔹 Obtém preço do config.yml, com fallback de 500
     if (!processPurchase(player, price)) return; // 🔹 Interrompe se a compra falhar
     // Ajusta o saldo do jogador após a compra
-        ajustarSaldo(player, "take", price);
+        //ajustarSaldo(player, "take", price);
 
     // 🔹 Executa o comando para dar um balde com Axolote ao jogador
     String command = String.format("give %s minecraft:axolotl_bucket 1", player.getName());

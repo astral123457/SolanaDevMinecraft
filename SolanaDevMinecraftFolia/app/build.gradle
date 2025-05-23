@@ -13,16 +13,15 @@ repositories {
 
 dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter:5.9.1'
-    testImplementation 'io.papermc.paper:paper-api:1.20-R0.1-SNAPSHOT'
-    compileOnly 'io.papermc.paper:paper-api:1.20-R0.1-SNAPSHOT'
+    testImplementation 'io.papermc.paper:paper-api:1.20.1-R0.1-SNAPSHOT'
+    compileOnly 'io.papermc.paper:paper-api:1.20.1-R0.1-SNAPSHOT'
+    compileOnly 'org.spigotmc:spigot-api:1.20.1-R0.1-SNAPSHOT'
+    compileOnly 'com.github.MilkBowl:VaultAPI:1.7'
     implementation 'com.google.guava:guava:31.1-jre'
+    implementation 'dev.folia:folia-api:1.20.1-R0.1-SNAPSHOT'
     //implementation 'org.mariadb.jdbc:mariadb-java-client:3.1.4' // Substitua pelo driver MariaDB
     implementation 'mysql:mysql-connector-java:8.0.33'
     implementation 'org.json:json:20210307'
-    compileOnly 'com.github.MilkBowl:VaultAPI:1.7'
-    compileOnly 'org.spigotmc:spigot-api:1.21-R0.1-SNAPSHOT'
-    implementation 'dev.folia:folia-api:1.20.1-R0.1-SNAPSHOT'
-
 }
 
 java {
@@ -38,7 +37,7 @@ tasks.withType(JavaCompile) {
 
 tasks.named('shadowJar') {
     archiveBaseName.set('SolanaDevMinecraftAstralFoliaMC')
-    archiveVersion.set('2.7.0')
+    archiveVersion.set('v2.7.2')
     archiveClassifier.set('')
     destinationDirectory.set(file("$buildDir/libs"))
     minimize()
