@@ -26,6 +26,7 @@
                     <source>17</source>
                     <target>17</target>
                 </configuration>
+
             </plugin>
 
             <plugin>
@@ -42,6 +43,12 @@
                 </executions>
                 <configuration>
                     <minimizeJar>true</minimizeJar>
+                    <relocations>
+                        <relocation>
+                            <pattern>net.kyori.adventure</pattern>
+                            <shadedPattern>me.seuplugin.sombra.adventure</shadedPattern>
+                        </relocation>
+                    </relocations>
                 </configuration>
             </plugin>
         </plugins>
@@ -98,6 +105,11 @@
             <artifactId>folia-api</artifactId>
             <version>1.20.1-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.kyori</groupId>
+            <artifactId>adventure-api</artifactId>
+            <version>4.14.0</version>
         </dependency>
 
     </dependencies>

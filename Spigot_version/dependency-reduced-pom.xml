@@ -28,6 +28,12 @@
         </executions>
         <configuration>
           <minimizeJar>true</minimizeJar>
+          <relocations>
+            <relocation>
+              <pattern>net.kyori.adventure</pattern>
+              <shadedPattern>me.seuplugin.sombra.adventure</shadedPattern>
+            </relocation>
+          </relocations>
         </configuration>
       </plugin>
     </plugins>

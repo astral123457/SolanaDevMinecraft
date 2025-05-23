@@ -14,7 +14,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
-
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -28,23 +27,24 @@ import java.util.Map;
 import java.util.Arrays;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.BanList;
-import net.kyori.adventure.text.Component;
-
 import java.util.logging.Level;
-
-
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
-
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import java.util.concurrent.CompletableFuture;
-
-
-
-
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryOpenEvent;
+import org.bukkit.event.block.BlockBreakEvent;
+import net.kyori.adventure.text.Component;
+import org.bukkit.event.player.PlayerBedEnterEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.BanEntry;
+import java.util.Set;
 
 
 
@@ -55,9 +55,6 @@ public class SolanaDevMinecraft extends JavaPlugin implements Listener {
     private final Map<Player, Location> homes = new HashMap<>();
     private final Map<Player, Map<String, Location>> casas = new HashMap<>();
     private final Map<Location, String> lockedChests = new HashMap<>();
-    private final Map<Player, String> playerLanguages = new HashMap<>();
-    private final Map<Player, String> playerNames = new HashMap<>();
-    private final Map<Player, String> playerWallets = new HashMap<>();
 
     private Connection connection;
     private Solana solana;
@@ -225,6 +222,76 @@ public class SolanaDevMinecraft extends JavaPlugin implements Listener {
         }
     }
 
+    @EventHandler
+    public void aoAbrirBau(InventoryOpenEvent event) {
+        if (!(event.getPlayer() instanceof Player)) return;
+
+        Player jogador = (Player) event.getPlayer();
+        Location chestLocation = event.getInventory().getLocation();
+
+        if (chestLocation != null && lockedChests.containsKey(chestLocation)) {
+            event.setCancelled(true); // Impede a abertura do baú
+            jogador.playSound(jogador.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
+            jogador.sendMessage(ChatColor.RED + "❌ Este baú está trancado! Use sua etiqueta de senha para desbloquear.");
+        }
+    }
+
+    @EventHandler
+    public void aoQuebrarBau(BlockBreakEvent event) {
+        Block block = event.getBlock();
+
+        if (!(block.getState() instanceof Chest)) return; // Ignora blocos que não são baús
+
+        Location chestLocation = block.getLocation();
+
+        if (lockedChests.containsKey(chestLocation)) {
+            event.setCancelled(true); // 🔒 Impede a destruição do baú
+            Player jogador = event.getPlayer();
+            jogador.playSound(jogador.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
+            jogador.sendMessage(ChatColor.RED + "❌ Este baú está trancado! Você não pode quebrá-lo.");
+        }
+    }
+
+    @EventHandler
+    public void aoDormir(PlayerBedEnterEvent event) {
+        if (event.getBedEnterResult() != PlayerBedEnterEvent.BedEnterResult.OK) return; // Apenas define a home se o jogador conseguir dormir
+
+        Player jogador = event.getPlayer();
+        Location cama = event.getBed().getLocation(); // Obtém a localização correta da cama
+        cama.setY(cama.getY() + 1); // Ajusta a Y para evitar que o jogador fique preso
+
+        // Verifica se o jogador já tem casas registradas
+        casas.computeIfAbsent(jogador, k -> new HashMap<>());
+
+        // Salva ou atualiza a casa "default" do jogador
+        casas.get(jogador).put("default", cama);
+
+        jogador.sendMessage(ChatColor.GREEN + "🏡 Sua casa principal ('default') foi definida automaticamente na cama!");
+
+        // Opcional: Salvar no banco de dados para persistência
+        registrarCasa(jogador, "default", cama);
+    }
+
+    @EventHandler
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        Player player = event.getEntity();
+
+        if (player == null) {
+            getLogger().warning("❌ O evento de morte ocorreu, mas o jogador é nulo!");
+            return;
+        }
+
+        Location deathLocation = player.getLocation();
+        if (deathLocation == null) {
+            getLogger().warning("❌ A localização do jogador no momento da morte é nula!");
+            return;
+        }
+
+        lastLocations.put(player, deathLocation);
+        getLogger().info("🛠️ Localização da morte armazenada para: " + player.getName() +
+                " | X: " + deathLocation.getX() + " Y: " + deathLocation.getY() +
+                " Z: " + deathLocation.getZ());
+    }
 
 
     private void connectToDatabase() {
@@ -595,38 +662,34 @@ public class SolanaDevMinecraft extends JavaPlugin implements Listener {
             }
             return true;
         } else if (command.getName().equalsIgnoreCase("back")) {
-            CompletableFuture.runAsync(() -> {
-                try {
-                    if (!(sender instanceof Player)) {
-                        sender.sendMessage("❌ Apenas jogadores podem usar este comando.");
-                        return;
-                    }
+            if (!(sender instanceof Player)) {
+                sender.sendMessage("❌ Apenas jogadores podem usar este comando.");
+                return true;
+            }
 
-                    Player player = (Player) sender;
+            Player player = (Player) sender;
 
-                    // Debug para verificar se o jogador está registrado
-                    getLogger().info("🔍 Comando /back executado por: " + player.getName());
+            // Debug para verificar se o jogador está registrado
+            getLogger().info("🔍 Comando /back executado por: " + player.getName());
 
-                    if (!lastLocations.containsKey(player) || lastLocations.get(player) == null) {
-                        player.sendMessage("❌ Nenhuma posição anterior encontrada.");
-                        getLogger().warning("⚠️ Tentativa de /back sem localização armazenada para " + player.getName());
-                        return;
-                    }
+            if (!lastLocations.containsKey(player) || lastLocations.get(player) == null) {
+                player.sendMessage("❌ Nenhuma posição anterior encontrada.");
+                getLogger().warning("⚠️ Tentativa de /back sem localização armazenada para " + player.getName());
+                return true;
+            }
 
-                    Location backLocation = lastLocations.remove(player);
+            Location backLocation = lastLocations.remove(player);
 
-                    // Debug para verificar a localização antes do teleporte
-                    getLogger().info("🚀 Teleportando " + player.getName() + " para última posição: " +
-                            "X: " + backLocation.getX() + ", Y: " + backLocation.getY() + ", Z: " + backLocation.getZ());
+            // Debug para verificar a localização antes do teleporte
+            getLogger().info("🚀 Teleportando " + player.getName() + " para última posição: " +
+                    "X: " + backLocation.getX() + ", Y: " + backLocation.getY() + ", Z: " + backLocation.getZ());
 
-                    player.teleportAsync(backLocation);
-                    player.sendMessage("🚀 Você voltou para sua última posição!");
-
-                } catch (Exception e) {
-                    getLogger().severe("❌ Erro ao executar o comando /back: " + e.getMessage());
-                    e.printStackTrace();
-                }
+            // Executa o teleporte de forma segura com BukkitScheduler
+            Bukkit.getScheduler().runTask(this, () -> {
+                player.teleport(backLocation);
+                player.sendMessage("🚀 Você voltou para sua última posição!");
             });
+
             return true;
         } else if (command.getName().equalsIgnoreCase("tpa")) {
             if (!(sender instanceof Player)) {
@@ -649,10 +712,13 @@ public class SolanaDevMinecraft extends JavaPlugin implements Listener {
 
             tpaRequests.put(target, player);
             player.sendMessage("✉️ Pedido de teleporte enviado para " + target.getName() + ".");
-            target.sendMessage("📩 " + player.getName() + " deseja se teleportar até você! Use `/tpaccept` para aceitar ou `/tpdeny` para negar.");
+
+            // Ao invés de enviar mensagem, abrir o menu de TPA
+            openTpaMenu(target, player);
 
             return true;
-        } else if (command.getName().equalsIgnoreCase("tpaccept")) {
+        }
+        else if (command.getName().equalsIgnoreCase("tpaccept")) {
             if (!(sender instanceof Player)) return true;
             Player target = (Player) sender;
 
@@ -662,7 +728,7 @@ public class SolanaDevMinecraft extends JavaPlugin implements Listener {
             }
 
             Player requester = tpaRequests.remove(target);
-            requester.teleportAsync(target.getLocation());
+            requester.teleport(target.getLocation());
             requester.sendMessage("✅ Teleporte aceito! Você foi movido até " + target.getName() + ".");
             target.sendMessage("✅ Teleporte realizado com sucesso.");
 
@@ -735,13 +801,13 @@ public class SolanaDevMinecraft extends JavaPlugin implements Listener {
                             getLogger().info("🚀 Teleportando " + player.getName() + " para sua casa '" + nomeCasa + "': " +
                                     "X: " + homeLocation.getX() + ", Y: " + homeLocation.getY() + ", Z: " + homeLocation.getZ());
 
-                            player.teleportAsync(homeLocation)
-                                    .thenRun(() -> player.sendMessage("🏡 Bem-vindo à sua casa '" + nomeCasa + "'!"))
-                                    .exceptionally(e -> {
-                                        getLogger().severe("❌ Erro ao teleportar " + player.getName() + ": " + e.getMessage());
-                                        e.printStackTrace();
-                                        return null;
-                                    });
+                            Bukkit.getScheduler().runTask(this, () -> {
+                                if (player.teleport(homeLocation)) {
+                                    player.sendMessage("🏡 Bem-vindo à sua casa '" + nomeCasa + "'!");
+                                } else {
+                                    getLogger().severe("❌ Erro ao teleportar " + player.getName());
+                                }
+                            });
 
                         } else {
                             player.sendMessage("❌ Casa '" + nomeCasa + "' não encontrada!");
@@ -897,8 +963,8 @@ public class SolanaDevMinecraft extends JavaPlugin implements Listener {
 
             String enteredPassword = args[0];
 
-            // 🔄 Verificar senha antes de destrancar
-            CompletableFuture.runAsync(() -> {
+            // 🔄 Verificar senha antes de destrancar, agora sem execução assíncrona
+            Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
                 try (Connection conn = getDatabaseConnection();
                      PreparedStatement stmt = conn.prepareStatement(
                              "SELECT password FROM locked_chests WHERE world = ? AND x = ? AND y = ? AND z = ?"
@@ -926,16 +992,24 @@ public class SolanaDevMinecraft extends JavaPlugin implements Listener {
                             }
 
                             lockedChests.remove(chestLocation);
-                            p.sendMessage(ChatColor.GREEN + "✅ Baú destrancado com sucesso!");
-                            getLogger().info("🔓 Baú destrancado em " + chestLocation + " por " + p.getName());
+
+                            // Executa o envio de mensagens e teleporte de forma segura na thread principal
+                            Bukkit.getScheduler().runTask(this, () -> {
+                                p.sendMessage(ChatColor.GREEN + "✅ Baú destrancado com sucesso!");
+                                getLogger().info("🔓 Baú destrancado em " + chestLocation + " por " + p.getName());
+                            });
 
                         } else {
-                            p.sendMessage(ChatColor.RED + "❌ Senha incorreta! Tente novamente.");
-                            p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
-                            getLogger().warning("⚠️ Tentativa de destrancar baú com senha incorreta por: " + p.getName());
+                            Bukkit.getScheduler().runTask(this, () -> {
+                                p.sendMessage(ChatColor.RED + "❌ Senha incorreta! Tente novamente.");
+                                p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
+                                getLogger().warning("⚠️ Tentativa de destrancar baú com senha incorreta por: " + p.getName());
+                            });
                         }
                     } else {
-                        p.sendMessage(ChatColor.RED + "❌ Este baú não está trancado.");
+                        Bukkit.getScheduler().runTask(this, () -> {
+                            p.sendMessage(ChatColor.RED + "❌ Este baú não está trancado.");
+                        });
                     }
 
                 } catch (SQLException e) {
@@ -945,7 +1019,7 @@ public class SolanaDevMinecraft extends JavaPlugin implements Listener {
             });
 
             return true;
-        } if (!sender.hasPermission("eco.admin")) {
+        } else if (!sender.hasPermission("eco.admin")) {
             sender.sendMessage("❌ Você não tem permissão para executar este comando.");
             return true;
         } else if (command.getName().equalsIgnoreCase("ban")) {
@@ -959,10 +1033,10 @@ public class SolanaDevMinecraft extends JavaPlugin implements Listener {
 
             OfflinePlayer target = Bukkit.getOfflinePlayer(playerName);
 
-            if (target != null) {
-                target.banPlayer(motivo);
+            if (target.hasPlayedBefore()) {  // Confirma que o jogador já jogou no servidor
+                Bukkit.getBanList(BanList.Type.NAME).addBan(playerName, motivo, null, sender.getName());
                 sender.sendMessage("✅ O jogador " + playerName + " foi banido! Motivo: " + motivo);
-                Bukkit.getServer().broadcast(Component.text(playerName + " foi banido do servidor! Motivo: " + motivo));
+                Bukkit.getServer().broadcast(Component.text("🚫 " + playerName + " foi banido do servidor! Motivo: " + motivo));
             } else {
                 sender.sendMessage("❌ Jogador não encontrado.");
             }
@@ -977,7 +1051,50 @@ public class SolanaDevMinecraft extends JavaPlugin implements Listener {
             Bukkit.getBanList(BanList.Type.NAME).pardon(playerName);
             sender.sendMessage("✅ O jogador " + playerName + " foi desbanido!");
             return true;
-        } else if (command.getName().equalsIgnoreCase("invest")) {
+        } else if (command.getName().equalsIgnoreCase("unban-ip")) {
+            if (args.length < 1) {
+                sender.sendMessage("❌ Uso incorreto! Formato: /unban-ip [endereço IP]");
+                return true;
+            }
+
+            String ipAddress = args[0];
+
+            if (Bukkit.getBanList(BanList.Type.IP).isBanned(ipAddress)) {
+                // 🔹 Desbanir o IP do sistema de bans do Bukkit
+                Bukkit.getBanList(BanList.Type.IP).pardon(ipAddress);
+                sender.sendMessage("✅ O IP " + ipAddress + " foi desbanido com sucesso!");
+            } else {
+                sender.sendMessage("⚠️ O IP " + ipAddress + " não está banido.");
+            }
+            return true;
+        } else if (command.getName().equalsIgnoreCase("list-bans")) {
+            Set<BanEntry> bannedPlayers = Bukkit.getBanList(BanList.Type.NAME).getBanEntries();
+            Set<BanEntry> bannedIps = Bukkit.getBanList(BanList.Type.IP).getBanEntries();
+
+            if (bannedPlayers.isEmpty() && bannedIps.isEmpty()) {
+                sender.sendMessage("✅ Nenhum jogador ou IP banido no momento.");
+                return true;
+            }
+
+            // 🔹 Lista de jogadores banidos
+            if (!bannedPlayers.isEmpty()) {
+                sender.sendMessage("🚨 Lista de jogadores banidos:");
+                for (BanEntry ban : bannedPlayers) {
+                    sender.sendMessage("🔴 " + ban.getTarget() + " | Motivo: " + (ban.getReason() != null ? ban.getReason() : "Não especificado"));
+                }
+            }
+
+            // 🔹 Lista de IPs banidos
+            if (!bannedIps.isEmpty()) {
+                sender.sendMessage("🚨 Lista de IPs banidos:");
+                for (BanEntry ban : bannedIps) {
+                    sender.sendMessage("🔴 " + ban.getTarget() + " | Motivo: " + (ban.getReason() != null ? ban.getReason() : "Não especificado"));
+                }
+            }
+
+            return true;
+        }
+        else if (command.getName().equalsIgnoreCase("invest")) {
             if (sender instanceof Player) {
                 Player player = (Player) sender;
                 if (args.length == 1) {
@@ -998,7 +1115,50 @@ public class SolanaDevMinecraft extends JavaPlugin implements Listener {
         return false;
     }
 
-    public void carregarCasa(Player jogador, String nome) {
+
+    private void openTpaMenu(Player target, Player sender) {
+        Inventory inventory = Bukkit.createInventory(null, 9, "Pedido de TPA");
+        ItemStack accept = new ItemStack(Material.GREEN_WOOL);
+        ItemMeta acceptMeta = accept.getItemMeta();
+        acceptMeta.setDisplayName("✔ Aceitar");
+        accept.setItemMeta(acceptMeta);
+
+        ItemStack deny = new ItemStack(Material.RED_WOOL);
+        ItemMeta denyMeta = deny.getItemMeta();
+        denyMeta.setDisplayName("✖ Recusar");
+        deny.setItemMeta(denyMeta);
+
+        inventory.setItem(3, accept);
+        inventory.setItem(5, deny);
+
+        target.openInventory(inventory);
+    }
+
+    @EventHandler
+    public void onInventoryClick(InventoryClickEvent event) {
+        if (event.getView().getTitle().equals("Pedido de TPA")) {
+            event.setCancelled(true);
+            Player target = (Player) event.getWhoClicked();
+            Player sender = tpaRequests.get(target);
+
+            if (event.getCurrentItem() != null) {
+                String itemName = event.getCurrentItem().getItemMeta().getDisplayName();
+                if (itemName.equals("✔ Aceitar")) {
+                    sender.teleport(target.getLocation());
+                    sender.sendMessage("Você foi teleportado para " + target.getName());
+                    target.sendMessage("Você aceitou o pedido de TPA!");
+                } else if (itemName.equals("✖ Recusar")) {
+                    sender.sendMessage(target.getName() + " recusou o pedido de TPA.");
+                    target.sendMessage("Você recusou o pedido de TPA.");
+                }
+                target.closeInventory();
+                tpaRequests.remove(target);
+            }
+        }
+    }
+
+
+        public void carregarCasa(Player jogador, String nome) {
         try (Connection conn = getDatabaseConnection();
              PreparedStatement stmt = conn.prepareStatement("SELECT world, x, y, z FROM homes WHERE player_uuid = ? AND home_name = ?")) {
 

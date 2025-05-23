@@ -5,6 +5,8 @@ api-version: '1.19'
 author: Amauri Bueno dos Santos
 website: https://solanadev.com
 description: Plugin que permite ver token Solana Dev no Minecraft
+folia-compatible: true
+folia-supported: true
 commands:
   saldo:
     description: Mostra o saldo do jogador
