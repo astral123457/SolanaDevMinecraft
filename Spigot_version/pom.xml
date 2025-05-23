@@ -6,7 +6,7 @@
 
     <groupId>solanadevminecraft</groupId>
     <artifactId>SolanaDevMinecraftAstralSpigotMC</artifactId>
-    <version>2.6.0</version>
+    <version>v2.7.0</version>
     <packaging>jar</packaging>
 
     <name>SolanaDevMinecraftAstralSpigotMC</name>

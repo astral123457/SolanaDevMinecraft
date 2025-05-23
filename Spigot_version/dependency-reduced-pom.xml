@@ -4,7 +4,7 @@
   <groupId>solanadevminecraft</groupId>
   <artifactId>SolanaDevMinecraftAstralSpigotMC</artifactId>
   <name>SolanaDevMinecraftAstralSpigotMC</name>
-  <version>2.6.0</version>
+  <version>v2.7.0</version>
   <build>
     <plugins>
       <plugin>

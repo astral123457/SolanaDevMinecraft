@@ -1,42 +1,85 @@
 package solanadevminecraft.solanadevminecraftastral.solanadevminecraft;
 
-import org.bukkit.Warning;
-import org.bukkit.plugin.java.JavaPlugin;
-
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.Location;
+import org.bukkit.Sound;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Statement;
 import java.sql.SQLException;
-
-import net.md_5.bungee.api.ChatColor;
-
+import java.sql.Statement;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.HashMap;
 import java.util.List;
-import org.bukkit.Bukkit;
+import java.util.Map;
+import java.util.Arrays;
+import org.bukkit.OfflinePlayer;
+import org.bukkit.BanList;
+import net.kyori.adventure.text.Component;
+
+import java.util.logging.Level;
 
 
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.Material;
+import org.bukkit.block.Block;
+import org.bukkit.block.Chest;
+
+import org.bukkit.event.block.Action;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.ItemStack;
+import java.util.concurrent.CompletableFuture;
+
+
+
 
 
 
 
 public class SolanaDevMinecraft extends JavaPlugin implements Listener {
 
+    private final Map<Player, Player> tpaRequests = new HashMap<>();
+    private final Map<Player, Location> lastLocations = new HashMap<>();
+    private final Map<Player, Location> homes = new HashMap<>();
+    private final Map<Player, Map<String, Location>> casas = new HashMap<>();
+    private final Map<Location, String> lockedChests = new HashMap<>();
+    private final Map<Player, String> playerLanguages = new HashMap<>();
+    private final Map<Player, String> playerNames = new HashMap<>();
+    private final Map<Player, String> playerWallets = new HashMap<>();
+
     private Connection connection;
     private Solana solana;
     private Store store; // Instância da classe Store
     private FileConfiguration config; // Armazena o config.yml
 
+    private Connection getDatabaseConnection() throws SQLException {
+        String url = config.getString("database.url");
+        String user = config.getString("database.user");
+        String password = config.getString("database.password");
 
+        if (url == null || user == null || password == null) {
+            throw new SQLException("Configuração de banco de dados incompleta");
+        }
+
+        try {
+            return DriverManager.getConnection(url, user, password);
+        } catch (SQLException e) {
+            getLogger().log(Level.SEVERE, "Erro ao conectar ao banco de dados", e);
+            throw e;
+        }
+    }
 
 
 
@@ -81,10 +124,105 @@ public class SolanaDevMinecraft extends JavaPlugin implements Listener {
         disconnectFromDatabase();
     }
 
+    //@EventHandler
+    //public void aoEntrarNoServidor(PlayerJoinEvent event) {
+    //    Player jogador = event.getPlayer();
+    //    checkBalance(jogador);
+    //}
+
     @EventHandler
+    @Deprecated
     public void aoEntrarNoServidor(PlayerJoinEvent event) {
         Player jogador = event.getPlayer();
-        checkBalance(jogador);
+
+        // Carrega a casa do jogador
+        carregarCasa(jogador, "default");
+
+        // Mensagem de boas-vindas
+        jogador.sendTitle(ChatColor.GREEN + "Bem-vindo!", ChatColor.WHITE + jogador.getName(), 10, 70, 20);
+        jogador.playSound(jogador.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
+        jogador.sendMessage(ChatColor.GREEN + "Bem-vindo ao servidor, " + jogador.getName() + "!");
+
+        // Contador seguro para uso em lambda
+        AtomicInteger count = new AtomicInteger(0);
+
+        // Carregar baús trancados do banco de forma assíncrona
+        Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
+            try (Connection conn = getDatabaseConnection()) {
+                if (conn == null) {
+                    getLogger().severe("Erro: Conexão com banco de dados não encontrada!");
+                    return;
+                }
+
+                try (PreparedStatement stmt = conn.prepareStatement("SELECT world, x, y, z, password FROM locked_chests");
+                     ResultSet rs = stmt.executeQuery()) {
+
+                    while (rs.next()) {
+                        String worldName = rs.getString("world");
+                        double x = rs.getDouble("x");
+                        double y = rs.getDouble("y");
+                        double z = rs.getDouble("z");
+                        String password = rs.getString("password");
+
+                        World world = Bukkit.getWorld(worldName);
+                        if (world == null) continue; // Evita erro caso o mundo não seja encontrado
+
+                        Location chestLocation = new Location(world, x, y, z);
+                        lockedChests.put(chestLocation, password);
+                        count.incrementAndGet();
+                    }
+                }
+
+                Bukkit.getScheduler().runTask(this, () -> {
+                    jogador.sendMessage(String.format("%s%d baú(s) trancado(s) restaurado(s)!", ChatColor.YELLOW, count.get()));
+                    getLogger().info("Restaurados " + count.get() + " baús trancados para " + jogador.getName());
+                });
+
+            } catch (SQLException e) {
+                getLogger().severe("Erro ao carregar baús trancados: " + e.getMessage());
+            }
+        });
+    }
+
+    @EventHandler
+    @Deprecated
+    public void aoClicarNoBau(PlayerInteractEvent event) {
+        if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+
+        Player jogador = event.getPlayer();
+        Block block = event.getClickedBlock();
+        if (block == null || !(block.getState() instanceof Chest)) return;
+
+        Location chestLocation = block.getLocation();
+
+        if (!lockedChests.containsKey(chestLocation)) return;
+
+        ItemStack itemNaMao = jogador.getInventory().getItemInMainHand();
+        if (itemNaMao.getType() != Material.PAPER) {
+
+            jogador.sendMessage(ChatColor.RED + " Você precisa segurar uma etiqueta de senha para destrancar este baú!");
+            return;
+        }
+
+        String senhaEtiqueta = itemNaMao.getItemMeta().getDisplayName().replace("Senha: ", "").trim();
+        String senhaCorreta = lockedChests.get(chestLocation);
+
+        if (senhaEtiqueta.equals(senhaCorreta)) {
+            jogador.sendMessage(ChatColor.GREEN + " Baú destrancado! Ele será trancado novamente em 10 segundos.");
+            getLogger().info(" Baú destrancado temporariamente por " + jogador.getName());
+            lockedChests.remove(chestLocation);
+
+            Bukkit.getScheduler().runTaskLater(this, () -> {
+                if (jogador.isOnline()) {
+                    lockedChests.put(chestLocation, senhaCorreta);
+                    jogador.sendMessage(ChatColor.RED + " O baú foi trancado novamente!");
+                    getLogger().info(" Baú trancado automaticamente.");
+                }
+            }, 200L);
+        } else {
+            jogador.sendMessage(ChatColor.RED + " Senha incorreta! Tente novamente.");
+            getLogger().warning(" Tentativa de desbloqueio falha por " + jogador.getName());
+        }
     }
 
 
@@ -140,6 +278,7 @@ public class SolanaDevMinecraft extends JavaPlugin implements Listener {
 
 
     @Override
+    @Deprecated
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
 
         ensureConnection(); // Verifica a conexão antes de processar o comando
@@ -455,6 +594,389 @@ public class SolanaDevMinecraft extends JavaPlugin implements Listener {
                 store.buyNetheriteBlock(player);
             }
             return true;
+        } else if (command.getName().equalsIgnoreCase("back")) {
+            CompletableFuture.runAsync(() -> {
+                try {
+                    if (!(sender instanceof Player)) {
+                        sender.sendMessage("❌ Apenas jogadores podem usar este comando.");
+                        return;
+                    }
+
+                    Player player = (Player) sender;
+
+                    // Debug para verificar se o jogador está registrado
+                    getLogger().info("🔍 Comando /back executado por: " + player.getName());
+
+                    if (!lastLocations.containsKey(player) || lastLocations.get(player) == null) {
+                        player.sendMessage("❌ Nenhuma posição anterior encontrada.");
+                        getLogger().warning("⚠️ Tentativa de /back sem localização armazenada para " + player.getName());
+                        return;
+                    }
+
+                    Location backLocation = lastLocations.remove(player);
+
+                    // Debug para verificar a localização antes do teleporte
+                    getLogger().info("🚀 Teleportando " + player.getName() + " para última posição: " +
+                            "X: " + backLocation.getX() + ", Y: " + backLocation.getY() + ", Z: " + backLocation.getZ());
+
+                    player.teleportAsync(backLocation);
+                    player.sendMessage("🚀 Você voltou para sua última posição!");
+
+                } catch (Exception e) {
+                    getLogger().severe("❌ Erro ao executar o comando /back: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            });
+            return true;
+        } else if (command.getName().equalsIgnoreCase("tpa")) {
+            if (!(sender instanceof Player)) {
+                sender.sendMessage("❌ Apenas jogadores podem usar este comando.");
+                return true;
+            }
+
+            Player player = (Player) sender;
+
+            if (args.length < 1) {
+                player.sendMessage("❌ Uso incorreto! Formato: /tpa [jogador]");
+                return true;
+            }
+
+            Player target = Bukkit.getPlayer(args[0]);
+            if (target == null || !target.isOnline()) {
+                player.sendMessage("❌ Jogador não encontrado ou offline.");
+                return true;
+            }
+
+            tpaRequests.put(target, player);
+            player.sendMessage("✉️ Pedido de teleporte enviado para " + target.getName() + ".");
+            target.sendMessage("📩 " + player.getName() + " deseja se teleportar até você! Use `/tpaccept` para aceitar ou `/tpdeny` para negar.");
+
+            return true;
+        } else if (command.getName().equalsIgnoreCase("tpaccept")) {
+            if (!(sender instanceof Player)) return true;
+            Player target = (Player) sender;
+
+            if (!tpaRequests.containsKey(target)) {
+                target.sendMessage("❌ Nenhum pedido de teleporte pendente.");
+                return true;
+            }
+
+            Player requester = tpaRequests.remove(target);
+            requester.teleportAsync(target.getLocation());
+            requester.sendMessage("✅ Teleporte aceito! Você foi movido até " + target.getName() + ".");
+            target.sendMessage("✅ Teleporte realizado com sucesso.");
+
+            return true;
+        } else if (command.getName().equalsIgnoreCase("tpdeny")) {
+            if (!(sender instanceof Player)) return true;
+            Player target = (Player) sender;
+
+            if (!tpaRequests.containsKey(target)) {
+                target.sendMessage("❌ Nenhum pedido de teleporte pendente.");
+                return true;
+            }
+
+            Player requester = tpaRequests.remove(target);
+            requester.sendMessage("❌ Pedido de teleporte recusado por " + target.getName() + ".");
+            target.sendMessage("❌ Você recusou o pedido de teleporte.");
+
+            return true;
+        } else if (command.getName().equalsIgnoreCase("sethome")) {
+            if (!(sender instanceof Player)) {
+                sender.sendMessage("❌ Este comando só pode ser usado por um jogador!");
+                return true;
+            }
+
+            Player jogador = (Player) sender; // Faz o cast para Player
+
+            if (args.length == 0) {
+                jogador.sendMessage("❌ Use `/sethome <nome>` para definir uma casa!");
+                return true;
+            }
+
+            String nomeCasa = args[0]; // Obtém o nome da casa do primeiro argumento
+            Location local = jogador.getLocation(); // Obtém a localização atual do jogador
+
+            // Registra a casa com o nome fornecido
+            registrarCasa(jogador, nomeCasa, local);
+
+            jogador.sendMessage("🏡 Casa '" + nomeCasa + "' foi definida! Use `/home " + nomeCasa + "` para voltar.");
+            return true;
+        }
+
+
+        else if (command.getName().equalsIgnoreCase("home")) {
+            if (!(sender instanceof Player)) {
+                sender.sendMessage("❌ Este comando só pode ser usado por um jogador!");
+                return true;
+            }
+
+            CompletableFuture.runAsync(() -> {
+                try {
+                    Player player = (Player) sender;
+                    String nomeCasa = (args.length > 0) ? args[0] : "default"; // Se não informar, usa 'default'
+
+                    // Verifica no MySQL se a casa existe
+                    try (Connection conn = getDatabaseConnection();
+                         PreparedStatement stmt = conn.prepareStatement("SELECT world, x, y, z FROM homes WHERE player_uuid = ? AND home_name = ?")) {
+
+                        stmt.setString(1, player.getUniqueId().toString());
+                        stmt.setString(2, nomeCasa);
+                        ResultSet rs = stmt.executeQuery();
+
+                        if (rs.next()) {
+                            // Casa encontrada, adiciona ao mapa `casas`
+                            World mundo = Bukkit.getWorld(rs.getString("world"));
+                            Location homeLocation = new Location(mundo, rs.getDouble("x"), rs.getDouble("y"), rs.getDouble("z"));
+
+                            // Atualiza no mapa
+                            casas.computeIfAbsent(player, k -> new HashMap<>()).put(nomeCasa, homeLocation);
+
+                            getLogger().info("🚀 Teleportando " + player.getName() + " para sua casa '" + nomeCasa + "': " +
+                                    "X: " + homeLocation.getX() + ", Y: " + homeLocation.getY() + ", Z: " + homeLocation.getZ());
+
+                            player.teleportAsync(homeLocation)
+                                    .thenRun(() -> player.sendMessage("🏡 Bem-vindo à sua casa '" + nomeCasa + "'!"))
+                                    .exceptionally(e -> {
+                                        getLogger().severe("❌ Erro ao teleportar " + player.getName() + ": " + e.getMessage());
+                                        e.printStackTrace();
+                                        return null;
+                                    });
+
+                        } else {
+                            player.sendMessage("❌ Casa '" + nomeCasa + "' não encontrada!");
+                        }
+
+                    } catch (SQLException e) {
+                        getLogger().severe("❌ Erro ao consultar casa no MySQL: " + e.getMessage());
+                        e.printStackTrace();
+                    }
+
+                } catch (Exception e) {
+                    getLogger().severe("❌ Exceção ao executar /home: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            });
+
+            return true;
+        }
+
+        else if (command.getName().equalsIgnoreCase("homereset")) {
+            if (!(sender instanceof Player) || !sender.hasPermission("home.admin")) { // Apenas admins podem executar
+                sender.sendMessage("❌ Você não tem permissão para resetar as casas!");
+                return true;
+            }
+
+            CompletableFuture.runAsync(() -> {
+                try (Connection conn = getDatabaseConnection();
+                     Statement stmt = conn.createStatement()) {
+
+                    stmt.execute("TRUNCATE TABLE homes"); // Remove todos os registros da tabela
+                    casas.clear(); // Limpa o cache de casas armazenado no plugin
+
+                    sender.sendMessage(ChatColor.RED + "⚠️ TODAS as casas foram resetadas pelo administrador!");
+                    getLogger().warning("⚠️ O administrador " + sender.getName() + " resetou todas as casas!");
+
+                } catch (SQLException e) {
+                    sender.sendMessage(ChatColor.RED + "❌ Erro ao resetar as casas!");
+                    getLogger().severe("❌ Erro ao executar TRUNCATE TABLE homes: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            });
+
+            return true;
+        }
+
+        else if (command.getName().equalsIgnoreCase("lockchest")) {
+            if (!(sender instanceof Player)) {
+                sender.sendMessage(ChatColor.RED + "❌ Este comando só pode ser usado por um jogador!");
+                return true;
+            }
+
+            Player p = (Player) sender;
+            getLogger().info("🔍 Comando /lockchest executado por: " + p.getName());
+
+            if (args.length < 1) {
+                sender.sendMessage(ChatColor.RED + "❌ Uso incorreto! Formato: /lockchest [senha]");
+                return true;
+            }
+
+            Block block;
+            try {
+                block = p.getTargetBlockExact(5);
+                if (block == null || !(block.getState() instanceof Chest)) {
+                    sender.sendMessage(ChatColor.RED + "❌ Você precisa olhar para um baú!");
+                    return true;
+                }
+            } catch (Exception e) {
+                getLogger().severe("❌ Erro ao identificar o bloco: " + e.getMessage());
+                e.printStackTrace();
+                sender.sendMessage(ChatColor.RED + "❌ Ocorreu um erro ao verificar o baú.");
+                return true;
+            }
+
+            String password = args[0];
+            Location chestLocation = block.getLocation();
+
+            // 🛠 Execução assíncrona para evitar travamento do servidor
+            CompletableFuture.runAsync(() -> {
+                try (Connection conn = getDatabaseConnection()) {
+                    if (conn == null) {
+                        getLogger().severe("❌ Erro: Conexão com banco de dados não encontrada!");
+                        sender.sendMessage(ChatColor.RED + "❌ Erro interno! Não foi possível conectar ao banco de dados.");
+                        return;
+                    }
+
+                    // 🔍 Verificar se o baú já está trancado
+                    try (PreparedStatement checkStmt = conn.prepareStatement(
+                            "SELECT COUNT(*) FROM locked_chests WHERE world = ? AND x = ? AND y = ? AND z = ?"
+                    )) {
+                        checkStmt.setString(1, chestLocation.getWorld().getName());
+                        checkStmt.setDouble(2, chestLocation.getX());
+                        checkStmt.setDouble(3, chestLocation.getY());
+                        checkStmt.setDouble(4, chestLocation.getZ());
+
+                        ResultSet rs = checkStmt.executeQuery();
+                        if (rs.next() && rs.getInt(1) > 0) {
+                            sender.sendMessage(ChatColor.RED + "❌ Este baú já está trancado!");
+                            getLogger().warning("⚠️ Tentativa de trancar um baú já trancado: " + chestLocation);
+                            return;
+                        }
+                    }
+
+                    // 🔒 Inserção no banco de dados com prevenção de duplicação
+                    try (PreparedStatement stmt = conn.prepareStatement(
+                            "INSERT INTO locked_chests (world, x, y, z, password) VALUES (?, ?, ?, ?, ?) "
+                                    + "ON DUPLICATE KEY UPDATE password = VALUES(password)"
+                    )) {
+                        stmt.setString(1, chestLocation.getWorld().getName());
+                        stmt.setDouble(2, chestLocation.getX());
+                        stmt.setDouble(3, chestLocation.getY());
+                        stmt.setDouble(4, chestLocation.getZ());
+                        stmt.setString(5, password);
+
+                        int rowsInserted = stmt.executeUpdate();
+                        if (rowsInserted > 0) {
+                            lockedChests.put(chestLocation, password);
+                            getLogger().info("🔒 Baú trancado no banco e memória: " + chestLocation);
+                            sender.sendMessage(ChatColor.GREEN + "🔒 Baú trancado com sucesso!");
+                        } else {
+                            sender.sendMessage(ChatColor.RED + "❌ Falha ao trancar o baú!");
+                            getLogger().warning("⚠️ Nenhuma linha foi inserida ao trancar o baú.");
+                        }
+                    }
+                } catch (SQLException e) {
+                    getLogger().severe("❌ Erro ao salvar baú no banco: " + e.getMessage());
+                    e.printStackTrace();
+                    sender.sendMessage(ChatColor.RED + "❌ Erro ao registrar a tranca do baú!");
+                }
+            });
+
+            return true;
+        }
+
+        else if (command.getName().equalsIgnoreCase("unlockchest")) {
+            if (!(sender instanceof Player)) {
+                sender.sendMessage("❌ Este comando só pode ser usado por um jogador!");
+                return true;
+            }
+
+            Player p = (Player) sender;
+            Block block = p.getTargetBlockExact(5);
+            if (block == null || !(block.getState() instanceof Chest)) {
+                sender.sendMessage("❌ Você precisa olhar para um baú!");
+                return true;
+            }
+
+            Location chestLocation = block.getLocation();
+
+            if (args.length < 1) {
+                sender.sendMessage("❌ Uso incorreto! Formato: /unlockchest [senha]");
+                return true;
+            }
+
+            String enteredPassword = args[0];
+
+            // 🔄 Verificar senha antes de destrancar
+            CompletableFuture.runAsync(() -> {
+                try (Connection conn = getDatabaseConnection();
+                     PreparedStatement stmt = conn.prepareStatement(
+                             "SELECT password FROM locked_chests WHERE world = ? AND x = ? AND y = ? AND z = ?"
+                     )) {
+
+                    stmt.setString(1, chestLocation.getWorld().getName());
+                    stmt.setDouble(2, chestLocation.getX());
+                    stmt.setDouble(3, chestLocation.getY());
+                    stmt.setDouble(4, chestLocation.getZ());
+
+                    ResultSet rs = stmt.executeQuery();
+
+                    if (rs.next()) {
+                        String correctPassword = rs.getString("password");
+
+                        if (enteredPassword.equals(correctPassword)) {
+                            try (PreparedStatement deleteStmt = conn.prepareStatement(
+                                    "DELETE FROM locked_chests WHERE world = ? AND x = ? AND y = ? AND z = ?"
+                            )) {
+                                deleteStmt.setString(1, chestLocation.getWorld().getName());
+                                deleteStmt.setDouble(2, chestLocation.getX());
+                                deleteStmt.setDouble(3, chestLocation.getY());
+                                deleteStmt.setDouble(4, chestLocation.getZ());
+                                deleteStmt.executeUpdate();
+                            }
+
+                            lockedChests.remove(chestLocation);
+                            p.sendMessage(ChatColor.GREEN + "✅ Baú destrancado com sucesso!");
+                            getLogger().info("🔓 Baú destrancado em " + chestLocation + " por " + p.getName());
+
+                        } else {
+                            p.sendMessage(ChatColor.RED + "❌ Senha incorreta! Tente novamente.");
+                            p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
+                            getLogger().warning("⚠️ Tentativa de destrancar baú com senha incorreta por: " + p.getName());
+                        }
+                    } else {
+                        p.sendMessage(ChatColor.RED + "❌ Este baú não está trancado.");
+                    }
+
+                } catch (SQLException e) {
+                    getLogger().severe("❌ Erro ao verificar senha do baú: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            });
+
+            return true;
+        } if (!sender.hasPermission("eco.admin")) {
+            sender.sendMessage("❌ Você não tem permissão para executar este comando.");
+            return true;
+        } else if (command.getName().equalsIgnoreCase("ban")) {
+            if (args.length < 2) {
+                sender.sendMessage("❌ Uso incorreto! Formato: /ban [jogador] [motivo]");
+                return true;
+            }
+
+            String playerName = args[0];
+            String motivo = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
+
+            OfflinePlayer target = Bukkit.getOfflinePlayer(playerName);
+
+            if (target != null) {
+                target.banPlayer(motivo);
+                sender.sendMessage("✅ O jogador " + playerName + " foi banido! Motivo: " + motivo);
+                Bukkit.getServer().broadcast(Component.text(playerName + " foi banido do servidor! Motivo: " + motivo));
+            } else {
+                sender.sendMessage("❌ Jogador não encontrado.");
+            }
+            return true;
+        } else if (command.getName().equalsIgnoreCase("unban")) {
+            if (args.length < 1) {
+                sender.sendMessage("❌ Uso incorreto! Formato: /unban [jogador]");
+                return true;
+            }
+
+            String playerName = args[0];
+            Bukkit.getBanList(BanList.Type.NAME).pardon(playerName);
+            sender.sendMessage("✅ O jogador " + playerName + " foi desbanido!");
+            return true;
         } else if (command.getName().equalsIgnoreCase("invest")) {
             if (sender instanceof Player) {
                 Player player = (Player) sender;
@@ -474,6 +996,35 @@ public class SolanaDevMinecraft extends JavaPlugin implements Listener {
             return true;
         }
         return false;
+    }
+
+    public void carregarCasa(Player jogador, String nome) {
+        try (Connection conn = getDatabaseConnection();
+             PreparedStatement stmt = conn.prepareStatement("SELECT world, x, y, z FROM homes WHERE player_uuid = ? AND home_name = ?")) {
+
+            stmt.setString(1, jogador.getUniqueId().toString());
+            stmt.setString(2, nome);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                String worldName = rs.getString("world");
+                World mundo = Bukkit.getWorld(worldName);
+
+                if (mundo != null) {
+                    Location casa = new Location(mundo, rs.getDouble("x"), rs.getDouble("y"), rs.getDouble("z"));
+                    homes.put(jogador, casa);
+                    jogador.sendMessage(ChatColor.GREEN + " Sua casa '" + nome + "' foi carregada com sucesso!");
+                } else {
+                    jogador.sendMessage(ChatColor.RED + " Mundo não encontrado para a casa '" + nome + "'!");
+                    getLogger().warning("Mundo não encontrado para a casa '" + nome + "' do jogador " + jogador.getName());
+                }
+            } else {
+                jogador.sendMessage(ChatColor.RED + " Casa '" + nome + "' não encontrada!");
+            }
+        } catch (SQLException e) {
+            jogador.sendMessage(ChatColor.RED + " Erro ao carregar a casa do banco!");
+            getLogger().log(Level.SEVERE, "Erro ao carregar casa do jogador " + jogador.getName(), e);
+        }
     }
 
     private void giveLoan(Player player, double amount) {
@@ -666,7 +1217,31 @@ public class SolanaDevMinecraft extends JavaPlugin implements Listener {
             player.sendMessage("Comando inválido! Use 'give' ou 'take' ou set.");
         }
     }
+    public void registrarCasa(Player jogador, String nome, Location local) {
+        try (Connection conn = getDatabaseConnection();
+             PreparedStatement stmt = conn.prepareStatement(
+                     "INSERT INTO homes (player_uuid, home_name, world, x, y, z) VALUES (?, ?, ?, ?, ?, ?) " +
+                             "ON DUPLICATE KEY UPDATE world = VALUES(world), x = VALUES(x), y = VALUES(y), z = VALUES(z)"
+             )) {
 
+            stmt.setString(1, jogador.getUniqueId().toString());
+            stmt.setString(2, nome);
+            stmt.setString(3, local.getWorld().getName());
+            stmt.setDouble(4, local.getX());
+            stmt.setDouble(5, local.getY());
+            stmt.setDouble(6, local.getZ());
+
+            stmt.executeUpdate();
+
+            // Atualiza no mapa de casas, garantindo múltiplas casas por jogador
+            casas.computeIfAbsent(jogador, k -> new HashMap<>()).put(nome, local);
+
+            jogador.sendMessage(ChatColor.GREEN + "🏡 Casa '" + nome + "' foi registrada ou atualizada com sucesso!");
+        } catch (SQLException e) {
+            jogador.sendMessage(ChatColor.RED + "❌ Erro ao registrar ou atualizar a casa no banco!");
+            e.printStackTrace();
+        }
+    }
 
 
     private void createDatabaseAndTables() {
@@ -706,6 +1281,27 @@ public class SolanaDevMinecraft extends JavaPlugin implements Listener {
                     + "moeda VARCHAR(10) NOT NULL, "
                     + "assinatura VARCHAR(255) NOT NULL, "
                     + "data_hora DATETIME DEFAULT CURRENT_TIMESTAMP"
+                    + ");");
+
+            statement.execute("CREATE TABLE IF NOT EXISTS locked_chests ("
+                    + "id INT AUTO_INCREMENT PRIMARY KEY, "
+                    + "x DOUBLE NOT NULL, "
+                    + "y DOUBLE NOT NULL, "
+                    + "z DOUBLE NOT NULL, "
+                    + "world VARCHAR(64) NOT NULL, "
+                    + "password VARCHAR(255) NOT NULL, "
+                    + "UNIQUE(world, x, y, z)" // 🔄 Evita registros duplicados de baús na mesma localização
+                    + ");");
+
+            statement.execute("CREATE TABLE IF NOT EXISTS homes ("
+                    + "id INT AUTO_INCREMENT PRIMARY KEY, "
+                    + "player_uuid VARCHAR(36) NOT NULL, "
+                    + "home_name VARCHAR(50) NOT NULL, "
+                    + "world VARCHAR(64) NOT NULL, "
+                    + "x DOUBLE NOT NULL, "
+                    + "y DOUBLE NOT NULL, "
+                    + "z DOUBLE NOT NULL, "
+                    + "UNIQUE(player_uuid, home_name)" // Garante que cada jogador pode ter várias casas, mas impede nomes duplicados
                     + ");");
 
             getLogger().info("✅ Banco de dados e tabelas criados/verificados!");
