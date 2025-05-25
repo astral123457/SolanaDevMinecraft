@@ -2,3 +2,28 @@ Fabric Peper
 IDE VIsual Studo Code
 ./gradlew clean build --refresh-dependencies
 ./gradlew clean shadowJar
+
+
+Parece que o problema ainda é a incompatibilidade entre versões do Gradle e do Paperweight, especificamente entre 8.5 e 8.12. Seu projeto ainda está configurado para buscar dependências com a versão 8.5, enquanto você está tentando atualizar para 8.12.
+🔹 Possíveis Soluções
+1️⃣ Atualizar Gradle Manualmente
+Se gradlew wrapper --gradle-version 8.12 não funcionou, tente atualizar manualmente:
+- veja a mas recente o Gradle 8.14.1 do site oficial:
+🔗 https://gradle.org/releases/
+- Extraia o arquivo e substitua a pasta gradle dentro do seu projeto.
+- Edite o arquivo gradle/wrapper/gradle-wrapper.properties e garanta que a linha esteja assim:
+
+ distributionUrl=https://services.gradle.org/distributions/gradle-8.14.1-bin.zip
+
+.\gradlew build --refresh-dependencies
+
+PS C:\Users\astra\OneDrive\Área de Trabalho\Bau\SolanaDevMinecraftFolia> .\gradlew wrapper --gradle-version 8.14.1
+
+> Configure project :app
+paperweight-patcher v2.0.0-beta.14 (running on 'Windows 10')
+
+BUILD SUCCESSFUL in 1s
+1 actionable task: 1 up-to-date
+PS C:\Users\astra\OneDrive\Área de Trabalho\Bau\SolanaDevMinecraftFolia>
+
+
