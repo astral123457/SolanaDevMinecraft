@@ -36,6 +36,7 @@ store:
     buySimpleCompass: 150
     buySimpleFishingRod: 200
     buyAxolotlBucket: 400
+    price.nether_relic: 1000
 
 language:
   default: "pt-BR"

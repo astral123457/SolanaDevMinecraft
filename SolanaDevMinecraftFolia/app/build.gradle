@@ -1,13 +1,13 @@
 plugins {
-    id 'java'
-    id 'com.github.johnrengelman.shadow' version '8.1.1' // For packaging dependencies
+    id("java")
+    id("com.github.johnrengelman.shadow") version "8.1.1" // For packaging dependencies
 }
 
 repositories {
     mavenCentral()
-    maven { url 'https://repo.papermc.io/repository/maven-public/' }
-    maven { url 'https://jitpack.io' } // Adiciona o repositório JitPack
-    maven { url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
+    maven { url = 'https://repo.papermc.io/repository/maven-public/' }
+    maven { url = 'https://jitpack.io' } // Adiciona o repositório JitPack
+    maven { url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
 
 }
 
@@ -37,7 +37,7 @@ tasks.withType(JavaCompile) {
 
 tasks.named('shadowJar') {
     archiveBaseName.set('SolanaDevMinecraftAstralFoliaMC')
-    archiveVersion.set('v2.7.2')
+    archiveVersion.set('v2.7.3')
     archiveClassifier.set('')
     destinationDirectory.set(file("$buildDir/libs"))
     minimize()

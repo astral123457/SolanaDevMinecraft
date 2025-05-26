@@ -121,7 +121,7 @@ public class App extends JavaPlugin implements Listener {
         connectToDatabase();
         
         solana = new Solana(this, config, connection); // Passa config.yml e conexão para Solana
-        store = new Store(getConfig(), connection);
+        store = new Store(this, getConfig(), connection);
 // Passa config.yml e conexão para Store
 
         // 🔹 Cria banco e tabelas automaticamente
@@ -257,7 +257,7 @@ public void aoClicarNoBau(PlayerInteractEvent event) {
     }
 
     // 🔑 Obtém a senha da etiqueta pelo nome do item (`getDisplayName()`)
-    String senhaEtiqueta = itemNaMao.getItemMeta().getDisplayName().replace("Senha: ", "").trim();
+    String senhaEtiqueta = itemNaMao.getItemMeta().displayName().toString().replace("Senha: ", "").trim();
     String senhaCorreta = lockedChests.get(chestLocation);
 
     if (senhaEtiqueta.equals(senhaCorreta)) {
@@ -388,6 +388,7 @@ public void onPlayerDeath(PlayerDeathEvent event) {
 
 
 @Override
+@SuppressWarnings("deprecation")
 public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
 
     ensureConnection(); // Verifica a conexão antes de processar o comando
@@ -956,6 +957,55 @@ else if (command.getName().equalsIgnoreCase("homereset")) {
         } catch (SQLException e) {
             sender.sendMessage(ChatColor.RED + "❌ Erro ao resetar as casas!");
             getLogger().severe("❌ Erro ao executar TRUNCATE TABLE homes: " + e.getMessage());
+            e.printStackTrace();
+        }
+    });
+
+    return true;
+} else if (command.getName().equalsIgnoreCase("buyNetherRelic")) {
+    if (!(sender instanceof Player)) {
+        sender.sendMessage(ChatColor.RED + "❌ Este comando só pode ser usado por um jogador!");
+        return true;
+    }
+    Player player = (Player) sender;
+    if (!player.hasPermission("netherrelic.buy")) {
+        player.sendMessage(ChatColor.RED + "❌ Você não tem permissão para comprar relíquias do Nether!");
+        return true;
+    }
+    if (args.length < 1) {
+        player.sendMessage(ChatColor.RED + "❌ Uso incorreto! Formato: /buyNetherRelic <quantidade>");
+        return true;
+    }
+    try {
+        
+        // 🛠️ Chama o método para comprar relíquias do Nether
+        store.buyNetherRelic(player);
+    } catch (NumberFormatException e) {
+        player.sendMessage(ChatColor.RED + "❌ Quantidade inválida! Use um número inteiro.");
+    }
+    return true;
+}
+
+
+else if (command.getName().equalsIgnoreCase("lockchestressettingall")) {
+    if (!(sender instanceof Player) || !sender.hasPermission("lockchest.admin")) { // Apenas admins podem executar
+        sender.sendMessage("❌ Você não tem permissão para resetar os baus!");
+        return true;
+    }
+
+    CompletableFuture.runAsync(() -> {
+        try (Connection conn = getDatabaseConnection();
+             Statement stmt = conn.createStatement()) {
+
+            stmt.execute("TRUNCATE TABLE locked_chests"); // Remove todos os registros da tabela
+            casas.clear(); // Limpa o cache de casas armazenado no plugin
+
+            sender.sendMessage(ChatColor.RED + "⚠️ TODAS as casas foram resetadas pelo administrador!");
+            getLogger().warning("⚠️ O administrador " + sender.getName() + " resetou todas os baus!");
+
+        } catch (SQLException e) {
+            sender.sendMessage(ChatColor.RED + "❌ Erro ao resetar as casas!");
+            getLogger().severe("❌ Erro ao executar TRUNCATE TABLE locked_chests: " + e.getMessage());
             e.printStackTrace();
         }
     });

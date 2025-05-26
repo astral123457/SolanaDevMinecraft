@@ -114,7 +114,7 @@ public class Solana {
         }
 
         // 🖨️ Exibir saldo no console
-        System.out.println("Saldo obtido para " + playerName + ": " + balance);
+        LOGGER.info("Saldo obtido para " + playerName + ": " + balance);
 
     } catch (SQLException e) {
         e.printStackTrace(); // Mostra erro no console
@@ -225,7 +225,7 @@ private String executeHttpGet(String urlString) throws Exception {
 
             // Registra a transação no banco de dados
            try (PreparedStatement stmt = this.connection.prepareStatement(
-                "INSERT INTO livro_caixa (jogador, tipo_transacao, valor, moeda, assinatura) VALUES (?, ?, ?, ?, ?)"
+                "INSERT INTO livro_caixa (jogador, tipo_transacao, valor, moeda, assinatura, data_hora) VALUES (?, ?, ?, ?, ?, NOW())"
             )) {
 
                 stmt.setString(1, sender.getName());
@@ -274,7 +274,7 @@ private void sendTransactionMessage(Player sender, String recipient, double amou
     // Executar a inserção no banco de dados de forma assíncrona
     CompletableFuture.runAsync(() -> {
         try (PreparedStatement statement = connection.prepareStatement(
-                "INSERT INTO livro_caixa (jogador, tipo_transacao, valor, moeda, assinatura, data) VALUES (?, ?, ?, ?, ?, NOW())"
+                "INSERT INTO livro_caixa (jogador, tipo_transacao, valor, moeda, assinatura, data_hora) VALUES (?, ?, ?, ?, ?, NOW())"
         )) {
             statement.setString(1, player);
             statement.setString(2, transactionType);
@@ -372,9 +372,9 @@ private void sendTransactionMessage(Player sender, String recipient, double amou
 
     if (walletAddress != null) {
         // Loga o endereço da carteira no console do servidor
-        System.out.println("Endereço da carteira para " + username + ": " + walletAddress);
+        LOGGER.info("Endereço da carteira para " + username + ": " + walletAddress);
     } else {
-        System.out.println("Nenhuma carteira encontrada para o jogador: " + username);
+        LOGGER.info("Nenhuma carteira encontrada para o jogador: " + username);
     }
 }
 
@@ -792,13 +792,13 @@ public static String convertPrivateKeyToHex(String jsonResponse) {
             Matcher matcher = pattern.matcher(jsonResponse);
 
             if (!matcher.find()) {
-                System.err.println("[ERRO] Campo 'output' não encontrado ou mal formatado!");
+                LOGGER.severe("[ERRO] Campo 'output' não encontrado ou mal formatado!");
                 return null;
             }
 
             // 🔍 Captura os números extraídos da chave privada
             String numbersOnly = matcher.group(1).trim();
-            System.out.println("[DEBUG] Números Extraídos: " + numbersOnly);
+            LOGGER.info("[DEBUG] Números Extraídos: " + numbersOnly);
 
             // 🔹 Divide os números separados por vírgula e converte para um array de bytes
             String[] numberStrings = numbersOnly.split(",");
@@ -814,7 +814,7 @@ public static String convertPrivateKeyToHex(String jsonResponse) {
                 hexString.append(String.format("%02x", b));
             }
 
-            System.out.println("[DEBUG] Chave privada em HEX: " + hexString.toString());
+            LOGGER.info("[DEBUG] Chave privada em HEX: " + hexString.toString());
             return hexString.toString();
 
         } catch (Exception e) {
@@ -826,7 +826,7 @@ public static String convertPrivateKeyToHex(String jsonResponse) {
     // 📌 Método para ajustar o saldo do jogador do sql do plugin EssentialsX (nao e necessario mas tenta mater os dados iguais do sql e do mysql)
 
     public void ajustarSaldo(Player player, String tipo, double valor) {
-    System.out.println("DEBUG (ajustarSaldo): Iniciado para " + player.getName() + ", tipo: " + tipo + ", quantia: " + valor);
+    LOGGER.info("DEBUG (ajustarSaldo): Iniciado para " + player.getName() + ", tipo: " + tipo + ", quantia: " + valor);
 
     // *** NOVA LINHA DE DEBUG: Verificar se 'plugin' é nulo ***
     if (this.plugin == null) {
@@ -837,7 +837,7 @@ player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f,
         // Saia do método para evitar um NullPointerException
         return;
     }
-    System.out.println("DEBUG (ajustarSaldo): Instância do plugin está OK.");
+    LOGGER.info("DEBUG (ajustarSaldo): Instância do plugin está OK.");
 
     final String playerName = player.getName(); // Captura o nome do jogador
 
@@ -845,31 +845,31 @@ player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f,
         // Bloco try-catch para capturar exceções do próprio runTaskLater
         Bukkit.getScheduler().runTaskLater(this.plugin, () -> { // Use 'this.plugin' para clareza
             try {
-                System.out.println("DEBUG (ajustarSaldo - Main Thread): Executando comando eco para " + playerName + "...");
+                LOGGER.info("DEBUG (ajustarSaldo - Main Thread): Executando comando eco para " + playerName + "...");
                 if (tipo.equalsIgnoreCase("give")) {
                     Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco give " + playerName + " " + valor);
-                    System.out.println("DEBUG (ajustarSaldo - Main Thread): Executado 'eco give " + playerName + " " + valor + "'");
+                    LOGGER.info("DEBUG (ajustarSaldo - Main Thread): Executado 'eco give " + playerName + " " + valor + "'");
                 } else if (tipo.equalsIgnoreCase("take")) {
                     Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco take " + playerName + " " + valor);
-                    System.out.println("DEBUG (ajustarSaldo - Main Thread): Executado 'eco take " + playerName + " " + valor + "'");
+                    LOGGER.info("DEBUG (ajustarSaldo - Main Thread): Executado 'eco take " + playerName + " " + valor + "'");
                 } else if (tipo.equalsIgnoreCase("set")) {
                     Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco set " + playerName + " " + valor);
-                    System.out.println("DEBUG (ajustarSaldo - Main Thread): Executado 'eco set " + playerName + " " + valor + "'");
+                    LOGGER.info("DEBUG (ajustarSaldo - Main Thread): Executado 'eco set " + playerName + " " + valor + "'");
                 } else {
                     Player onlinePlayer = Bukkit.getPlayer(playerName);
                     if (onlinePlayer != null && onlinePlayer.isOnline()) {
                         onlinePlayer.sendMessage("Comando inválido! Use 'give' ou 'take' ou set.");
                     }
-                    System.out.println("DEBUG (ajustarSaldo - Main Thread): Tipo de ajuste inválido para " + playerName + ": " + tipo);
+                    LOGGER.info("DEBUG (ajustarSaldo - Main Thread): Tipo de ajuste inválido para " + playerName + ": " + tipo);
                 }
-                System.out.println("DEBUG (ajustarSaldo - Main Thread): Comando eco despachado com sucesso.");
+                LOGGER.info("DEBUG (ajustarSaldo - Main Thread): Comando eco despachado com sucesso.");
             } catch (Exception e) {
                 System.err.println("ERROR (ajustarSaldo - Main Thread - Inner): Erro ao despachar comando eco para " + playerName);
                 e.printStackTrace(); // Imprime o stack trace completo da exceção interna!
             }
         }, 0L); // 0L significa executar na próxima tick disponível
 
-        System.out.println("DEBUG (ajustarSaldo): Chamada para agendador da thread principal finalizada.");
+        LOGGER.info("DEBUG (ajustarSaldo): Chamada para agendador da thread principal finalizada.");
 
     } catch (Exception e) {
         // Este catch pegará exceções se o próprio agendamento falhar (muito raro, mas possível)
@@ -895,7 +895,7 @@ player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f,
             }
             return;
         } else {
-            System.out.println("Nenhum resultado encontrado!");
+            LOGGER.info("Nenhum resultado encontrado!");
             }
 
 
@@ -1031,12 +1031,12 @@ player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f,
 
         String response = executeHttpGet(url);
 
-        System.out.println("[DEBUG SOLANA REFUND RESPONSE]: " + response);
+        LOGGER.info("[DEBUG SOLANA REFUND RESPONSE]: " + response);
 
         // 🔹 Registrar devolução no banco e enviar mensagem ao jogador
         if (response.contains("\"status\":\"success\"")) {
             stmt = connection.prepareStatement(
-                "INSERT INTO livro_caixa (jogador, tipo_transacao, valor, moeda, assinatura) VALUES (?, ?, ?, ?, ?)"
+                "INSERT INTO livro_caixa (jogador, tipo_transacao, valor, moeda, assinatura, data_hora) VALUES (?, ?, ?, ?, ?, NOW())"
             );
             stmt.setString(1, playerName);
             stmt.setString(2, "reembolso");

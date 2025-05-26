@@ -40,21 +40,35 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.Sound;
 import org.bukkit.Particle;
 import java.util.concurrent.CompletableFuture;
+import io.papermc.paper.threadedregions.scheduler.GlobalRegionScheduler;
+import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerItemHeldEvent;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
+
+
+
+
+
+
 
 public class Store {
     private final Connection connection;
     private final FileConfiguration config;
     private static Economy economy;
-    private JavaPlugin plugin;
+    private final JavaPlugin plugin; // 🔹 Corrigido: Agora 'plugin' é final e corretamente inicializado.
 
-
-
-    // 🔹 Construtor correto que inicializa 'config' e 'connection'
-    public Store(FileConfiguration config, Connection connection) {
+    // 🔹 Construtor correto que inicializa 'config', 'connection' e 'plugin'
+    public Store(JavaPlugin plugin, FileConfiguration config, Connection connection) {
+        this.plugin = plugin;   // 🔹 Corrigido: Agora 'plugin' recebe a instância correta!
         this.config = config;
-        this.plugin = plugin;
         this.connection = connection;
     }
+
 
     @SuppressWarnings("deprecation")
     public String getPlayerLanguage(Player player) {
@@ -100,315 +114,425 @@ public class Store {
     return false;
     }
 
+    public void buyNetherRelic(Player player) {
+    int price = config.getInt("store.price.nether_relic", 25000); // 🔹 Obtém preço do config.yml, com fallback de 25000
+    if (!processPurchase(player, price)) return; // 🔹 Interrompe se a compra falhar
+
+    // 🔹 Cria o capacete especial da Relíquia do Nether
+    ItemStack netherRelic = new ItemStack(Material.GOLDEN_HELMET);
+    ItemMeta meta = netherRelic.getItemMeta();
+    if (meta != null) {
+        meta.setUnbreakable(true); // 🔥 Torna o capacete indestrutível
+        meta.displayName(Component.text("Relíquia do Nether").color(NamedTextColor.GOLD)); // 🔥 Define o nome personalizado
+        meta.addEnchant(Enchantment.PROTECTION_FIRE, 4, true); // 🔥 Proteção contra fogo máxima
+        meta.addEnchant(Enchantment.MENDING, 1, true); // 🔥 Reparação automática
+        meta.addEnchant(Enchantment.DURABILITY, 3, true); // 🔥 Resistência extra (equivale a UNBREAKING)
+        netherRelic.setItemMeta(meta);
+    }
+
+    // 🔹 Entrega o item dentro da região global para evitar problemas no Folia
+    plugin.getServer().getGlobalRegionScheduler().execute(plugin, () -> {
+        player.getInventory().addItem(netherRelic);
+    });
+
+    // 🔹 Mensagem para o jogador
+    String lang = getPlayerLanguage(player);
+    String message = switch (lang) {
+        case "pt-BR" -> "🔥 Você comprou a Relíquia do Nether por $" + price + "!";
+        case "es-ES" -> "🔥 ¡Has comprado la Reliquia del Nether por $" + price + "!";
+        default -> "🔥 You bought the Nether Relic for $" + price + "!";
+    };
+
+    player.sendMessage(Component.text(message).color(NamedTextColor.GOLD));
+}
+
+// 🔥 Listener para conceder imunidade ao fogo ao usar a Relíquia do Nether
+public class NetherRelicListener implements Listener {
+    @EventHandler
+    public void onEquipHelmet(PlayerItemHeldEvent event) {
+        Player player = event.getPlayer();
+        ItemStack helmet = player.getInventory().getHelmet();
+
+        // 🔹 Verifica se o jogador está usando a Relíquia do Nether
+        if (helmet != null && helmet.hasItemMeta() && helmet.getItemMeta().displayName().equals(Component.text("Relíquia do Nether").color(NamedTextColor.GOLD))) {
+            // 🔥 Dá resistência ao fogo sempre que o capacete estiver equipado
+            player.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, Integer.MAX_VALUE, 0));
+        } else {
+            // ❌ Remove o efeito se o capacete for removido
+            player.removePotionEffect(PotionEffectType.FIRE_RESISTANCE);
+        }
+    }
+}
+
+
+
+
+
     // 📌 Compra de Maçã Encantada
     public void buyEnchantedApple(Player player) {
-    System.out.println("DEBUG (buyEnchantedApple): Iniciado para " + player.getName()); // <-- Use System.out.println
-    int price = config.getInt("store.price.apple");
-    System.out.println("DEBUG (buyEnchantedApple): Preço da maçã lido: " + price); // <-- Use System.out.println
-    String lang = getPlayerLanguage(player); // Se getPlayerLanguage está em outra classe, o log interno dela precisa ser ajustado
-    player.sendMessage("🍳. Lang= " + lang); // Esta mensagem aparece?
+    System.out.println("DEBUG (buyEnchantedApple): Iniciado para " + player.getName());
 
-    System.out.println("DEBUG (buyEnchantedApple): Chamando processPurchase..."); // <-- Use System.out.println
-    if (processPurchase(player, price)) {
-        System.out.println("DEBUG (buyEnchantedApple): Compra processada com sucesso. Adicionando item..."); // <-- Use System.out.println
-        player.getInventory().addItem(new ItemStack(Material.ENCHANTED_GOLDEN_APPLE, 1));
-        System.out.println("DEBUG (buyEnchantedApple): Item adicionado. Ajustando saldo..."); // <-- Use System.out.println
-        //ajustarSaldo(player, "take", price);
-        System.out.println("DEBUG (buyEnchantedApple): Saldo ajustado. Enviando mensagem final..."); // <-- Use System.out.println
-        player.sendMessage(
-            lang.equals("pt-BR") ?
-            Component.text("🍎 Você comprou uma Maçã Encantada por $" + price + "!", NamedTextColor.GOLD) :
-            lang.equals("es-ES") ?
-            Component.text("🍎 ¡Has comprado una Manzana Encantada por $" + price + "!", NamedTextColor.GOLD) :
-            Component.text("🍎 You bought an Enchanted Apple for $" + price + "!", NamedTextColor.GOLD)
-        );
-        System.out.println("DEBUG (buyEnchantedApple): Mensagem final enviada."); // <-- Use System.out.println
-    } else {
-        System.out.println("DEBUG (buyEnchantedApple): processPurchase retornou false. Mensagem de compra não enviada."); // <-- Use System.out.println
+    int price = config.getInt("store.price.apple", 5000); // 🔹 Fallback para evitar erro caso config falhe
+    System.out.println("DEBUG (buyEnchantedApple): Preço da maçã lido: " + price);
+
+    String lang = getPlayerLanguage(player);
+    System.out.println("DEBUG (buyEnchantedApple): Idioma identificado: " + lang);
+
+    // Envia uma mensagem inicial ao jogador
+    player.sendMessage(Component.text("🍳. Lang= " + lang, NamedTextColor.YELLOW));
+
+    System.out.println("DEBUG (buyEnchantedApple): Chamando processPurchase...");
+    if (!processPurchase(player, price)) {
+        System.out.println("DEBUG (buyEnchantedApple): Compra falhou. Interrompendo processo.");
+        return;
     }
-    System.out.println("DEBUG (buyEnchantedApple): Finalizado."); // <-- Use System.out.println
+
+    System.out.println("DEBUG (buyEnchantedApple): Compra processada com sucesso. Adicionando item...");
+
+    // 🔹 Adiciona a maçã encantada ao inventário do jogador dentro da região global
+    plugin.getServer().getGlobalRegionScheduler().execute(plugin, () -> {
+        player.getInventory().addItem(new ItemStack(Material.ENCHANTED_GOLDEN_APPLE, 1));
+    });
+
+    System.out.println("DEBUG (buyEnchantedApple): Item adicionado. Ajustando saldo...");
+    //ajustarSaldo(player, "take", price);
+
+    // 🔹 Mensagem para o jogador
+    String message = switch (lang) {
+        case "pt-BR" -> "🍎 Você comprou uma Maçã Encantada por $" + price + "!";
+        case "es-ES" -> "🍎 ¡Has comprado una Manzana Encantada por $" + price + "!";
+        default -> "🍎 You bought an Enchanted Apple for $" + price + "!";
+    };
+
+    player.sendMessage(Component.text(message).color(NamedTextColor.GOLD));
+    System.out.println("DEBUG (buyEnchantedApple): Mensagem final enviada.");
+    System.out.println("DEBUG (buyEnchantedApple): Finalizado.");
 }
+
+
 
     // 📌 Compra de Esmeralda
     public void buyEmerald(Player player) {
-        int price = config.getInt("store.price.emerald"); // 🔹 Obtém preço 
-        //int price = 1000;
-        if (processPurchase(player, price)) {
-            player.getInventory().addItem(new ItemStack(Material.EMERALD, 1));
-            // Ajusta o saldo do jogador após a compra
-        //ajustarSaldo(player, "take", price);
+    int price = config.getInt("store.price.emerald", 1000); // 🔹 Obtém preço do config.yml, com fallback de 1000
+    if (!processPurchase(player, price)) return; // 🔹 Interrompe se a compra falhar
 
-            String lang = getPlayerLanguage(player);
-            player.sendMessage(
-                lang.equals("pt-BR") ? 
-                Component.text("💎 Você comprou uma Esmeralda por $" + price + "!", NamedTextColor.GOLD) :
-                lang.equals("es-ES") ? 
-                Component.text("💎 ¡Has comprado una Esmeralda por $" + price + "!", NamedTextColor.GOLD) :
-                Component.text("💎 You bought an Emerald for $" + price + "!", NamedTextColor.GOLD)
-            );
-        }
-    }
+    // 🔹 Adiciona a esmeralda ao inventário do jogador dentro da região global
+    plugin.getServer().getGlobalRegionScheduler().execute(plugin, () -> {
+        player.getInventory().addItem(new ItemStack(Material.EMERALD, 1));
+    });
+
+    // 🔹 Mensagem para o jogador
+    String lang = getPlayerLanguage(player);
+    String message = switch (lang) {
+        case "pt-BR" -> "💎 Você comprou uma Esmeralda por $" + price + "!";
+        case "es-ES" -> "💎 ¡Has comprado una Esmeralda por $" + price + "!";
+        default -> "💎 You bought an Emerald for $" + price + "!";
+    };
+
+    player.sendMessage(Component.text(message).color(NamedTextColor.GOLD));
+}
+
+
 
     // 📌 Compra de Bloco de Ouro
 
     public void buyGoldBlock(Player player) {
-        int price = config.getInt("store.price.buyGoldBlock"); // 🔹 Obtém preço 
-        //int price = 10000;
-        if (processPurchase(player, price)) {
-            player.getInventory().addItem(new ItemStack(Material.GOLD_BLOCK, 1));
-            // Ajusta o saldo do jogador após a compra
-        //ajustarSaldo(player, "take", price);
+    int price = config.getInt("store.price.buyGoldBlock", 10000); // 🔹 Obtém preço do config.yml, com fallback de 10000
+    if (!processPurchase(player, price)) return; // 🔹 Interrompe se a compra falhar
 
-            String lang = getPlayerLanguage(player);
-            player.sendMessage(
-                lang.equals("pt-BR") ? 
-                Component.text("🏆 Você comprou um Bloco de Ouro por $" + price + "!", NamedTextColor.GOLD) :
-                lang.equals("es-ES") ? 
-                Component.text("🏆 ¡Has comprado un Bloque de Oro por $" + price + "!", NamedTextColor.GOLD) :
-                Component.text("🏆 You bought a Gold Block for $" + price + "!", NamedTextColor.GOLD)
-            );
-        }
-    }
+    // 🔹 Adiciona o bloco de ouro ao inventário do jogador dentro da região global
+    plugin.getServer().getGlobalRegionScheduler().execute(plugin, () -> {
+        player.getInventory().addItem(new ItemStack(Material.GOLD_BLOCK, 1));
+    });
+
+    // 🔹 Mensagem para o jogador
+    String lang = getPlayerLanguage(player);
+    String message = switch (lang) {
+        case "pt-BR" -> "🏆 Você comprou um Bloco de Ouro por $" + price + "!";
+        case "es-ES" -> "🏆 ¡Has comprado un Bloque de Oro por $" + price + "!";
+        default -> "🏆 You bought a Gold Block for $" + price + "!";
+    };
+
+    player.sendMessage(Component.text(message).color(NamedTextColor.GOLD));
+}
+
+
 
     // 📌 Compra de Bloco de Diamante
 
     public void buyDiamondBlock(Player player) {
-        //int price = 20000;
-        int price = config.getInt("store.price.buyDiamondBlock"); // 🔹 Obtém preço 
-        if (processPurchase(player, price)) {
-            player.getInventory().addItem(new ItemStack(Material.DIAMOND_BLOCK, 1));
-            // Ajusta o saldo do jogador após a compra
-        //ajustarSaldo(player, "take", price);
+    int price = config.getInt("store.price.buyDiamondBlock", 20000); // 🔹 Obtém preço do config.yml, com fallback de 20000
+    if (!processPurchase(player, price)) return; // 🔹 Interrompe se a compra falhar
 
-            String lang = getPlayerLanguage(player);
-            player.sendMessage(
-                lang.equals("pt-BR") ? 
-                Component.text("💎 Você comprou um Bloco de Diamante por $" + price + "!", NamedTextColor.GOLD) :
-                lang.equals("es-ES") ? 
-                Component.text("💎 ¡Has comprado un Bloque de Diamante por $" + price + "!", NamedTextColor.GOLD) :
-                Component.text("💎 You bought a Diamond Block for $" + price + "!", NamedTextColor.GOLD)
-            );
-        }
-    }
+    // 🔹 Adiciona o bloco de diamante ao inventário do jogador dentro da região global
+    plugin.getServer().getGlobalRegionScheduler().execute(plugin, () -> {
+        player.getInventory().addItem(new ItemStack(Material.DIAMOND_BLOCK, 1));
+    });
+
+    // 🔹 Mensagem para o jogador
+    String lang = getPlayerLanguage(player);
+    String message = switch (lang) {
+        case "pt-BR" -> "💎 Você comprou um Bloco de Diamante por $" + price + "!";
+        case "es-ES" -> "💎 ¡Has comprado un Bloque de Diamante por $" + price + "!";
+        default -> "💎 You bought a Diamond Block for $" + price + "!";
+    };
+
+    player.sendMessage(Component.text(message).color(NamedTextColor.GOLD));
+}
+
+
 
 
     // 📌 Compra de Bloco de Esmeralda
     public void buyEmeraldBlock(Player player) {
-        
-        int price = config.getInt("store.price.buyEmeraldBlock"); // 🔹 Obtém preço 
-        //int price = 50000;
-        if (processPurchase(player, price)) {
-            player.getInventory().addItem(new ItemStack(Material.EMERALD_BLOCK, 1));
-            // Ajusta o saldo do jogador após a compra
-        //ajustarSaldo(player, "take", price);
+    int price = config.getInt("store.price.buyEmeraldBlock", 50000); // 🔹 Obtém preço do config.yml, com fallback de 50000
+    if (!processPurchase(player, price)) return; // 🔹 Interrompe se a compra falhar
 
-            String lang = getPlayerLanguage(player);
-            player.sendMessage(
-                lang.equals("pt-BR") ? 
-                Component.text("💎 Você comprou um Bloco de Esmeralda por $" + price + "!", NamedTextColor.GOLD) :
-                lang.equals("es-ES") ? 
-                Component.text("💎 ¡Has comprado un Bloque de Esmeralda por $" + price + "!", NamedTextColor.GOLD) :
-                Component.text("💎 You bought an Emerald Block for $" + price + "!", NamedTextColor.GOLD)
-            );
-        }
-    }
+    // 🔹 Adiciona o bloco de esmeralda ao inventário do jogador dentro da região global
+    plugin.getServer().getGlobalRegionScheduler().execute(plugin, () -> {
+        player.getInventory().addItem(new ItemStack(Material.EMERALD_BLOCK, 1));
+    });
+
+    // 🔹 Mensagem para o jogador
+    String lang = getPlayerLanguage(player);
+    String message = switch (lang) {
+        case "pt-BR" -> "💎 Você comprou um Bloco de Esmeralda por $" + price + "!";
+        case "es-ES" -> "💎 ¡Has comprado un Bloque de Esmeralda por $" + price + "!";
+        default -> "💎 You bought an Emerald Block for $" + price + "!";
+    };
+
+    player.sendMessage(Component.text(message).color(NamedTextColor.GOLD));
+}
+
+
 
     // 📌 Compra de Bloco de Netherite
     public void buyNetheriteBlock(Player player) {
-        int price = config.getInt("store.price.buyNetheriteBlock");
-        //int price = 100000;
-        if (processPurchase(player, price)) {
-            //player.getInventory().addItem(new ItemStack(Material.NETHERITE_BLOCK, 1));
-            player.getInventory().addItem(new ItemStack(Material.ANCIENT_DEBRIS, 10));
-            player.getInventory().addItem(new ItemStack(Material.NETHERITE_UPGRADE_SMITHING_TEMPLATE, 1));
-            // Ajusta o saldo do jogador após a compra
-        //ajustarSaldo(player, "take", price);
+    int price = config.getInt("store.price.buyNetheriteBlock", 100000); // 🔹 Obtém preço do config.yml, com fallback de 100000
+    if (!processPurchase(player, price)) return; // 🔹 Interrompe se a compra falhar
 
-            String lang = getPlayerLanguage(player);
-            player.sendMessage(
-                lang.equals("pt-BR") ? 
-                Component.text("💎 Você comprou um Bloco de Netherite por $" + price + "!", NamedTextColor.GOLD) :
-                lang.equals("es-ES") ? 
-                Component.text("💎 ¡Has comprado un Bloque de Netherite por $" + price + "!", NamedTextColor.GOLD) :
-                Component.text("💎 You bought a Netherite Block for $" + price + "!", NamedTextColor.GOLD)
-            );
-        }
-    }
+    // 🔹 Adiciona os itens ao inventário do jogador dentro da região global
+    plugin.getServer().getGlobalRegionScheduler().execute(plugin, () -> {
+        player.getInventory().addItem(new ItemStack(Material.ANCIENT_DEBRIS, 10));
+        player.getInventory().addItem(new ItemStack(Material.NETHERITE_UPGRADE_SMITHING_TEMPLATE, 1));
+    });
+
+    // 🔹 Mensagem para o jogador
+    String lang = getPlayerLanguage(player);
+    String message = switch (lang) {
+        case "pt-BR" -> "💎 Você comprou um Bloco de Netherite por $" + price + "!";
+        case "es-ES" -> "💎 ¡Has comprado un Bloque de Netherite por $" + price + "!";
+        default -> "💎 You bought a Netherite Block for $" + price + "!";
+    };
+
+    player.sendMessage(Component.text(message).color(NamedTextColor.GOLD));
+}
+
+
 
     // 📌 Compra de Bloco de Ferro
     public void buyIronBlock(Player player) {
-        int price = config.getInt("store.price.buyIronBlock");
-        //int price = 5000;
-        if (processPurchase(player, price)) {
-            player.getInventory().addItem(new ItemStack(Material.IRON_BLOCK, 1));
-            // Ajusta o saldo do jogador após a compra
-        //ajustarSaldo(player, "take", price);
+    int price = config.getInt("store.price.buyIronBlock", 5000); // 🔹 Obtém preço do config.yml, com fallback de 5000
+    if (!processPurchase(player, price)) return; // 🔹 Interrompe se a compra falhar
 
-            String lang = getPlayerLanguage(player);
-            player.sendMessage(
-                lang.equals("pt-BR") ? 
-                Component.text("🏆 Você comprou um Bloco de Ferro por $" + price + "!", NamedTextColor.GOLD) :
-                lang.equals("es-ES") ? 
-                Component.text("🏆 ¡Has comprado un Bloque de Hierro por $" + price + "!", NamedTextColor.GOLD) :
-                Component.text("🏆 You bought an Iron Block for $" + price + "!", NamedTextColor.GOLD)
-            );
-        }
-    }
+    // 🔹 Adiciona o bloco de ferro ao inventário do jogador dentro da região global
+    plugin.getServer().getGlobalRegionScheduler().execute(plugin, () -> {
+        player.getInventory().addItem(new ItemStack(Material.IRON_BLOCK, 1));
+    });
+
+    // 🔹 Mensagem para o jogador
+    String lang = getPlayerLanguage(player);
+    String message = switch (lang) {
+        case "pt-BR" -> "🏆 Você comprou um Bloco de Ferro por $" + price + "!";
+        case "es-ES" -> "🏆 ¡Has comprado un Bloque de Hierro por $" + price + "!";
+        default -> "🏆 You bought an Iron Block for $" + price + "!";
+    };
+
+    player.sendMessage(Component.text(message).color(NamedTextColor.GOLD));
+}
+
+
 
     // 📌 Compra de Bloco de Lapis
     public void buyLapisBlock(Player player) {
-        int price = config.getInt("store.price.lapis");
-        //int price = 1000;
-        if (processPurchase(player, price)) {
-            player.getInventory().addItem(new ItemStack(Material.LAPIS_BLOCK, 1));
-            // Ajusta o saldo do jogador após a compra
-        //ajustarSaldo(player, "take", price);
+    int price = config.getInt("store.price.lapis", 1000); // 🔹 Obtém preço do config.yml, com fallback de 1000
+    if (!processPurchase(player, price)) return; // 🔹 Interrompe se a compra falhar
 
-            String lang = getPlayerLanguage(player);
-            player.sendMessage(
-                lang.equals("pt-BR") ? 
-                Component.text("💎 Você comprou um Bloco de Lápis por $" + price + "!", NamedTextColor.GOLD) :
-                lang.equals("es-ES") ? 
-                Component.text("💎 ¡Has comprado un Bloque de Lápiz por $" + price + "!", NamedTextColor.GOLD) :
-                Component.text("💎 You bought a Lapis Block for $" + price + "!", NamedTextColor.GOLD)
-            );
-        }
-    }
+    // 🔹 Adiciona o bloco de lápis-lazúli ao inventário do jogador dentro da região global
+    plugin.getServer().getGlobalRegionScheduler().execute(plugin, () -> {
+        player.getInventory().addItem(new ItemStack(Material.LAPIS_BLOCK, 1));
+    });
+
+    // 🔹 Mensagem para o jogador
+    String lang = getPlayerLanguage(player);
+    String message = switch (lang) {
+        case "pt-BR" -> "💎 Você comprou um Bloco de Lápis-lazúli por $" + price + "!";
+        case "es-ES" -> "💎 ¡Has comprado un Bloque de Lapislázuli por $" + price + "!";
+        default -> "💎 You bought a Lapis Block for $" + price + "!";
+    };
+
+    player.sendMessage(Component.text(message).color(NamedTextColor.GOLD));
+}
+
+
 
     // 📌 Compra de Bloco de Redstone
     public void buyRedstoneBlock(Player player) {
-        int price = config.getInt("store.price.redstone");
-        //int price = 1000;
-        if (processPurchase(player, price)) {
-            player.getInventory().addItem(new ItemStack(Material.REDSTONE_BLOCK, 1));
-            // Ajusta o saldo do jogador após a compra
-        //ajustarSaldo(player, "take", price);
+    int price = config.getInt("store.price.redstone", 1000); // 🔹 Obtém preço do config.yml, com fallback de 1000
+    if (!processPurchase(player, price)) return; // 🔹 Interrompe se a compra falhar
 
-            String lang = getPlayerLanguage(player);
-            player.sendMessage(
-                lang.equals("pt-BR") ? 
-                Component.text("💎 Você comprou um Bloco de Redstone por $" + price + "!", NamedTextColor.GOLD) :
-                lang.equals("es-ES") ? 
-                Component.text("💎 ¡Has comprado un Bloque de Redstone por $" + price + "!", NamedTextColor.GOLD) :
-                Component.text("💎 You bought a Redstone Block for $" + price + "!", NamedTextColor.GOLD)
-            );
-        }
-    }
+    // 🔹 Adiciona o bloco de Redstone ao inventário do jogador dentro da região global
+    plugin.getServer().getGlobalRegionScheduler().execute(plugin, () -> {
+        player.getInventory().addItem(new ItemStack(Material.REDSTONE_BLOCK, 1));
+    });
+
+    // 🔹 Mensagem para o jogador
+    String lang = getPlayerLanguage(player);
+    String message = switch (lang) {
+        case "pt-BR" -> "💎 Você comprou um Bloco de Redstone por $" + price + "!";
+        case "es-ES" -> "💎 ¡Has comprado un Bloque de Redstone por $" + price + "!";
+        default -> "💎 You bought a Redstone Block for $" + price + "!";
+    };
+
+    player.sendMessage(Component.text(message).color(NamedTextColor.GOLD));
+}
+
+
 
     // 📌 Compra de Bloco de Quartzo
     public void buyQuartzBlock(Player player) {
-        int price = config.getInt("store.price.quartz");
-        //int price = 1000;
-        if (processPurchase(player, price)) {
-            player.getInventory().addItem(new ItemStack(Material.QUARTZ_BLOCK, 1));
-            // Ajusta o saldo do jogador após a compra
-        //ajustarSaldo(player, "take", price);
+    int price = config.getInt("store.price.quartz", 1000); // 🔹 Obtém preço do config.yml, com fallback de 1000
+    if (!processPurchase(player, price)) return; // 🔹 Interrompe se a compra falhar
 
-            String lang = getPlayerLanguage(player);
-            player.sendMessage(
-                lang.equals("pt-BR") ? 
-                Component.text("💎 Você comprou um Bloco de Quartzo por $" + price + "!", NamedTextColor.GOLD) :
-                lang.equals("es-ES") ? 
-                Component.text("💎 ¡Has comprado un Bloque de Quartzo por $" + price + "!", NamedTextColor.GOLD) :
-                Component.text("💎 You bought a Quartz Block for $" + price + "!", NamedTextColor.GOLD)
-            );
-        }
-    }
+    // 🔹 Adiciona o bloco de quartzo ao inventário do jogador dentro da região global
+    plugin.getServer().getGlobalRegionScheduler().execute(plugin, () -> {
+        player.getInventory().addItem(new ItemStack(Material.QUARTZ_BLOCK, 1));
+    });
+
+    // 🔹 Mensagem para o jogador
+    String lang = getPlayerLanguage(player);
+    String message = switch (lang) {
+        case "pt-BR" -> "💎 Você comprou um Bloco de Quartzo por $" + price + "!";
+        case "es-ES" -> "💎 ¡Has comprado un Bloque de Cuarzo por $" + price + "!";
+        default -> "💎 You bought a Quartz Block for $" + price + "!";
+    };
+
+    player.sendMessage(Component.text(message).color(NamedTextColor.GOLD));
+}
+
+
 
     // 📌 Compra de Bloco de Argila
     public void buyClayBlock(Player player) {
-        int price = config.getInt("store.price.clay");
-        //int price = 1000;
-        if (processPurchase(player, price)) {
-            player.getInventory().addItem(new ItemStack(Material.CLAY, 1));
-            // Ajusta o saldo do jogador após a compra
-        //ajustarSaldo(player, "take", price);
+    int price = config.getInt("store.price.clay", 1000); // 🔹 Obtém preço do config.yml, com fallback de 1000
+    if (!processPurchase(player, price)) return; // 🔹 Interrompe se a compra falhar
 
-            String lang = getPlayerLanguage(player);
-            player.sendMessage(
-                lang.equals("pt-BR") ? 
-                Component.text("💎 Você comprou um Bloco de Argila por $" + price + "!", NamedTextColor.GOLD) :
-                lang.equals("es-ES") ? 
-                Component.text("💎 ¡Has comprado un Bloque de Argila por $" + price + "!", NamedTextColor.GOLD) :
-                Component.text("💎 You bought a Clay Block for $" + price + "!", NamedTextColor.GOLD)
-            );
-        }
-    }
+    // 🔹 Adiciona o bloco de argila ao inventário do jogador dentro da região global
+    plugin.getServer().getGlobalRegionScheduler().execute(plugin, () -> {
+        player.getInventory().addItem(new ItemStack(Material.CLAY, 1));
+    });
+
+    // 🔹 Mensagem para o jogador
+    String lang = getPlayerLanguage(player);
+    String message = switch (lang) {
+        case "pt-BR" -> "💎 Você comprou um Bloco de Argila por $" + price + "!";
+        case "es-ES" -> "💎 ¡Has comprado un Bloque de Arcilla por $" + price + "!";
+        default -> "💎 You bought a Clay Block for $" + price + "!";
+    };
+
+    player.sendMessage(Component.text(message).color(NamedTextColor.GOLD));
+}
+
+
 
     // 📌 Compra de Bloco de Areia
     public void buySandBlock(Player player) {
-        int price = config.getInt("store.price.buySandBlock");
-        //int price = 1000;
-        if (processPurchase(player, price)) {
-            player.getInventory().addItem(new ItemStack(Material.SAND, 1));
-            // Ajusta o saldo do jogador após a compra
-        //ajustarSaldo(player, "take", price);
+    int price = config.getInt("store.price.buySandBlock", 1000); // 🔹 Obtém preço do config.yml, com fallback de 1000
+    if (!processPurchase(player, price)) return; // 🔹 Interrompe se a compra falhar
 
-            String lang = getPlayerLanguage(player);
-            player.sendMessage(
-                lang.equals("pt-BR") ? 
-                Component.text("💎 Você comprou um Bloco de Areia por $" + price + "!", NamedTextColor.GOLD) :
-                lang.equals("es-ES") ? 
-                Component.text("💎 ¡Has comprado un Bloque de Areia por $" + price + "!", NamedTextColor.GOLD) :
-                Component.text("💎 You bought a Sand Block for $" + price + "!", NamedTextColor.GOLD)
-            );
-        }
-    }
+    // 🔹 Adiciona o bloco de areia ao inventário do jogador dentro da região global
+    plugin.getServer().getGlobalRegionScheduler().execute(plugin, () -> {
+        player.getInventory().addItem(new ItemStack(Material.SAND, 1));
+    });
+
+    // 🔹 Mensagem para o jogador
+    String lang = getPlayerLanguage(player);
+    String message = switch (lang) {
+        case "pt-BR" -> "💎 Você comprou um Bloco de Areia por $" + price + "!";
+        case "es-ES" -> "💎 ¡Has comprado un Bloque de Arena por $" + price + "!";
+        default -> "💎 You bought a Sand Block for $" + price + "!";
+    };
+
+    player.sendMessage(Component.text(message).color(NamedTextColor.GOLD));
+}
+
+
 
 public void buyAllTools(Player player) {
-    int totalPrice = config.getInt("store.price.buyAllTools");
-    //int totalPrice = 5000; // Defina o preço total para todas as ferramentas
-    if (processPurchase(player, totalPrice)) {
-        List<Material> tools = List.of(
-            Material.DIAMOND_PICKAXE, Material.DIAMOND_AXE, Material.DIAMOND_SHOVEL,
-            Material.DIAMOND_HOE, Material.DIAMOND_SWORD
-        );
-        // Ajusta o saldo do jogador após a compra
-        //ajustarSaldo(player, "take", totalPrice);
+    int totalPrice = config.getInt("store.price.buyAllTools", 5000); // 🔹 Obtém preço do config.yml, com fallback de 5000
+    if (!processPurchase(player, totalPrice)) return; // 🔹 Interrompe se a compra falhar
 
+    // 🔹 Lista das ferramentas disponíveis para compra
+    List<Material> tools = List.of(
+        Material.DIAMOND_PICKAXE, Material.DIAMOND_AXE, Material.DIAMOND_SHOVEL,
+        Material.DIAMOND_HOE, Material.DIAMOND_SWORD
+    );
+
+    // 🔹 Adiciona as ferramentas ao inventário do jogador dentro da região global
+    plugin.getServer().getGlobalRegionScheduler().execute(plugin, () -> {
         for (Material tool : tools) {
-            ItemStack toolItem = new ItemStack(tool, 1);
+            ItemStack toolItem = new ItemStack(tool, 1); // Adiciona 1 unidade de cada ferramenta
             player.getInventory().addItem(toolItem);
         }
+    });
 
-        String lang = getPlayerLanguage(player);
-        player.sendMessage(
-            lang.equals("pt-BR") ? Component.text("🛠️ Você comprou todas as ferramentas por $" + totalPrice + "!", NamedTextColor.GOLD) :
-            lang.equals("es-ES") ? Component.text("🛠️ ¡Has comprado todas las herramientas por $" + totalPrice + "!", NamedTextColor.GOLD) :
-            Component.text("🛠️ You bought all tools for $" + totalPrice + "!", NamedTextColor.GOLD)
-        );
-    }
+    // 🔹 Mensagem para o jogador
+    String lang = getPlayerLanguage(player);
+    String message = switch (lang) {
+        case "pt-BR" -> "🛠️ Você comprou todas as ferramentas por $" + totalPrice + "!";
+        case "es-ES" -> "🛠️ ¡Has comprado todas las herramientas por $" + totalPrice + "!";
+        default -> "🛠️ You bought all tools for $" + totalPrice + "!";
+    };
+
+    player.sendMessage(Component.text(message).color(NamedTextColor.GOLD));
 }
+
+
 
 
 public void buyAllFood(Player player) {
-    int totalPrice = config.getInt("store.price.buyAllFood");
-    //int totalPrice = 2000; // Defina o preço total para todos os alimentos
-    if (processPurchase(player, totalPrice)) {
-        List<Material> foodItems = List.of(
-            Material.APPLE, Material.BREAD, Material.COOKED_BEEF, Material.COOKED_CHICKEN,
-            Material.COOKED_MUTTON, Material.COOKED_PORKCHOP, Material.COOKED_RABBIT,
-            Material.CARROT, Material.POTATO, Material.BAKED_POTATO, Material.GOLDEN_CARROT,
-            Material.BEETROOT, Material.BEETROOT_SOUP, Material.MUSHROOM_STEW,
-            Material.MELON_SLICE, Material.PUMPKIN_PIE, Material.COOKIE
-        );
+    int totalPrice = config.getInt("store.price.buyAllFood", 2000); // 🔹 Obtém preço do config.yml, com fallback de 2000
+    if (!processPurchase(player, totalPrice)) return; // 🔹 Interrompe se a compra falhar
 
-        // Ajusta o saldo do jogador após a compra
-        //ajustarSaldo(player, "take", totalPrice);
+    // 🔹 Lista de alimentos disponíveis para compra
+    List<Material> foodItems = List.of(
+        Material.APPLE, Material.BREAD, Material.COOKED_BEEF, Material.COOKED_CHICKEN,
+        Material.COOKED_MUTTON, Material.COOKED_PORKCHOP, Material.COOKED_RABBIT,
+        Material.CARROT, Material.POTATO, Material.BAKED_POTATO, Material.GOLDEN_CARROT,
+        Material.BEETROOT, Material.BEETROOT_SOUP, Material.MUSHROOM_STEW,
+        Material.MELON_SLICE, Material.PUMPKIN_PIE, Material.COOKIE
+    );
 
+    // 🔹 Adiciona os alimentos ao inventário do jogador dentro da região global
+    plugin.getServer().getGlobalRegionScheduler().execute(plugin, () -> {
         for (Material food : foodItems) {
-            ItemStack foodItem = new ItemStack(food, 5); // Adiciona 5 unidades de cada comida ao inventário
+            ItemStack foodItem = new ItemStack(food, 5); // Adiciona 5 unidades de cada comida
             player.getInventory().addItem(foodItem);
         }
+    });
 
-        String lang = getPlayerLanguage(player);
-        player.sendMessage(
-            lang.equals("pt-BR") ? Component.text("🍽️ Você comprou todos os alimentos por $" + totalPrice + "!", NamedTextColor.GOLD) :
-            lang.equals("es-ES") ? Component.text("🍽️ ¡Has comprado todos los alimentos por $" + totalPrice + "!", NamedTextColor.GOLD) :
-            Component.text("🍽️ You bought all food items for $" + totalPrice + "!", NamedTextColor.GOLD)
-        );
-    }
+    // 🔹 Mensagem para o jogador
+    String lang = getPlayerLanguage(player);
+    String message = switch (lang) {
+        case "pt-BR" -> "🍽️ Você comprou todos os alimentos por $" + totalPrice + "!";
+        case "es-ES" -> "🍽️ ¡Has comprado todos los alimentos por $" + totalPrice + "!";
+        default -> "🍽️ You bought all food items for $" + totalPrice + "!";
+    };
+
+    player.sendMessage(Component.text(message).color(NamedTextColor.GOLD));
 }
+
+
 
 
 public void buySimpleBook(Player player) {
@@ -434,52 +558,45 @@ public void buySimpleBook(Player player) {
 }
 
 public void buySimpleMap(Player player) {
-    int price = config.getInt("store.price.buySimpleMap", 100); // 🔹 Obtém preço do config.yml, fallback de 100
+    try {
+        int price = config.getInt("store.price.buySimpleMap", 100);
 
-    // Processa a compra e ajusta saldo
-    if (!processPurchase(player, price)) return;
-    //ajustarSaldo(player, "take", price);
+        if (!processPurchase(player, price)) return;
 
-    // Lista de comandos ajustados
-    List<String> commands = Arrays.asList(
-        "minecraft:enchant " + player.getName() + " mending 1",
-        "minecraft:enchant " + player.getName() + " efficiency 5",
-        "minecraft:enchant " + player.getName() + " fortune 3",
-        "minecraft:enchant " + player.getName() + " unbreaking 3",
-        "minecraft:enchant " + player.getName() + " featherfall 4",
-        "minecraft:enchant " + player.getName() + " frostwalker 2",
-        "minecraft:enchant " + player.getName() + " projectileprotection 4",
-        "minecraft:enchant " + player.getName() + " soulspeed 3",
-        "minecraft:enchant " + player.getName() + " swiftsneak 3",
-        "minecraft:enchant " + player.getName() + " respiration 3",
-        "minecraft:enchant " + player.getName() + " thorns 3",
-        "minecraft:give " + player.getName() + " filled_map 1"
-    );
+        List<String> commands = Arrays.asList(
+            "minecraft:enchant " + player.getName() + " mending 1",
+            "minecraft:enchant " + player.getName() + " efficiency 5",
+            "minecraft:enchant " + player.getName() + " fortune 3",
+            "minecraft:enchant " + player.getName() + " unbreaking 3",
+            "minecraft:give " + player.getName() + " filled_map 1"
+        );
 
-    // 🔹 Executa comandos no console de forma segura
-    Bukkit.getScheduler().runTaskLater(this.plugin, () -> {
-        for (String command : commands) {
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
-        }
-    }, 20L); // Executa após 20 ticks (~1 segundo)
+        plugin.getServer().getGlobalRegionScheduler().execute(plugin, () -> {
+            for (String command : commands) {
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+            }
+        });
 
-    // 🔹 Mensagem para o jogador
-    String lang = getPlayerLanguage(player);
-    String message = lang.equals("pt-BR") ?
-        "🗺️ Você comprou um mapa simples por $" + price + "!" :
-        lang.equals("es-ES") ?
-        "🗺️ ¡Has comprado un mapa simple por $" + price + "!" :
-        "🗺️ You bought a simple map for $" + price + "!";
+        String lang = getPlayerLanguage(player);
+        String message = switch (lang) {
+            case "pt-BR" -> "🗺️ Você comprou um mapa simples por $" + price + "!";
+            case "es-ES" -> "🗺️ ¡Has comprado un mapa simple por $" + price + "!";
+            default -> "🗺️ You bought a simple map for $" + price + "!";
+        };
 
-    player.sendMessage(Component.text(message).color(NamedTextColor.GRAY));
+        player.sendMessage(Component.text(message).color(NamedTextColor.GRAY));
+    } catch (Exception e) {
+        Bukkit.getLogger().severe("Erro ao executar buySimpleMap para " + player.getName() + ": " + e.getMessage());
+    }
 }
+
+
 
 public void buySimpleCompass(Player player) {
     int price = config.getInt("store.price.buySimpleCompass", 150);
 
     // Processa a compra e ajusta saldo
     if (!processPurchase(player, price)) return;
-    //ajustarSaldo(player, "take", price);
 
     // Lista de comandos ajustados
     List<String> commands = Arrays.asList(
@@ -492,88 +609,119 @@ public void buySimpleCompass(Player player) {
         "minecraft:give " + player.getName() + " recovery_compass 1"
     );
 
-    // Executa os comandos de forma agendada para evitar conflitos no Folia
-    Bukkit.getScheduler().runTaskLater(this.plugin, () -> {
+    // Executa os comandos na região correta para evitar conflitos no Folia
+    plugin.getServer().getGlobalRegionScheduler().execute(plugin, () -> {
         for (String command : commands) {
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
         }
-    }, 20L); // Executa após 20 ticks (~1 segundo)
+    });
 
     // Mensagem para o jogador
     String lang = getPlayerLanguage(player);
-    String message = lang.equals("pt-BR") ?
-        "🧭 Você comprou uma bússola simples por $" + price + "!" :
-        lang.equals("es-ES") ?
-        "🧭 ¡Has comprado una brújula simple por $" + price + "!" :
-        "🧭 You bought a simple compass for $" + price + "!";
+    String message = switch (lang) {
+        case "pt-BR" -> "🧭 Você comprou uma bússola simples por $" + price + "!";
+        case "es-ES" -> "🧭 ¡Has comprado una brújula simple por $" + price + "!";
+        default -> "🧭 You bought a simple compass for $" + price + "!";
+    };
 
     player.sendMessage(Component.text(message).color(NamedTextColor.GRAY));
 }
 
+
+
+
 public void buySimpleFishingRod(Player player) {
     int price = config.getInt("store.price.buySimpleFishingRod", 200); // 🔹 Obtém preço do config.yml, com fallback de 200
-    if (!processPurchase(player, price)) return; // 🔹 Interrompe se a compra falhar
-    // Ajusta o saldo do jogador após a compra
-        //ajustarSaldo(player, "take", price);
 
-    // 🔹 Executa o comando para dar uma vara de pesca encantada ao jogador
-    String command = String.format(
-        "give %s minecraft:fishing_rod 1",
-        player.getName()
+    if (!processPurchase(player, price)) return; // 🔹 Interrompe se a compra falhar
+
+    // 🔹 Lista de comandos ajustados
+    List<String> commands = Arrays.asList(
+        "minecraft:enchant " + player.getName() + " luck_of_the_sea 3",
+        "minecraft:enchant " + player.getName() + " lure 3",
+        "minecraft:enchant " + player.getName() + " unbreaking 3",
+        "minecraft:enchant " + player.getName() + " mending 1",
+        "minecraft:give " + player.getName() + " fishing_rod 1"
     );
-    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command); // 🔹 Executa o comando como console
+
+    // 🔹 Executa os comandos dentro da região global para evitar conflitos no Folia
+    plugin.getServer().getGlobalRegionScheduler().execute(plugin, () -> {
+        for (String command : commands) {
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+        }
+    });
 
     // 🔹 Mensagem para o jogador
     String lang = getPlayerLanguage(player);
-    player.sendMessage(
-        Component.text("🎣 ").append(
-            lang.equals("pt-BR") ? Component.text("Você comprou uma Vara de Pesca com Isca por $" + price + "!", NamedTextColor.GRAY) :
-            lang.equals("es-ES") ? Component.text("¡Has comprado una Caña de Pescar con Cebo por $" + price + "!", NamedTextColor.GRAY) :
-            Component.text("You bought a Fishing Rod with Bait for $" + price + "!", NamedTextColor.GRAY)
-        )
-    );
+    String message = switch (lang) {
+        case "pt-BR" -> "🎣 Você comprou uma Vara de Pesca encantada por $" + price + "!";
+        case "es-ES" -> "🎣 ¡Has comprado una Caña de Pescar encantada por $" + price + "!";
+        default -> "🎣 You bought an enchanted Fishing Rod for $" + price + "!";
+    };
+
+    player.sendMessage(Component.text(message).color(NamedTextColor.GRAY));
 }
+
+
 
 public void buySpinningWand(Player player) {
-    int price = config.getInt("store.price.buySpinningWand", 800); // 🔹 Obtém do config.yml, com fallback de 800
+    int price = config.getInt("store.price.buySpinningWand", 800); // 🔹 Obtém preço do config.yml, com fallback de 800
     if (!processPurchase(player, price)) return; // 🔹 Interrompe se a compra falhar
-    // Ajusta o saldo do jogador após a compra
-        //ajustarSaldo(player, "take", price);
 
-    // 🔹 Executa o comando para dar um Debug Stick ao jogador
-    String command = String.format("give %s minecraft:debug_stick 1", player.getName());
-    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command); // 🔹 Executa o comando como console
+    // 🔹 Lista de comandos ajustados para dar um Debug Stick ao jogador
+    List<String> commands = Arrays.asList(
+        "minecraft:give " + player.getName() + " debug_stick 1"
+    );
+
+    // 🔹 Executa os comandos dentro da região global para evitar conflitos no Folia
+    plugin.getServer().getGlobalRegionScheduler().execute(plugin, () -> {
+        for (String command : commands) {
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+        }
+    });
 
     // 🔹 Mensagem para o jogador
     String lang = getPlayerLanguage(player);
-    player.sendMessage(Component.text("✨ ").append(
-        lang.equals("pt-BR") ? Component.text("Você comprou um Debug Stick por $" + price + "!", NamedTextColor.LIGHT_PURPLE) :
-        lang.equals("es-ES") ? Component.text("¡Has comprado un Debug Stick por $" + price + "!", NamedTextColor.LIGHT_PURPLE) :
-        Component.text("You bought a Debug Stick for $" + price + "!", NamedTextColor.LIGHT_PURPLE)
-    ));
+    String message = switch (lang) {
+        case "pt-BR" -> "✨ Você comprou um Debug Stick por $" + price + "!";
+        case "es-ES" -> "✨ ¡Has comprado un Debug Stick por $" + price + "!";
+        default -> "✨ You bought a Debug Stick for $" + price + "!";
+    };
+
+    player.sendMessage(Component.text(message).color(NamedTextColor.LIGHT_PURPLE));
 }
+
+
 
 
 public void buyAxolotlBucket(Player player) {
     int price = config.getInt("store.price.axolotl_bucket", 500); // 🔹 Obtém preço do config.yml, com fallback de 500
     if (!processPurchase(player, price)) return; // 🔹 Interrompe se a compra falhar
-    // Ajusta o saldo do jogador após a compra
-        //ajustarSaldo(player, "take", price);
 
-    // 🔹 Executa o comando para dar um balde com Axolote ao jogador
-    String command = String.format("give %s minecraft:axolotl_bucket 1", player.getName());
-    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command); // 🔹 Executa o comando como console
+    // 🔹 Lista de comandos ajustados para dar um balde com Axolote ao jogador
+    List<String> commands = Arrays.asList(
+        "minecraft:give " + player.getName() + " axolotl_bucket 1"
+    );
+
+    // 🔹 Executa os comandos dentro da região global para evitar conflitos no Folia
+    plugin.getServer().getGlobalRegionScheduler().execute(plugin, () -> {
+        for (String command : commands) {
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+        }
+    });
 
     // 🔹 Mensagem para o jogador
     String lang = getPlayerLanguage(player);
-    player.sendMessage(
-        Component.text("🪣 ").append(
-            lang.equals("pt-BR") ? Component.text("Você comprou um balde com Axolote por $" + price + "!", NamedTextColor.AQUA) :
-            lang.equals("es-ES") ? Component.text("¡Has comprado un cubo con Axolote por $" + price + "!", NamedTextColor.AQUA) :
-            Component.text("You bought an Axolotl Bucket for $" + price + "!", NamedTextColor.AQUA)
-        )
-    );
+    String message = switch (lang) {
+        case "pt-BR" -> "🪣 Você comprou um balde com Axolote por $" + price + "!";
+        case "es-ES" -> "🪣 ¡Has comprado un cubo con Axolote por $" + price + "!";
+        default -> "🪣 You bought an Axolotl Bucket for $" + price + "!";
+    };
+
+    player.sendMessage(Component.text(message).color(NamedTextColor.AQUA));
 }
+
+
 
 
 // 📌 Método para ajustar o saldo do jogador do sql do plugin EssentialsX (nao e necessario mas tenta mater os dados iguais do sql e do mysql)
