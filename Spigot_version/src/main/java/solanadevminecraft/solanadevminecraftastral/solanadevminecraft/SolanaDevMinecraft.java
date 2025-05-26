@@ -1033,15 +1033,17 @@ public class SolanaDevMinecraft extends JavaPlugin implements Listener {
 
             OfflinePlayer target = Bukkit.getOfflinePlayer(playerName);
 
-            if (target.hasPlayedBefore()) {  // Confirma que o jogador já jogou no servidor
-                Bukkit.getBanList(BanList.Type.NAME).addBan(playerName, motivo, null, sender.getName());
-                sender.sendMessage("✅ O jogador " + playerName + " foi banido! Motivo: " + motivo);
-                Bukkit.getServer().broadcast(Component.text("🚫 " + playerName + " foi banido do servidor! Motivo: " + motivo));
+            if (target != null && target.hasPlayedBefore()) { // Confirma que o jogador já jogou no servidor
+                Bukkit.getBanList(BanList.Type.NAME).addBan(target.getName(), motivo, null, sender.getName());
+                sender.sendMessage("✅ O jogador " + target.getName() + " foi banido! Motivo: " + motivo);
+                Bukkit.getServer().broadcast(Component.text("🚫 " + target.getName() + " foi banido do servidor! Motivo: " + motivo));
             } else {
                 sender.sendMessage("❌ Jogador não encontrado.");
             }
             return true;
-        } else if (command.getName().equalsIgnoreCase("unban")) {
+        }
+
+        else if (command.getName().equalsIgnoreCase("unban")) {
             if (args.length < 1) {
                 sender.sendMessage("❌ Uso incorreto! Formato: /unban [jogador]");
                 return true;
