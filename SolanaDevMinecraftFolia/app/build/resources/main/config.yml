@@ -37,6 +37,8 @@ store:
     buySimpleFishingRod: 200
     buyAxolotlBucket: 400
     price.nether_relic: 1000
+    price.tree_debugger: 1000
+    price.wing_relic: 1000
 
 language:
   default: "pt-BR"

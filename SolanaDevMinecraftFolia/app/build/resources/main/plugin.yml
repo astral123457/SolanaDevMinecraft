@@ -154,6 +154,12 @@ commands:
   buyNetherRelic:
     description: Compra uma Relíquia do Nether.
     usage: /buyNetherRelic
+  buyTreeDebugger:
+    description: Compra um Depurador de Árvore.
+    usage: /buyTreeDebugger
+  buyWingRelic:
+    description: Compra uma Relíquia de Asa.
+    usage: /buyWingRelic
 
 
 

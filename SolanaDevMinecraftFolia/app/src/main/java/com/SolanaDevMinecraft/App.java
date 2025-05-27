@@ -702,7 +702,22 @@ public boolean onCommand(CommandSender sender, Command command, String label, St
             store.buySimpleBook(player);
         }
         return true;
-    } else if (command.getName().equalsIgnoreCase("buynetherite")) {
+    } else if (command.getName().equalsIgnoreCase("buyWingRelic")) {
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            store.buyWingRelic(player);
+        }
+        return true;
+    }
+    else if (command.getName().equalsIgnoreCase("buyTreeDebugger")) {
+
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            store.buyTreeDebuggerAxe(player);
+        }
+        return true;
+    }
+    else if (command.getName().equalsIgnoreCase("buynetherite")) {
         if (sender instanceof Player) {
             Player player = (Player) sender;
             store.buyNetheriteBlock(player);
@@ -973,16 +988,10 @@ else if (command.getName().equalsIgnoreCase("homereset")) {
         return true;
     }
     if (args.length < 1) {
-        player.sendMessage(ChatColor.RED + "❌ Uso incorreto! Formato: /buyNetherRelic <quantidade>");
+        player.sendMessage(ChatColor.RED + "❌ Uso incorreto! Formato: /buyNetherRelic");
         return true;
     }
-    try {
-        
-        // 🛠️ Chama o método para comprar relíquias do Nether
-        store.buyNetherRelic(player);
-    } catch (NumberFormatException e) {
-        player.sendMessage(ChatColor.RED + "❌ Quantidade inválida! Use um número inteiro.");
-    }
+    
     return true;
 }
 

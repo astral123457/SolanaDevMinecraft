@@ -3,7 +3,17 @@ package com.SolanaDevMinecraft;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
+import org.bukkit.Material;
+import org.bukkit.inventory.meta.ItemMeta;
+
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -20,6 +30,25 @@ public class PlayerJoinListener implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         registerPlayer(player);
+
+        ItemStack helmet = player.getInventory().getHelmet();
+        if (helmet != null && helmet.hasItemMeta() &&
+            helmet.getItemMeta().displayName().equals(Component.text("Relíquia do Nether").color(NamedTextColor.GOLD))) {
+            player.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, Integer.MAX_VALUE, 0));
+        }
+    }
+
+    @EventHandler
+    public void onArmorEquip(PlayerInteractEvent event) {
+        Player player = event.getPlayer();
+        ItemStack helmet = player.getInventory().getHelmet();
+
+        if (helmet != null && helmet.hasItemMeta() &&
+            helmet.getItemMeta().displayName().equals(Component.text("Relíquia do Nether").color(NamedTextColor.GOLD))) {
+            player.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, Integer.MAX_VALUE, 0));
+        } else {
+            player.removePotionEffect(PotionEffectType.FIRE_RESISTANCE);
+        }
     }
 
     private void registerPlayer(Player player) {

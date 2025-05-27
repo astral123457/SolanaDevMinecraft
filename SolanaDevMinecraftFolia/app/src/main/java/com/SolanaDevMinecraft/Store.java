@@ -49,6 +49,15 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import java.util.HashSet;
+import java.util.Set;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.block.Block;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.event.player.PlayerToggleFlightEvent;
+
+
 
 
 
@@ -149,21 +158,154 @@ public class Store {
 // 🔥 Listener para conceder imunidade ao fogo ao usar a Relíquia do Nether
 public class NetherRelicListener implements Listener {
     @EventHandler
-    public void onEquipHelmet(PlayerItemHeldEvent event) {
+    public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
+        applyFireResistance(player);
+    }
+
+    @EventHandler
+    public void onEquipArmor(PlayerItemHeldEvent event) {
+        Player player = event.getPlayer();
+        applyFireResistance(player);
+    }
+
+    private void applyFireResistance(Player player) {
         ItemStack helmet = player.getInventory().getHelmet();
 
-        // 🔹 Verifica se o jogador está usando a Relíquia do Nether
-        if (helmet != null && helmet.hasItemMeta() && helmet.getItemMeta().displayName().equals(Component.text("Relíquia do Nether").color(NamedTextColor.GOLD))) {
-            // 🔥 Dá resistência ao fogo sempre que o capacete estiver equipado
+        if (helmet != null && helmet.hasItemMeta() &&
+            helmet.getItemMeta().displayName().equals(Component.text("Relíquia do Nether").color(NamedTextColor.GOLD))) {
+            
             player.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, Integer.MAX_VALUE, 0));
         } else {
-            // ❌ Remove o efeito se o capacete for removido
             player.removePotionEffect(PotionEffectType.FIRE_RESISTANCE);
         }
     }
 }
 
+
+
+
+
+
+public class TreeDebuggerAxeListener implements Listener {
+    @EventHandler
+    public void onTreeChop(BlockBreakEvent event) {
+        Player player = event.getPlayer();
+        ItemStack item = player.getInventory().getItemInMainHand();
+
+        // 🔹 Verifica se o jogador está usando o Machado Debugger
+        if (item.hasItemMeta() && item.getItemMeta().displayName().equals(Component.text("Machado Debugger").color(NamedTextColor.GOLD))) {
+            Block block = event.getBlock();
+
+            // 🔹 Define os tipos de madeira que podem ser quebrados
+            Set<Material> logTypes = new HashSet<>(Set.of(
+                Material.OAK_LOG, Material.SPRUCE_LOG, Material.BIRCH_LOG,
+                Material.JUNGLE_LOG, Material.ACACIA_LOG, Material.DARK_OAK_LOG,
+                Material.MANGROVE_LOG, Material.CHERRY_LOG
+            ));
+
+            // 🔹 Se o bloco quebrado for um tronco, quebra toda a árvore
+            if (logTypes.contains(block.getType())) {
+                breakWholeTree(block);
+            }
+        }
+    }
+
+    private void breakWholeTree(Block block) {
+        Set<Block> blocksToBreak = new HashSet<>();
+        collectTreeBlocks(block, blocksToBreak);
+
+        for (Block treeBlock : blocksToBreak) {
+            treeBlock.breakNaturally();
+        }
+    }
+
+    private void collectTreeBlocks(Block block, Set<Block> blocks) {
+        if (!blocks.contains(block)) {
+            blocks.add(block);
+            for (Block relative : List.of(block.getRelative(0, 1, 0), block.getRelative(0, -1, 0))) {
+                if (!blocks.contains(relative)) collectTreeBlocks(relative, blocks);
+            }
+        }
+    }
+}
+
+public void buyTreeDebuggerAxe(Player player) {
+    int price = config.getInt("store.price.tree_debugger", 15000);
+    if (!processPurchase(player, price)) return;
+
+    ItemStack axe = new ItemStack(Material.DIAMOND_AXE);
+    ItemMeta meta = axe.getItemMeta();
+    if (meta != null) {
+        meta.setUnbreakable(true);
+        meta.displayName(Component.text("Machado Debugger").color(NamedTextColor.GOLD));
+        meta.addEnchant(Enchantment.getByKey(org.bukkit.NamespacedKey.minecraft("efficiency")), 5, true);
+        meta.addEnchant(Enchantment.getByKey(org.bukkit.NamespacedKey.minecraft("fortune")), 3, true);
+
+
+        axe.setItemMeta(meta);
+    }
+
+    plugin.getServer().getGlobalRegionScheduler().execute(plugin, () -> {
+        player.getInventory().addItem(axe);
+    });
+
+    String lang = getPlayerLanguage(player);
+    String message = switch (lang) {
+        case "pt-BR" -> "🪓 Você comprou o Machado Debugger por $" + price + "!";
+        case "es-ES" -> "🪓 ¡Has comprado el Hacha Debugger por $" + price + "!";
+        default -> "🪓 You bought the Tree Debugger Axe for $" + price + "!";
+    };
+
+    player.sendMessage(Component.text(message).color(NamedTextColor.GOLD));
+}
+
+public void buyWingRelic(Player player) {
+    int price = config.getInt("store.price.wing_relic", 50000);
+    if (!processPurchase(player, price)) return;
+
+    ItemStack wingRelic = new ItemStack(Material.ELYTRA);
+    ItemMeta meta = wingRelic.getItemMeta();
+    if (meta != null) {
+        meta.setUnbreakable(true);
+        meta.displayName(Component.text("🪽 Asa Relíquia do Nether").color(NamedTextColor.GOLD));
+        meta.addEnchant(Enchantment.MENDING, 1, true);
+        meta.addEnchant(Enchantment.DURABILITY, 3, true);
+        meta.addEnchant(Enchantment.BINDING_CURSE, 1, true);
+        wingRelic.setItemMeta(meta);
+    }
+
+    plugin.getServer().getGlobalRegionScheduler().execute(plugin, () -> {
+        player.getInventory().addItem(wingRelic);
+    });
+
+    String lang = getPlayerLanguage(player);
+    String message = switch (lang) {
+        case "pt-BR" -> "🪽 Você comprou a Asa Relíquia do Nether por $" + price + "!";
+        case "es-ES" -> "🪽 ¡Has comprado las Alas Reliquia del Nether por $" + price + "!";
+        default -> "🪽 You bought the Nether Wing Relic for $" + price + "!";
+    };
+
+    player.sendMessage(Component.text(message).color(NamedTextColor.GOLD));
+}
+
+
+
+public class WingRelicListener implements Listener {
+    @EventHandler
+    public void onPlayerFly(PlayerToggleFlightEvent event) {
+        Player player = event.getPlayer();
+        ItemStack chestplate = player.getInventory().getChestplate();
+
+        // 🔹 Verifica se o jogador está usando a Asa Relíquia
+        if (chestplate != null && chestplate.hasItemMeta() &&
+            chestplate.getItemMeta().displayName().equals(Component.text("🪽 Asa Relíquia do Nether").color(NamedTextColor.GOLD))) {
+            
+            // 🔥 Dá efeito de levitação para imitar voo sem foguetes
+            player.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 60, 1)); 
+        }
+    }
+}
 
 
 
