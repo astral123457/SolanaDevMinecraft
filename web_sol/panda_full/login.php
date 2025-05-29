@@ -1,13 +1,11 @@
 <?php
 session_start(); // Inicia a sessão
 
-// Conexão com o banco de dados
-include 'connection.php';
+// Conexão com o banco de dados (agora PDO)
+include 'connection.php'; // Este arquivo agora retorna a variável $pdo (sua conexão PDO)
 
-$conn = new mysqli($host, $user, $password, $dbname);
-if ($conn->connect_error) {
-    die(json_encode(['status' => 'error', 'message' => 'Erro ao conectar ao banco de dados: ' . $conn->connect_error]));
-}
+// A variável $pdo estará disponível aqui após o include 'connection.php';
+$conn = $pdo; // Renomeamos para manter a consistência com seu código original, mas $pdo também funcionaria.
 
 $error_message = ""; // Inicializa a mensagem vazia
 $ipUsuario = $_SERVER['REMOTE_ADDR']; // Obtém o IP do usuário
@@ -17,14 +15,16 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 // ---- Verificação de IP banido ANTES do login ----
-$stmt = $conn->prepare("SELECT * FROM ban_ip WHERE ip = ?");
-$stmt->bind_param("s", $ipUsuario);
-$stmt->execute();
-if ($stmt->fetch()) {
+// Usando PDO para statements preparados
+$stmt = $conn->prepare("SELECT ip FROM ban_ip WHERE ip = ?"); // Selecionamos apenas 'ip'
+$stmt->execute([$ipUsuario]); // execute() aceita um array de parâmetros
+$ban_ip = $stmt->fetchColumn(); // fetchColumn() retorna a primeira coluna da próxima linha
+
+if ($ban_ip) { // Se $ban_ip não for falso (ou seja, se encontrou um IP)
     echo "<h1 style='color:red;text-align:center;'>Seu IP está banido por tentativas excessivas.</h1>";
     exit;
 }
-$stmt->close();
+$stmt = null; // Fecha o statement (opcional, mas boa prática com PDO)
 
 // ---- Processar login ----
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
@@ -33,45 +33,31 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     // Consulta de usuário
     $stmt = $conn->prepare("SELECT password FROM users WHERE user = ?");
-    $stmt->bind_param("s", $username);
-    $stmt->execute();
-    $stmt->store_result(); // Libera resultado anterior
-    $stmt->bind_result($hashed_password);
-    $stmt->fetch();
+    $stmt->execute([$username]);
+    $hashed_password = $stmt->fetchColumn(); // Retorna o valor da coluna 'password' ou false se não encontrar
 
-    if ($stmt->num_rows === 0) {
-        // Se o usuário não existir, trata como senha errada
-        $hashed_password = null;
-    }
-    $stmt->close();
-
-    if ($hashed_password !== null && password_verify($password, $hashed_password)) {
+    if ($hashed_password && password_verify($password, $hashed_password)) {
         $_SESSION["user"] = $username;
         header("Location: protected_page.php");
         exit();
     } else {
         // ---- Registrar tentativa de login falha ----
-        $stmt = $conn->prepare("INSERT INTO login_attempts (ip, attempts, last_attempt) 
-                               VALUES (?, 1, NOW()) 
+        $stmt = $conn->prepare("INSERT INTO login_attempts (ip, attempts, last_attempt)
+                               VALUES (?, 1, NOW())
                                ON DUPLICATE KEY UPDATE attempts = attempts + 1, last_attempt = NOW()");
-        $stmt->bind_param("s", $ipUsuario);
-        $stmt->execute();
-        $stmt->close();
+        $stmt->execute([$ipUsuario]);
+        $stmt = null;
 
         // ---- Verificar se IP deve ser banido após 3 falhas ----
         $stmt = $conn->prepare("SELECT attempts FROM login_attempts WHERE ip = ?");
-        $stmt->bind_param("s", $ipUsuario);
-        $stmt->execute();
-        $stmt->store_result();
-        $stmt->bind_result($attempts);
-        $stmt->fetch();
-        $stmt->close();
+        $stmt->execute([$ipUsuario]);
+        $attempts = $stmt->fetchColumn();
+        $stmt = null;
 
         if ($attempts >= 3) {
             $stmtBan = $conn->prepare("INSERT INTO ban_ip (ip) VALUES (?)");
-            $stmtBan->bind_param("s", $ipUsuario);
-            $stmtBan->execute();
-            $stmtBan->close();
+            $stmtBan->execute([$ipUsuario]);
+            $stmtBan = null;
 
             echo "<h1 style='color:red;text-align:center;'>Seu IP foi banido por 3 tentativas inválidas.</h1>";
             exit;
@@ -178,10 +164,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         <form method="POST">
             <label for="username">Usuário:</label>
             <input type="text" id="username" name="username" required>
-            
+
             <label for="password">Senha:</label>
             <input type="password" id="password" name="password" required>
-            
+
             <button type="submit">Entrar</button>
         </form>
 
