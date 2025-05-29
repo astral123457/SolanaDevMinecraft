@@ -158,9 +158,15 @@ for (Player player : Bukkit.getOnlinePlayers()) {
 @Deprecated
 public void aoEntrarNoServidor(PlayerJoinEvent event) {
     Player jogador = event.getPlayer();
+    if (!estaConectadoAoBanco()) {
+        connectToDatabase();
+    }
+
+
 
     // 🔄 Carrega a casa do jogador
     carregarCasa(jogador, "default");
+
 
     // 🎉 Mensagem de boas-vindas
     jogador.sendTitle(ChatColor.GREEN + "Bem-vindo!", ChatColor.WHITE + jogador.getName(), 10, 70, 20);
@@ -338,19 +344,47 @@ public void onPlayerDeath(PlayerDeathEvent event) {
 
 
     private void connectToDatabase() {
-        try {
-            String url = config.getString("database.url");
-            String user = config.getString("database.user");
-            String password = config.getString("database.password");
+    try {
+        // Recupera as configurações do arquivo de configuração
+        String baseUrl = config.getString("database.url");
+        String autoReconnect = config.getString("database.autoReconnect", "true");
+        String useSSL = config.getString("database.SSL", "false");
+        String verifyServerCertificate = config.getString("database.verifyServerCertificate", "true");
+        String sslCert = config.getString("database.sslCert", "");
+        String sslKey = config.getString("database.sslKey", "");
+        String sslCa = config.getString("database.sslCa", "");
+        String user = config.getString("database.user");
+        String password = config.getString("database.password");
 
-            getLogger().info("Tentando conectar ao banco de dados com URL: " + url);
-            connection = DriverManager.getConnection(url, user, password);
-            getLogger().info("Conectado ao banco de dados!");
-        } catch (Exception e) {
-            getLogger().severe("Erro ao conectar ao banco de dados: " + e.getMessage());
-            e.printStackTrace();
-        }
+        // Converte a configuração SSL para booleano
+        boolean sslEnabled = Boolean.parseBoolean(useSSL);
+
+        // Monta a URL de conexão
+        String url = baseUrl + "?autoReconnect=" + autoReconnect + "&useSSL=" + sslEnabled;
+
+
+        //if (sslEnabled) {
+        //    url += "&verifyServerCertificate=" + verifyServerCertificate +
+        //           "&sslCert=" + sslCert +
+        //           "&sslKey=" + sslKey +
+        //           "&sslCa=" + sslCa;
+        //    getLogger().info("[🔒] Conectando com SSL...");
+        //} else {
+        //    getLogger().info("[⚡] Conectando sem SSL...");
+        //}
+
+        // Tenta estabelecer a conexão
+        getLogger().info("Tentando conectar ao banco de dados com URL: " + url);
+        connection = DriverManager.getConnection(url, user, password);
+        getLogger().info("✅ Conectado ao banco de dados com sucesso!");
+
+    } catch (Exception e) {
+        getLogger().severe("❌ Erro ao conectar ao banco de dados: " + e.getMessage());
+        e.printStackTrace();
     }
+}
+
+
 
     private void disconnectFromDatabase() {
         try {
@@ -362,6 +396,17 @@ public void onPlayerDeath(PlayerDeathEvent event) {
             getLogger().severe("Erro ao encerrar conexão com o banco de dados: " + e.getMessage());
         }
     }
+
+    public boolean estaConectadoAoBanco() {
+        try {
+            return (connection != null && !connection.isClosed());
+        } catch (Exception e) {
+            getLogger().severe("Erro ao verificar conexão com o banco de dados: " + e.getMessage());
+            return false;
+        }
+    }
+
+
 
     @SuppressWarnings("deprecation")
     public String getPlayerLanguage(Player player) {

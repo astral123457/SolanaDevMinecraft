@@ -3,6 +3,14 @@ database:
   user: root
   password: "0073007"
   database_solana_minecraft: "banco"
+  autoReconnect: true
+  SSL: false
+  verifyServerCertificate: true
+  sslCert: "/etc/mysql/ssl/client-cert.pem"
+  sslKey: "/etc/mysql/ssl/client-key.pem"
+  sslCa: "/etc/mysql/ssl/ca.pem"
+
+
 
 docker:
   host: debian.tail561849.ts.net
