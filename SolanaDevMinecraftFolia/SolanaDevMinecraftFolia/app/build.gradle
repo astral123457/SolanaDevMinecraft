@@ -1,0 +1,66 @@
+plugins {
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '8.1.1' // For packaging dependencies
+    id 'io.papermc.paperweight.patcher' version '2.0.0-beta.17'
+    id 'org.jetbrains.kotlin.jvm' version '2.2.0-RC'
+
+
+
+}
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://repo.papermc.io/repository/maven-public/' }
+    maven { url = 'https://jitpack.io' } // Adiciona o repositório JitPack
+    maven { url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
+}
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.9.1'
+
+    compileOnly 'dev.folia:folia-api:1.21.5-R0.1-SNAPSHOT'
+    implementation 'dev.folia:folia-api:1.21.5-R0.1-SNAPSHOT'
+
+
+    implementation 'net.kyori:adventure-api:4.13.0'
+
+
+
+    implementation 'com.google.guava:guava:31.1-jre'
+    implementation 'mysql:mysql-connector-java:8.0.33'
+    implementation 'org.json:json:20210307'
+    implementation 'org.xerial:sqlite-jdbc:3.36.0.3'
+
+}
+
+configurations.all {
+    resolutionStrategy.capabilitiesResolution.withCapability("org.spigotmc:spigot-api") {
+        selectHighestVersion()
+    }
+}
+
+
+
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 21
+    options.fork = true
+}
+
+tasks.named('jar') {
+    archiveBaseName.set('SolanaDevMinecraftFolia') // Nome personalizado
+    archiveVersion.set('v2.7.5')
+    archiveClassifier.set('')
+    destinationDirectory.set(file("/libs"))
+}
+
+tasks.test.configure {
+    enabled = false
+}
