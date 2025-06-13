@@ -271,7 +271,7 @@ public void buyWingRelic(Player player) {
 
     if (meta != null) {
         meta.setUnbreakable(true); // 🔥 Torna indestrutível
-        meta.displayName(Component.text("🪽 Asa Relíquia do Nether").color(NamedTextColor.GOLD)); // 🔥 Define nome personalizado
+        meta.displayName(Component.text("🚀 Relíquia Amauris gênero de borboletas").color(NamedTextColor.GOLD)); // 🔥 Define nome personalizado
 
         // 🔹 Adiciona encantamentos essenciais
         meta.addEnchant(Enchantment.MENDING, 1, true); // 🔥 Reparação automática
@@ -288,9 +288,9 @@ public void buyWingRelic(Player player) {
 
     // 🔹 Define mensagem conforme o idioma do jogador
     String message = switch (getPlayerLanguage(player)) {
-        case "pt-BR" -> "🪽 Você comprou a Asa Relíquia do Nether por $" + price + "!";
-        case "es-ES" -> "🪽 ¡Has comprado las Alas Reliquia del Nether por $" + price + "!";
-        default -> "🪽 You bought the Nether Wing Relic for $" + price + "!";
+        case "pt-BR" -> "🪽 Você comprou a Asa Relíquia Amauris gênero de borboletas por $" + price + "!";
+        case "es-ES" -> "🪽 ¡Has comprado las Alas Reliquia Amauris género de borboletas por $" + price + "!";
+        default -> "🪽 You bought the Amauris Wing Relic for $" + price + "!";
     };
 
     // 🔹 Envia mensagem ao jogador

@@ -69,6 +69,9 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
+import org.bukkit.entity.Player;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
 
 
@@ -161,6 +164,32 @@ public void aoEntrarNoServidor(PlayerJoinEvent event) {
     if (!estaConectadoAoBanco()) {
         connectToDatabase();
     }
+    registerPlayer(jogador);
+
+    ItemStack helmet = jogador.getInventory().getHelmet();
+        if (helmet != null && helmet.hasItemMeta() &&
+            helmet.getItemMeta().displayName().equals(Component.text("Relíquia do Nether").color(NamedTextColor.GOLD))) {
+            jogador.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, Integer.MAX_VALUE, 0));
+        
+
+         // 🔹 Garante que o jogador sempre tenha pelo menos um foguete
+        plugin.getServer().getGlobalRegionScheduler().execute(plugin, () -> {
+            boolean temFoguete = false;
+            for (ItemStack item : jogador.getInventory().getContents()) {
+                if (item != null && item.getType() == Material.FIREWORK_ROCKET) {
+                    temFoguete = true;
+                    break;
+                }
+            }
+
+            // Se não tiver um foguete, adiciona um ao inventário
+            if (!temFoguete) {
+                ItemStack foguete = new ItemStack(Material.FIREWORK_ROCKET, 3); // Dá 3 foguetes
+                jogador.getInventory().addItem(foguete);
+            }
+        });
+    }
+    
 
 
 
@@ -211,6 +240,19 @@ public void aoEntrarNoServidor(PlayerJoinEvent event) {
         }
     });
 }
+
+@EventHandler
+    public void onArmorEquip(PlayerInteractEvent event) {
+        Player player = event.getPlayer();
+        ItemStack helmet = player.getInventory().getHelmet();
+
+        if (helmet != null && helmet.hasItemMeta() &&
+            helmet.getItemMeta().displayName().equals(Component.text("Relíquia do Nether").color(NamedTextColor.GOLD))) {
+            player.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, Integer.MAX_VALUE, 0));
+        } else {
+            player.removePotionEffect(PotionEffectType.FIRE_RESISTANCE);
+        }
+    }
 
 @EventHandler
 public void aoAbrirBau(InventoryOpenEvent event) {
@@ -1032,10 +1074,8 @@ else if (command.getName().equalsIgnoreCase("homereset")) {
         player.sendMessage(ChatColor.RED + "❌ Você não tem permissão para comprar relíquias do Nether!");
         return true;
     }
-    if (args.length < 1) {
-        player.sendMessage(ChatColor.RED + "❌ Uso incorreto! Formato: /buyNetherRelic");
-        return true;
-    }
+
+    store.buyNetherRelic(player);
     
     return true;
 }
@@ -1448,6 +1488,38 @@ private void updateDebts() {
         getLogger().severe("Erro ao atualizar dívidas: " + e.getMessage());
     }
 }
+
+private void registerPlayer(Player player) {
+        String playerName = player.getName().replace(" ", "_").toLowerCase();
+        try {
+            PreparedStatement checkStatement = connection.prepareStatement(
+                "SELECT id FROM jogadores WHERE nome = ?"
+            );
+            checkStatement.setString(1, playerName);
+            ResultSet resultSet = checkStatement.executeQuery();
+
+            if (!resultSet.next()) {
+                PreparedStatement insertPlayer = connection.prepareStatement(
+                    "INSERT INTO jogadores (nome) VALUES (?)"
+                );
+                insertPlayer.setString(1, playerName);
+                insertPlayer.executeUpdate();
+
+                PreparedStatement insertBank = connection.prepareStatement(
+                    "INSERT INTO banco (jogador, saldo) VALUES (?, 500)"
+                );
+                insertBank.setString(1, playerName);
+                insertBank.executeUpdate();
+
+                player.sendMessage("✅ Você foi cadastrado no banco com 500 moedas!");
+            } else {
+                player.sendMessage("⚠ Você já está cadastrado!");
+            }
+        } catch (SQLException e) {
+            player.sendMessage("❌ Erro ao registrar jogador: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
 
 private void processInvestments(Player player, String lang) {
     try {
