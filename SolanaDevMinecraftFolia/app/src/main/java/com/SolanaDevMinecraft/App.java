@@ -23,7 +23,7 @@ import java.util.Locale;
 import org.bukkit.entity.Player;
 import org.bukkit.Bukkit;
 
-import net.milkbowl.vault.economy.Economy;
+
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.RegisteredServiceProvider;
 
@@ -69,6 +69,9 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
+import org.bukkit.entity.Player;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
 
 
@@ -92,7 +95,7 @@ public class App extends JavaPlugin implements Listener {
     private Solana solana;
     private Store store; // Instância da classe Store
     private FileConfiguration config; // Armazena o config.yml
-    private static Economy economy;
+
     private static App plugin;
     private static final Logger logger = Logger.getLogger("SolanaDevMinecraft");
     private static final String PLUGIN_NAME = "SolanaDevMinecraft";
@@ -161,8 +164,23 @@ public void aoEntrarNoServidor(PlayerJoinEvent event) {
     if (!estaConectadoAoBanco()) {
         connectToDatabase();
     }
+    registerPlayer(jogador);
 
+    ItemStack helmet = jogador.getInventory().getHelmet();
+        if (helmet != null && helmet.hasItemMeta() &&
+            helmet.getItemMeta().displayName().equals(Component.text("Relíquia do Nether").color(NamedTextColor.GOLD))) {
+            jogador.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, Integer.MAX_VALUE, 0));
+            jogador.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, Integer.MAX_VALUE, 1));
 
+            // 🔹 Adicionar voo sem foguete
+        jogador.setAllowFlight(true);
+        jogador.setFlying(true);
+        } else {
+            jogador.removePotionEffect(PotionEffectType.FIRE_RESISTANCE);
+            // 🔹 Remover voo se não estiver usando a relíquia
+            jogador.setAllowFlight(false);
+            jogador.setFlying(false);
+        }
 
     // 🔄 Carrega a casa do jogador
     carregarCasa(jogador, "default");
@@ -211,6 +229,19 @@ public void aoEntrarNoServidor(PlayerJoinEvent event) {
         }
     });
 }
+
+@EventHandler
+    public void onArmorEquip(PlayerInteractEvent event) {
+        Player player = event.getPlayer();
+        ItemStack helmet = player.getInventory().getHelmet();
+
+        if (helmet != null && helmet.hasItemMeta() &&
+            helmet.getItemMeta().displayName().equals(Component.text("Relíquia do Nether").color(NamedTextColor.GOLD))) {
+            player.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, Integer.MAX_VALUE, 0));
+        } else {
+            player.removePotionEffect(PotionEffectType.FIRE_RESISTANCE);
+        }
+    }
 
 @EventHandler
 public void aoAbrirBau(InventoryOpenEvent event) {
@@ -1032,10 +1063,8 @@ else if (command.getName().equalsIgnoreCase("homereset")) {
         player.sendMessage(ChatColor.RED + "❌ Você não tem permissão para comprar relíquias do Nether!");
         return true;
     }
-    if (args.length < 1) {
-        player.sendMessage(ChatColor.RED + "❌ Uso incorreto! Formato: /buyNetherRelic");
-        return true;
-    }
+
+    store.buyNetherRelic(player);
     
     return true;
 }
@@ -1449,6 +1478,38 @@ private void updateDebts() {
     }
 }
 
+private void registerPlayer(Player player) {
+        String playerName = player.getName().replace(" ", "_").toLowerCase();
+        try {
+            PreparedStatement checkStatement = connection.prepareStatement(
+                "SELECT id FROM jogadores WHERE nome = ?"
+            );
+            checkStatement.setString(1, playerName);
+            ResultSet resultSet = checkStatement.executeQuery();
+
+            if (!resultSet.next()) {
+                PreparedStatement insertPlayer = connection.prepareStatement(
+                    "INSERT INTO jogadores (nome) VALUES (?)"
+                );
+                insertPlayer.setString(1, playerName);
+                insertPlayer.executeUpdate();
+
+                PreparedStatement insertBank = connection.prepareStatement(
+                    "INSERT INTO banco (jogador, saldo) VALUES (?, 500)"
+                );
+                insertBank.setString(1, playerName);
+                insertBank.executeUpdate();
+
+                player.sendMessage("✅ Você foi cadastrado no banco com 500 moedas!");
+            } else {
+                player.sendMessage("⚠ Você já está cadastrado!");
+            }
+        } catch (SQLException e) {
+            player.sendMessage("❌ Erro ao registrar jogador: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
 private void processInvestments(Player player, String lang) {
     try {
         // Obtendo saldo antes do update
@@ -1500,8 +1561,7 @@ private void processInvestments(Player player, String lang) {
     .append(Component.text("COIN").color(TextColor.color(0x00FF00))) // Vermelho
 );
 player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.5f);
- player.getWorld().spawnParticle(Particle.FIREWORKS_SPARK,
-                            player.getLocation().add(0, 1, 0), 20, 0.5, 0.5, 0.5, 0.05);
+ player.getWorld().spawnParticle(Particle.FIREWORK, player.getLocation().add(0, 1, 0), 20, 0.5, 0.5, 0.5, 0.05);
 
 
             // ✅ Exibir saldo com ícones e efeitos
@@ -1535,8 +1595,7 @@ player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f,
                     getLogger().info("🎵 Som de dinheiro tocado para " + player.getName());
 
                     // ✨ Cria um efeito de partículas douradas
-                    player.getWorld().spawnParticle(Particle.FIREWORKS_SPARK, 
-                            player.getLocation().add(0, 1, 0), 20, 0.5, 0.5, 0.5, 0.05);
+                    player.getWorld().spawnParticle(Particle.FIREWORK, player.getLocation().add(0, 1, 0), 20, 0.5, 0.5, 0.5, 0.05);
                     getLogger().info("✨ Efeito de partículas criado para " + player.getName());
                 }
             }, 0L);

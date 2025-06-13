@@ -12,7 +12,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionType;
-import org.bukkit.potion.Potion;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.potion.PotionData;
@@ -32,7 +31,6 @@ import java.sql.SQLException;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
-import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
@@ -58,17 +56,9 @@ import org.bukkit.enchantments.Enchantment;
 import org.bukkit.event.player.PlayerToggleFlightEvent;
 
 
-
-
-
-
-
-
-
 public class Store {
     private final Connection connection;
     private final FileConfiguration config;
-    private static Economy economy;
     private final JavaPlugin plugin; // 🔹 Corrigido: Agora 'plugin' é final e corretamente inicializado.
 
     // 🔹 Construtor correto que inicializa 'config', 'connection' e 'plugin'
@@ -124,18 +114,25 @@ public class Store {
     }
 
     public void buyNetherRelic(Player player) {
-    int price = config.getInt("store.price.nether_relic", 25000); // 🔹 Obtém preço do config.yml, com fallback de 25000
-    if (!processPurchase(player, price)) return; // 🔹 Interrompe se a compra falhar
+    // 🔹 Obtém o preço da relíquia do config.yml, com fallback de 25000
+    int price = config.getInt("store.price.nether_relic", 25000);
+
+    // 🔹 Verifica se o jogador tem saldo suficiente e processa a compra
+    if (!processPurchase(player, price)) return;
 
     // 🔹 Cria o capacete especial da Relíquia do Nether
     ItemStack netherRelic = new ItemStack(Material.GOLDEN_HELMET);
     ItemMeta meta = netherRelic.getItemMeta();
+    
     if (meta != null) {
         meta.setUnbreakable(true); // 🔥 Torna o capacete indestrutível
-        meta.displayName(Component.text("Relíquia do Nether").color(NamedTextColor.GOLD)); // 🔥 Define o nome personalizado
-        meta.addEnchant(Enchantment.PROTECTION_FIRE, 4, true); // 🔥 Proteção contra fogo máxima
+        meta.displayName(Component.text("Relíquia do Nether").color(NamedTextColor.GOLD)); // 🔥 Define nome personalizado
+        
+        // 🔹 Adiciona encantamentos essenciais
+        meta.addEnchant(Enchantment.FIRE_PROTECTION, 4, true); // 🔥 Proteção contra fogo máxima
         meta.addEnchant(Enchantment.MENDING, 1, true); // 🔥 Reparação automática
-        meta.addEnchant(Enchantment.DURABILITY, 3, true); // 🔥 Resistência extra (equivale a UNBREAKING)
+        meta.addEnchant(Enchantment.UNBREAKING, 3, true);  // 🔥 Resistência extra
+        
         netherRelic.setItemMeta(meta);
     }
 
@@ -144,7 +141,7 @@ public class Store {
         player.getInventory().addItem(netherRelic);
     });
 
-    // 🔹 Mensagem para o jogador
+    // 🔹 Define mensagem conforme o idioma do jogador
     String lang = getPlayerLanguage(player);
     String message = switch (lang) {
         case "pt-BR" -> "🔥 Você comprou a Relíquia do Nether por $" + price + "!";
@@ -152,6 +149,7 @@ public class Store {
         default -> "🔥 You bought the Nether Relic for $" + price + "!";
     };
 
+    // 🔹 Envia mensagem ao jogador
     player.sendMessage(Component.text(message).color(NamedTextColor.GOLD));
 }
 
@@ -261,31 +259,41 @@ public void buyTreeDebuggerAxe(Player player) {
 }
 
 public void buyWingRelic(Player player) {
+    // 🔹 Obtém o preço da relíquia das asas no config.yml, com fallback de 50000
     int price = config.getInt("store.price.wing_relic", 50000);
+
+    // 🔹 Verifica se o jogador tem saldo suficiente e processa a compra
     if (!processPurchase(player, price)) return;
 
+    // 🔹 Cria o item da Relíquia das Asas
     ItemStack wingRelic = new ItemStack(Material.ELYTRA);
     ItemMeta meta = wingRelic.getItemMeta();
+
     if (meta != null) {
-        meta.setUnbreakable(true);
-        meta.displayName(Component.text("🪽 Asa Relíquia do Nether").color(NamedTextColor.GOLD));
-        meta.addEnchant(Enchantment.MENDING, 1, true);
-        meta.addEnchant(Enchantment.DURABILITY, 3, true);
-        meta.addEnchant(Enchantment.BINDING_CURSE, 1, true);
+        meta.setUnbreakable(true); // 🔥 Torna indestrutível
+        meta.displayName(Component.text("🚀 Relíquia Amauris gênero de borboletas").color(NamedTextColor.GOLD)); // 🔥 Define nome personalizado
+
+        // 🔹 Adiciona encantamentos essenciais
+        meta.addEnchant(Enchantment.MENDING, 1, true); // 🔥 Reparação automática
+        meta.addEnchant(Enchantment.UNBREAKING, 3, true); // 🔥 Resistência extra
+        meta.addEnchant(Enchantment.BINDING_CURSE, 1, true); // 🔥 Maldição de vínculo (não pode ser removida)
+
         wingRelic.setItemMeta(meta);
     }
 
+    // 🔹 Entrega o item dentro da região global para evitar problemas no Folia
     plugin.getServer().getGlobalRegionScheduler().execute(plugin, () -> {
         player.getInventory().addItem(wingRelic);
     });
 
-    String lang = getPlayerLanguage(player);
-    String message = switch (lang) {
-        case "pt-BR" -> "🪽 Você comprou a Asa Relíquia do Nether por $" + price + "!";
-        case "es-ES" -> "🪽 ¡Has comprado las Alas Reliquia del Nether por $" + price + "!";
-        default -> "🪽 You bought the Nether Wing Relic for $" + price + "!";
+    // 🔹 Define mensagem conforme o idioma do jogador
+    String message = switch (getPlayerLanguage(player)) {
+        case "pt-BR" -> "🪽 Você comprou a Asa Relíquia Amauris gênero de borboletas por $" + price + "!";
+        case "es-ES" -> "🪽 ¡Has comprado las Alas Reliquia Amauris género de borboletas por $" + price + "!";
+        default -> "🪽 You bought the Amauris Wing Relic for $" + price + "!";
     };
 
+    // 🔹 Envia mensagem ao jogador
     player.sendMessage(Component.text(message).color(NamedTextColor.GOLD));
 }
 
@@ -875,8 +883,7 @@ public void buyAxolotlBucket(Player player) {
     if (this.plugin == null) {
         System.err.println("ERROR (ajustarSaldo): Instância do plugin é NULA! Não é possível agendar a tarefa.");
         player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.5f);
- player.getWorld().spawnParticle(Particle.FIREWORKS_SPARK,
-                            player.getLocation().add(0, 1, 0), 20, 0.5, 0.5, 0.5, 0.05);
+ player.getWorld().spawnParticle(Particle.FIREWORK, player.getLocation().add(0, 1, 0), 20, 0.5, 0.5, 0.5, 0.05);
         // Saia do método para evitar um NullPointerException
         return;
     }

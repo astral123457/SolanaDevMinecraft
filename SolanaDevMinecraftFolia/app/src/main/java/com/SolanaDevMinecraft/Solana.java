@@ -52,7 +52,6 @@ import java.util.Base64;
 import java.util.regex.*;
 import java.util.List;
 
-import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
@@ -81,7 +80,6 @@ class WalletInfo {
 public class Solana {
     private final Connection connection;
     private final FileConfiguration config;
-    private static Economy economy;
     private JavaPlugin plugin;
 
     
@@ -832,8 +830,7 @@ public static String convertPrivateKeyToHex(String jsonResponse) {
     if (this.plugin == null) {
         System.err.println("ERROR (ajustarSaldo): Instância do plugin é NULA! Não é possível agendar a tarefa.");
 player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.5f);
- player.getWorld().spawnParticle(Particle.FIREWORKS_SPARK,
-                            player.getLocation().add(0, 1, 0), 20, 0.5, 0.5, 0.5, 0.05);
+ player.getWorld().spawnParticle(Particle.FIREWORK, player.getLocation().add(0, 1, 0), 20, 0.5, 0.5, 0.5, 0.05);
         // Saia do método para evitar um NullPointerException
         return;
     }
