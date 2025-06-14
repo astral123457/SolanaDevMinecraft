@@ -73,7 +73,15 @@ import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.event.player.PlayerToggleFlightEvent;
-
+import org.bukkit.GameMode;
+import org.bukkit.event.player.PlayerGameModeChangeEvent;
+import org.bukkit.enchantments.Enchantment;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.Lightable;
+import org.bukkit.block.data.Levelled;
+import org.bukkit.event.entity.EntityDamageEvent;
 
 
 
@@ -87,6 +95,7 @@ public class App extends JavaPlugin implements Listener {
     private final Map<Player, String> playerLanguages = new HashMap<>();
     private final Map<Player, String> playerNames = new HashMap<>();
     private final Map<Player, String> playerWallets = new HashMap<>();
+    
     
 
 
@@ -114,6 +123,7 @@ public class App extends JavaPlugin implements Listener {
     public void onEnable() {
         plugin = this; // 🔥 Inicializa a instância do plugin
         getServer().getPluginManager().registerEvents(this, this);
+        
         // Salva o config.yml na pasta do plugin, caso ainda não exista
         saveDefaultConfig();
         config = getConfig(); // Inicializa config.yml corretamente
@@ -169,70 +179,39 @@ public void aoEntrarNoServidor(PlayerJoinEvent event) {
     ItemStack helmet = jogador.getInventory().getHelmet();
     ItemStack elytra = jogador.getInventory().getChestplate();
 
-        if (helmet != null && helmet.hasItemMeta() &&
-            helmet.getItemMeta().displayName().equals(Component.text("Relíquia do Nether").color(NamedTextColor.GOLD))) {
-            jogador.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, Integer.MAX_VALUE, 0));
-        
-
-         // 🔹 Garante que o jogador sempre tenha pelo menos um foguete
-        plugin.getServer().getGlobalRegionScheduler().execute(plugin, () -> {
-            boolean temFoguete = false;
-            for (ItemStack item : jogador.getInventory().getContents()) {
-                if (item != null && item.getType() == Material.FIREWORK_ROCKET) {
-                    temFoguete = true;
-                    break;
-                }
-            }
-
-            // Se não tiver um foguete, adiciona um ao inventário
-            if (!temFoguete) {
-                ItemStack foguete = new ItemStack(Material.FIREWORK_ROCKET, 3); // Dá 3 foguetes
-                jogador.getInventory().addItem(foguete);
-            }
-        });
-    }
-
-    
-
-// 🔹 Verifica se o jogador está vestindo Elytra corretamente
-if (elytra != null && elytra.hasItemMeta()) {
-    if (elytra.getItemMeta().displayName() != null) {
-        String nomeItem = elytra.getItemMeta().displayName().toString(); // Obtém o nome como String
-
-        // 🔹 Verifica se o nome contém palavras-chave específicas
-        if (nomeItem.contains("Relíquia") && nomeItem.contains("Amauris") && nomeItem.contains("borboletas")) {
-            jogador.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, Integer.MAX_VALUE, 0));
-
-            // 🔥 Ativa voo sem foguetes
-            jogador.setAllowFlight(true);
-            jogador.setFlying(true);
-
-            // 🎆 Verifica se o jogador tem menos de 3 foguetes e dá mais se necessário
-            plugin.getServer().getGlobalRegionScheduler().execute(plugin, () -> {
-                int qtdFoguetes = 0;
-
-                for (ItemStack item : jogador.getInventory().getContents()) {
-                    if (item != null && item.getType() == Material.FIREWORK_ROCKET) {
-                        qtdFoguetes += item.getAmount();
-                    }
-                }
-
-                // Se tiver menos de 3 foguetes, adiciona mais até atingir 3
-                if (qtdFoguetes < 3) {
-                    jogador.getInventory().addItem(new ItemStack(Material.FIREWORK_ROCKET, 3 - qtdFoguetes));
-                }
-            });
-
-            // ✨ Exibe mensagem no chat
-            jogador.sendMessage(Component.text("🪽 Você está com a **Relíquia Amauris gênero de borboletas** e recebeu foguetes!").color(NamedTextColor.GOLD));
-        } else {
-            // 🚫 Se remover a relíquia, perde a habilidade de voar
-            jogador.setAllowFlight(false);
-            jogador.setFlying(false);
-        }
+if (helmet != null && helmet.hasItemMeta()) {
+    String nomeCapacete = PlainTextComponentSerializer.plainText().serialize(helmet.getItemMeta().displayName());
+    if (nomeCapacete.contains("Relíquia") && nomeCapacete.contains("ELmo") && nomeCapacete.contains("Arcanjo") && nomeCapacete.contains("Uriel")) {
+        jogador.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, Integer.MAX_VALUE, 0));
+        jogador.sendMessage(Component.text("🔥 Você está protegido contra fogo com o Elmo Arcanjo Uriel!").color(NamedTextColor.RED));
     }
 }
 
+if (elytra != null && elytra.hasItemMeta()) {
+    String nomeElytra = PlainTextComponentSerializer.plainText().serialize(elytra.getItemMeta().displayName());
+    if (nomeElytra.contains("Relíquia") && nomeElytra.contains("Amauris") && nomeElytra.contains("borboletas")) {
+        jogador.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, Integer.MAX_VALUE, 0));
+        jogador.setAllowFlight(true);
+        jogador.setFlying(true);
+
+        plugin.getServer().getGlobalRegionScheduler().run(plugin, task -> {
+            int qtdFoguetes = 0;
+            for (ItemStack item : jogador.getInventory().getContents()) {
+                if (item != null && item.getType() == Material.FIREWORK_ROCKET) {
+                    qtdFoguetes += item.getAmount();
+                }
+            }
+            if (qtdFoguetes < 3) {
+                jogador.getInventory().addItem(new ItemStack(Material.FIREWORK_ROCKET, 3 - qtdFoguetes));
+            }
+        });
+
+        jogador.sendMessage(Component.text("🪽 Você está com a **Relíquia Amauris gênero de borboletas** e recebeu foguetes!").color(NamedTextColor.GOLD));
+    } else {
+        jogador.setAllowFlight(false);
+        jogador.setFlying(false);
+    }
+}
 
 
 
@@ -287,14 +266,94 @@ if (elytra != null && elytra.hasItemMeta()) {
 }
 
 @EventHandler
+public void aoPegarFogo(EntityDamageEvent event) {
+    // Verifica se a entidade é um jogador
+    if (!(event.getEntity() instanceof Player jogador)) return;
+
+    // Verifica se o dano foi causado por fogo ou lava
+    if (event.getCause() == EntityDamageEvent.DamageCause.FIRE ||
+        event.getCause() == EntityDamageEvent.DamageCause.FIRE_TICK ||
+        event.getCause() == EntityDamageEvent.DamageCause.LAVA) {
+
+        // Obtém o capacete do jogador
+        ItemStack helmet = jogador.getInventory().getHelmet();
+
+        // Verifica se o capacete tem o nome correto
+        if (helmet != null && helmet.hasItemMeta()) {
+            String nomeCapacete = PlainTextComponentSerializer.plainText().serialize(helmet.getItemMeta().displayName());
+            if (nomeCapacete.contains("Relíquia") && nomeCapacete.contains("ELmo") && nomeCapacete.contains("Arcanjo") && nomeCapacete.contains("Uriel")) {
+
+                // Cancela o dano de fogo
+                event.setCancelled(true);
+
+                // Exibe mensagem no chat
+                jogador.sendMessage(Component.text("🔥 Você está pegando fogo, mas está protegido pelo Elmo Arcanjo Uriel!").color(NamedTextColor.RED));
+            }
+        }
+    }
+}
+
+@EventHandler
 public void aoIniciarVoo(PlayerToggleFlightEvent event) {
     Player jogador = event.getPlayer();
+
+    // 🔹 Se o jogador estiver no modo Criativo, não faz nada
+    if (jogador.getGameMode() == GameMode.CREATIVE) {
+        return;
+    }
 
     // 🔹 Se o jogador estiver caindo, desativa o voo para permitir o uso do foguete
     if (!jogador.isOnGround()) {
         jogador.setAllowFlight(false);
         jogador.setFlying(false);
     }
+}
+
+
+
+@EventHandler
+public void aoMover(PlayerMoveEvent evento) {
+        Player jogador = evento.getPlayer();
+        ItemStack boots = jogador.getInventory().getBoots();
+
+        if (boots != null && boots.hasItemMeta()) {
+            String nome = PlainTextComponentSerializer.plainText().serialize(boots.getItemMeta().displayName());
+            if (nome.contains("Relíquia Meow Cat") && nome.contains("Botas Celestiais")) {
+
+                // Local onde o jogador está pisando
+                Block bloco = jogador.getLocation().getBlock();
+
+                // Evita sobrescrever blocos importantes
+                if (bloco.getType().isAir()) {
+                    bloco.setType(Material.LIGHT);
+                    BlockData data = bloco.getBlockData();
+                    if (data instanceof Levelled level) {
+                        level.setLevel(15); // Nível máximo de luz
+                        bloco.setBlockData(level);
+                    }
+
+                    // Remove a luz após 2 segundos usando o GlobalRegionScheduler do Folia
+                    plugin.getServer().getGlobalRegionScheduler().runDelayed(plugin, task -> {
+                    if (bloco.getType() == Material.LIGHT) {
+                        bloco.setType(Material.AIR);
+                    }
+                    }, 40L);
+                }
+            }
+        }
+}
+
+
+@EventHandler
+public void aoMudarModoDeJogo(PlayerGameModeChangeEvent evento) {
+    Player jogador = evento.getPlayer();
+    GameMode novoModo = evento.getNewGameMode();
+
+    if (novoModo == GameMode.CREATIVE) {
+        jogador.setAllowFlight(true);
+        jogador.setFlying(true);
+        jogador.sendMessage("Você agora está no modo Criativo e pode voar!");
+    } 
 }
 
 @EventHandler
@@ -304,6 +363,7 @@ public void aoClicarComBotaoDireito(PlayerInteractEvent event) {
     // 🔹 Verifica se o jogador clicou com o botão direito
     if (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
         ItemStack elytra = jogador.getInventory().getChestplate();
+
 
         if (elytra != null && elytra.hasItemMeta() &&
             elytra.getItemMeta().displayName() != null) {
@@ -781,7 +841,21 @@ public boolean onCommand(CommandSender sender, Command command, String label, St
             store.buySpinningWand(player);
         }
         return true;
-    } else if (command.getName().equalsIgnoreCase("buyiron")) {
+    } else if (command.getName().equalsIgnoreCase("limparTrilhaDeLuz")) { 
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            limparTrilhaDeLuz(player);
+        }
+        return true;
+    } else if (command.getName().equalsIgnoreCase("buyIronBlock")) {
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            store.buyIronBlock(player);
+        }
+        return true;
+    }
+    
+    else if (command.getName().equalsIgnoreCase("buyiron")) {
         if (sender instanceof Player) {
             Player player = (Player) sender;
             store.buyIronBlock(player);
@@ -884,12 +958,28 @@ public boolean onCommand(CommandSender sender, Command command, String label, St
             store.buyWingRelic(player);
         }
         return true;
-    }
-    else if (command.getName().equalsIgnoreCase("buyTreeDebugger")) {
-
+    } else if (command.getName().equalsIgnoreCase("buyShulkerKit")) {
         if (sender instanceof Player) {
             Player player = (Player) sender;
-            store.buyTreeDebuggerAxe(player);
+            store.buyShulkerKit(player);
+        }
+        return true;
+    } else if (command.getName().equalsIgnoreCase("buyBootRelic")) {
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            store.buyBootRelic(player);
+        }
+        return true;
+    } else if (command.getName().equalsIgnoreCase("stairs")) {
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            store.venderEscadas(player);
+        }
+        return true;
+    } else if (command.getName().equalsIgnoreCase("buyThorAxe")) {
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            store.buyThorAxe(player);
         }
         return true;
     }
@@ -1851,6 +1941,24 @@ public void ajustarSaldo(Player player, String tipo, double valor) {
             e.printStackTrace();
         }
     }
+
+    public void limparTrilhaDeLuz(Player jogador) {
+    Location centro = jogador.getLocation();
+    int raio = 15;
+
+    for (int x = -raio; x <= raio; x++) {
+        for (int y = -5; y <= 5; y++) {
+            for (int z = -raio; z <= raio; z++) {
+                Location alvo = centro.clone().add(x, y, z);
+                if (alvo.getBlock().getType() == Material.LIGHT) {
+                    alvo.getBlock().setType(Material.AIR);
+                }
+            }
+        }
+    }
+
+    jogador.sendMessage(Component.text("💡 Trilha luminosa removida!").color(NamedTextColor.YELLOW));
+}
 
     
 

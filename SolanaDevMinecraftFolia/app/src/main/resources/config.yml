@@ -43,9 +43,14 @@ store:
     buySimpleCompass: 150
     buySimpleFishingRod: 200
     buyAxolotlBucket: 400
-    price.nether_relic: 1000
-    price.tree_debugger: 1000
-    price.wing_relic: 1000
+    nether_relic: 1000
+    tree_debugger: 1000
+    wing_relic: 1000
+    boot_relic: 1000
+    thor_axe: 60000
+    shulker_kit: 10000
+  self:
+    stairs: 10
 
 language:
   default: "pt-BR"

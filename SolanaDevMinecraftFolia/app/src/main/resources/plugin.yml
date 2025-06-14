@@ -1,5 +1,5 @@
 name: SolanaDevMinecraftAstralFoliaMC
-version: v2.7.6
+version: v2.7.7
 main: com.SolanaDevMinecraft.App
 api-version: 1.20.1
 author: Amauri Bueno dos Santos
@@ -160,6 +160,23 @@ commands:
   buyWingRelic:
     description: Compra uma Relíquia de Asa.
     usage: /buyWingRelic
+  buyBootRelic:
+    description: Compra uma Relíquia de Bota.
+    usage: /buyBootRelic
+  buyThorAxe:
+    description: Compra o Machado do Thor.
+    usage: /buyThorAxe
+  limparTrilhaDeLuz:
+    description: Limpa a trilha de luz do jogador.
+    usage: /limparTrilhaDeLuz
+    permission: limparTrilhaDeLuz.use
+  buyShulkerKit:
+    description: Compra um Kit Shulker.
+    usage: /buyShulkerKit
+  stairs:
+    description: Compra escadas.
+    usage: /stairs <quantidade>
+    permission: stairs.use
 
 
 

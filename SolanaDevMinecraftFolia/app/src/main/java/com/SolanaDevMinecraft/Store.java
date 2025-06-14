@@ -113,6 +113,58 @@ public class Store {
     return false;
     }
 
+
+    public void venderEscadas(Player jogador) {
+    int quantidade = 33; // Quantidade fixa de escadas vendidas
+    int precoPorEscada = config.getInt("store.self.stairs", 10); // Obtém o preço do config.yml
+    int total = precoPorEscada * quantidade;
+
+    // Lista de todos os tipos de escadas no Minecraft
+    Material[] escadas = {
+    Material.OAK_STAIRS, Material.SPRUCE_STAIRS, Material.BIRCH_STAIRS, Material.JUNGLE_STAIRS,
+    Material.ACACIA_STAIRS, Material.DARK_OAK_STAIRS, Material.MANGROVE_STAIRS, Material.CHERRY_STAIRS,
+    Material.BAMBOO_STAIRS, Material.CRIMSON_STAIRS, Material.WARPED_STAIRS, Material.BAMBOO_MOSAIC_STAIRS,
+    Material.COBBLESTONE_STAIRS, Material.MOSSY_COBBLESTONE_STAIRS, Material.STONE_STAIRS,
+    Material.GRANITE_STAIRS, Material.POLISHED_GRANITE_STAIRS, Material.DIORITE_STAIRS,
+    Material.POLISHED_DIORITE_STAIRS, Material.ANDESITE_STAIRS, Material.POLISHED_ANDESITE_STAIRS,
+    Material.BLACKSTONE_STAIRS, Material.POLISHED_BLACKSTONE_STAIRS, Material.POLISHED_BLACKSTONE_BRICK_STAIRS,
+    Material.NETHER_BRICK_STAIRS, Material.RED_NETHER_BRICK_STAIRS, Material.END_STONE_BRICK_STAIRS,
+    Material.PURPUR_STAIRS, Material.QUARTZ_STAIRS, Material.SMOOTH_QUARTZ_STAIRS,
+    Material.PRISMARINE_STAIRS, Material.PRISMARINE_BRICK_STAIRS, Material.DARK_PRISMARINE_STAIRS,
+    Material.SANDSTONE_STAIRS, Material.SMOOTH_SANDSTONE_STAIRS, Material.RED_SANDSTONE_STAIRS,
+    Material.SMOOTH_RED_SANDSTONE_STAIRS, Material.BRICK_STAIRS, Material.MUD_BRICK_STAIRS,
+    Material.LADDER // Escada de mão
+};
+
+    boolean temEscadas = false;
+
+    for (Material tipoEscada : escadas) {
+        ItemStack escada = new ItemStack(tipoEscada, quantidade);
+        if (jogador.getInventory().containsAtLeast(escada, quantidade)) {
+            // Remove as escadas do inventário
+            jogador.getInventory().removeItem(escada);
+            temEscadas = true;
+        }
+    }
+
+    if (temEscadas) {
+        // Converte o dinheiro para Solana (opcional)
+        int taxaConversao = config.getInt("store.value_of_in_game_currency", 1000);
+        double solanaRecebida = (double) total / taxaConversao;
+
+        // Adiciona dinheiro ao banco do jogador (moeda do jogo)
+        boolean vendaEfetuada = processPurchase(jogador, -total); // Usa valor negativo para adicionar dinheiro
+
+        if (vendaEfetuada) {
+            jogador.sendMessage(Component.text("💰 Você vendeu 33 escadas por $" + total + " (" + solanaRecebida + " SOL)!").color(NamedTextColor.GREEN));
+        } else {
+            jogador.sendMessage(Component.text("⚠ Erro ao vender escadas. Verifique seu saldo no banco.").color(NamedTextColor.RED));
+        }
+    } else {
+        jogador.sendMessage(Component.text("❌ Você não tem 33 escadas para vender!").color(NamedTextColor.RED));
+    }
+}
+
     public void buyNetherRelic(Player player) {
     // 🔹 Obtém o preço da relíquia do config.yml, com fallback de 25000
     int price = config.getInt("store.price.nether_relic", 25000);
@@ -126,7 +178,7 @@ public class Store {
     
     if (meta != null) {
         meta.setUnbreakable(true); // 🔥 Torna o capacete indestrutível
-        meta.displayName(Component.text("Relíquia do Nether").color(NamedTextColor.GOLD)); // 🔥 Define nome personalizado
+        meta.displayName(Component.text("Relíquia ELmo Arcanjo Uriel").color(NamedTextColor.GOLD)); // 🔥 Define nome personalizado
         
         // 🔹 Adiciona encantamentos essenciais
         meta.addEnchant(Enchantment.FIRE_PROTECTION, 4, true); // 🔥 Proteção contra fogo máxima
@@ -257,6 +309,107 @@ public void buyTreeDebuggerAxe(Player player) {
 
     player.sendMessage(Component.text(message).color(NamedTextColor.GOLD));
 }
+
+public void buyBootRelic(Player player) {
+    int price = config.getInt("store.price.boot_relic", 40000);
+
+    if (!processPurchase(player, price)) return;
+
+    ItemStack bootRelic = new ItemStack(Material.NETHERITE_BOOTS);
+    ItemMeta meta = bootRelic.getItemMeta();
+
+    if (meta != null) {
+        meta.setUnbreakable(true);
+        meta.displayName(Component.text("👢 Relíquia Meow Cat das Botas Celestiais").color(NamedTextColor.LIGHT_PURPLE));
+        meta.addEnchant(Enchantment.DEPTH_STRIDER, 3, true);   // Passos profundos
+        meta.addEnchant(Enchantment.MENDING, 1, true);         // Reparação
+        meta.addEnchant(Enchantment.UNBREAKING, 3, true);      // Durabilidade
+        //meta.addEnchant(Enchantment.BINDING_CURSE, 1, true);   // Maldição de vínculo
+
+        bootRelic.setItemMeta(meta);
+    }
+
+    plugin.getServer().getGlobalRegionScheduler().execute(plugin, () -> {
+        player.getInventory().addItem(bootRelic);
+    });
+
+    String message = switch (getPlayerLanguage(player)) {
+        case "pt-BR" -> "👢 Você comprou a Relíquia Meow Cat das Botas Celestiais por $" + price + "!";
+        case "es-ES" -> "👢 ¡Has comprado las Botas Reliquia Meow Cat Celestiales por $" + price + "!";
+        default -> "👢 You bought the Meow Cat Celestial Boots Relic for $" + price + "!";
+    };
+
+    player.sendMessage(Component.text(message).color(NamedTextColor.LIGHT_PURPLE));
+}
+
+public void buyShulkerKit(Player player) {
+    int price = config.getInt("store.price.shulker_kit", 50000);
+
+    if (!processPurchase(player, price)) return;
+
+    // Lista com todas as cores de shulker box
+    Material[] shulkerColors = {
+        Material.WHITE_SHULKER_BOX, Material.ORANGE_SHULKER_BOX, Material.MAGENTA_SHULKER_BOX,
+        Material.LIGHT_BLUE_SHULKER_BOX, Material.YELLOW_SHULKER_BOX, Material.LIME_SHULKER_BOX,
+        Material.PINK_SHULKER_BOX, Material.GRAY_SHULKER_BOX, Material.LIGHT_GRAY_SHULKER_BOX,
+        Material.CYAN_SHULKER_BOX, Material.PURPLE_SHULKER_BOX, Material.BLUE_SHULKER_BOX,
+        Material.BROWN_SHULKER_BOX, Material.GREEN_SHULKER_BOX, Material.RED_SHULKER_BOX,
+        Material.BLACK_SHULKER_BOX
+    };
+
+    for (Material shulker : shulkerColors) {
+        ItemStack item = new ItemStack(shulker);
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            meta.displayName(Component.text("📦 Shulker Colorida").color(NamedTextColor.GOLD));
+            item.setItemMeta(meta);
+        }
+        player.getInventory().addItem(item);
+    }
+
+    String message = switch (getPlayerLanguage(player)) {
+        case "pt-BR" -> "📦 Você comprou o Kit Shulker Colorida por $" + price + "!";
+        case "es-ES" -> "📦 ¡Has comprado el Kit Shulker Colorida por $" + price + "!";
+        default -> "📦 You bought the Colorful Shulker Kit for $" + price + "!";
+    };
+
+    player.sendMessage(Component.text(message).color(NamedTextColor.GOLD));
+}
+
+public void buyThorAxe(Player player) {
+    int price = config.getInt("store.price.thor_axe", 60000);
+
+    if (!processPurchase(player, price)) return;
+
+    ItemStack thorAxe = new ItemStack(Material.NETHERITE_AXE);
+    ItemMeta meta = thorAxe.getItemMeta();
+
+    if (meta != null) {
+        meta.setUnbreakable(true);
+        meta.displayName(Component.text("⚡ Machado de Thor: Stormbreaker").color(NamedTextColor.AQUA));
+
+        meta.addEnchant(Enchantment.MENDING, 1, true);         // Reparação
+        meta.addEnchant(Enchantment.UNBREAKING, 3, true);      // Durabilidade
+        meta.addEnchant(Enchantment.KNOCKBACK, 2, true);       // Repulsão
+        //meta.addEnchant(Enchantment.BINDING_CURSE, 1, true);   // Maldição de vínculo
+
+        thorAxe.setItemMeta(meta);
+    }
+
+    plugin.getServer().getGlobalRegionScheduler().execute(plugin, () -> {
+        player.getInventory().addItem(thorAxe);
+    });
+
+    String message = switch (getPlayerLanguage(player)) {
+        case "pt-BR" -> "⚡ Você empunha agora o Machado de Thor por $" + price + "!";
+        case "es-ES" -> "⚡ ¡Has adquirido el Hacha de Thor por $" + price + "!";
+        default -> "⚡ You now wield Thor's Axe for $" + price + "!";
+    };
+
+    player.sendMessage(Component.text(message).color(NamedTextColor.AQUA));
+}
+
+
 
 public void buyWingRelic(Player player) {
     // 🔹 Obtém o preço da relíquia das asas no config.yml, com fallback de 50000
