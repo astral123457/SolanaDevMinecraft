@@ -1,0 +1,32 @@
+profiler:
+  enabled: true
+      - server.mute
+      - server.unmute
+      - server.teleport
+      - server.fly
+      - server.godmode
+      - server.admin
+users:
+  Amauri:
+    permissions:
+      - server.chat
+      - server.build
+      - server.use.items
+    group: admin
+
+groups:
+  default:
+    permissions:
+      - server.chat
+      - server.use.items
+
+  admin:
+    permissions:
+      - server.chat
+      - server.build
+      - server.use.items
+      - server.kick
+      - server.ban
+      - server.mute
+      - server.unban
+      
