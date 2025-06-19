@@ -57,6 +57,8 @@
      Encontrei um guia em vídeo bem completo que mostra como montar esse tipo de cluster com Debian 12, usando Pacemaker e Corosync. Ele cobre desde a configuração de IP fixo até os testes de failover.
      Se preferir um passo a passo escrito, esse tutorial do Clube do Linux também é excelente — mostra como configurar a rede, instalar os pacotes e testar o cluster.
 
+     
+
 # 📁 Sincronização de arquivos entre os PC
 
      Sim, é possível! Para que os arquivos de um servidor sejam automaticamente replicados no outro, você pode usar:
@@ -73,6 +75,8 @@
      - Os arquivos podem ser armazenados em um volume compartilhado (como o GlusterFS que mencionei).
      Tem um guia excelente de configuração do vsftpd no Debian 12 que mostra como deixar tudo seguro com SSL/TLS e controle de usuários.
 
+     link https://pt.linux-console.net/?p=30685
+
 # 🎮 Cluster para Minecraft (por diversão e ciência, claro 😄)
 
      Sim, senhor! Você pode rodar o Minecraft Server em um dos PCs e usar o outro como backup ou até para balancear carga (em setups mais avançados). Algumas ideias:
@@ -82,6 +86,21 @@
      Tem um tutorial completíssimo de instalação do Minecraft Server no Debian 12 que cobre desde o Java até o firewall e o EULA.
 
      Se quiser, posso montar um plano de ação com comandos e tudo, baseado no que você já tem aí. Bora transformar esse laboratório caseiro num datacenter gamer-acadêmico? 😎🖥️🎮✨
+
+# Um cluster é basicamente um conjunto de computadores ou servidores que funciona juntos
+
+     como se fossem uma única máquina. Eles são usados para aumentar a performance, a disponibilidade ou a capacidade de processamento de dados. Mas o interessante mesmo está nas possibilidades:
+     - Alta performance: para rodar aplicações pesadas, como simulações científicas, modelagem 3D, ou renderização de vídeos.
+     - Alta disponibilidade: em empresas que precisam que sistemas fiquem sempre online, mesmo que um servidor falhe, outro assume.
+     - Big Data e análise de dados: ferramentas como Apache Hadoop e Spark rodam em clusters para processar grandes volumes de informações.
+     - Hospedagem de sites e serviços: grandes portais ou aplicativos que recebem muitos acessos ao mesmo tempo.
+     - Inteligência artificial: treinar modelos de IA exige muito poder de processamento — e clusters dão conta do recado.
+
+     links https://www.youtube.com/watch?v=mgCDf-0Ovcg
+
+     
+
+     
 
 
 
